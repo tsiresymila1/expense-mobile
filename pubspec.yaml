@@ -88,12 +88,12 @@ flavorizr:
     android:
       flavorDimensions: "flavor-type"
     ios:
-      name: "Apple Expense"
+      name: "Expense"
 
   flavors:
     dev:
       app:
-        name: "Expense Dev"
+        name: "Expense"
       android:
         applicationId: "ts.mila.expense.dev"
       ios:

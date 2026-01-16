@@ -2,5 +2,5 @@
 #include "Generated.xcconfig"
 
 ASSET_PREFIX=dev
-BUNDLE_NAME=Expense Dev
-BUNDLE_DISPLAY_NAME=Expense Dev
+BUNDLE_NAME=Expense
+BUNDLE_DISPLAY_NAME=Expense

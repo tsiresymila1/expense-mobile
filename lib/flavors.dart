@@ -11,7 +11,7 @@ class F {
   static String get title {
     switch (appFlavor) {
       case Flavor.dev:
-        return 'Expense Dev';
+        return 'Expense';
       case Flavor.prod:
         return 'Expense';
     }
