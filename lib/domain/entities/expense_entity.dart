@@ -16,7 +16,8 @@ class ExpenseEntity with _$ExpenseEntity {
     required DateTime createdAt,
   }) = _ExpenseEntity;
 
-  factory ExpenseEntity.fromJson(Map<String, dynamic> json) => _$ExpenseEntityFromJson(json);
+  factory ExpenseEntity.fromJson(Map<String, dynamic> json) =>
+      _$ExpenseEntityFromJson(json);
 }
 
 @freezed
@@ -31,5 +32,6 @@ class CategoryEntity with _$CategoryEntity {
     required DateTime updatedAt,
   }) = _CategoryEntity;
 
-  factory CategoryEntity.fromJson(Map<String, dynamic> json) => _$CategoryEntityFromJson(json);
+  factory CategoryEntity.fromJson(Map<String, dynamic> json) =>
+      _$CategoryEntityFromJson(json);
 }

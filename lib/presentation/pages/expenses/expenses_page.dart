@@ -1,17 +1,17 @@
-import 'package:expense/core/theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
-import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
+import 'package:expense/presentation/pages/expenses/widgets/expense_card.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'package:expense/presentation/widgets/expense_filter_modal.dart';
+import 'package:expense/sync_engine/sync_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:go_router/go_router.dart';
 
 class ExpensesPage extends StatelessWidget {
   const ExpensesPage({super.key});
@@ -31,7 +31,6 @@ class ExpensesPage extends StatelessWidget {
           'transactions'.tr(),
           style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
-        centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.category_rounded),
@@ -45,70 +44,73 @@ class ExpensesPage extends StatelessWidget {
         ],
       ),
       body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settings) {
-          return BlocBuilder<ExpensesBloc, ExpensesState>(
-            builder: (context, state) {
-              if (state.isLoading && state.expenses.isEmpty) {
-                return _buildShimmer(theme);
-              }
+        builder: (context, settings) =>
+            BlocBuilder<ExpensesBloc, ExpensesState>(
+              builder: (context, state) {
+                if (state.isLoading && state.expenses.isEmpty)
+                  return _buildShimmer(theme);
+                if (state.expenses.isEmpty) return _buildEmptyState(theme);
 
-              if (state.expenses.isEmpty) {
-                return _buildEmptyState(theme);
-              }
-
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<ExpensesBloc>().add(LoadExpenses());
-                },
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                  itemCount: state.expenses.length,
-                  itemBuilder: (context, index) {
-                    final expense = state.expenses[index];
-                    final showHeader = index == 0 || !_isSameDay(expense.date, state.expenses[index - 1].date);
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showHeader) _buildDateHeader(expense.date, theme),
-                        _buildExpenseCard(expense, theme, settings, context),
-                      ],
-                    );
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<ExpensesBloc>().add(LoadExpenses());
+                    await context.read<SyncEngine>().triggerSync();
+                    if (context.mounted)
+                      context.read<ExpensesBloc>().add(LoadExpenses());
                   },
-                ),
-              );
-            },
-          );
-        },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                    itemCount: state.expenses.length,
+                    itemBuilder: (context, index) {
+                      final expense = state.expenses[index];
+                      final showHeader =
+                          index == 0 ||
+                          !_isSameDay(
+                            expense.date,
+                            state.expenses[index - 1].date,
+                          );
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (showHeader) _buildDateHeader(expense.date, theme),
+                          ExpenseCard(
+                            expense: expense,
+                            settings: settings,
+                            onTap: () => _showExpenseOptions(context, expense),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddExpense(context),
-        label: Text('new_expense'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        label: Text(
+          'new_expense'.tr(),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
         icon: const Icon(Icons.add_rounded),
-        elevation: 4,
       ),
     );
   }
 
-  bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
-  }
+  bool _isSameDay(DateTime d1, DateTime d2) =>
+      d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
 
   Widget _buildDateHeader(DateTime date, ThemeData theme) {
-    String label;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final dateOnly = DateTime(date.year, date.month, date.day);
 
-    if (dateOnly == today) {
-      label = 'today'.tr();
-    } else if (dateOnly == yesterday) {
-      label = 'yesterday'.tr();
-    } else {
-      label = DateFormat('MMM dd, yyyy').format(date).toUpperCase();
-    }
-
+    String label = dateOnly == today
+        ? 'today'.tr()
+        : (dateOnly == yesterday
+              ? 'yesterday'.tr()
+              : DateFormat('MMM dd, yyyy').format(date).toUpperCase());
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 12, left: 4),
       child: Text(
@@ -123,127 +125,35 @@ class ExpensesPage extends StatelessWidget {
     );
   }
 
-  Widget _buildExpenseCard(LocalExpense expense, ThemeData theme, SettingsState settings, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: InkWell(
-        onTap: () => _showExpenseOptions(context, expense),
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              _buildCategoryIcon(expense.categoryId, theme),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      expense.note ?? 'No description',
-                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    BlocBuilder<CategoriesBloc, CategoriesState>(
-                      builder: (context, state) {
-                        final cat = state.categories.where((c) => c.id == expense.categoryId).firstOrNull;
-                        return Text(
-                          cat?.name ?? 'General',
-                          style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${expense.type == 'income' ? '+' : '-'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol)}',
-                style: GoogleFonts.outfit(
-                  color: expense.type == 'income' ? Colors.green : theme.colorScheme.onSurface,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 17,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryIcon(String? categoryId, ThemeData theme) {
-    return BlocBuilder<CategoriesBloc, CategoriesState>(
-      builder: (context, state) {
-        final cat = state.categories.where((c) => c.id == categoryId).firstOrNull;
-        final colorStr = cat?.color;
-        final catColor = AppTheme.parseColor(colorStr).withValues(alpha: 1.0);
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: catColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Icon(
-            _getIconData(cat?.icon),
-            color: catColor,
-            size: 20,
-          ),
-        );
-      },
-    );
-  }
-
-  IconData _getIconData(String? iconName) {
-    switch (iconName) {
-      case 'Shopping': return Icons.shopping_bag_rounded;
-      case 'Food': return Icons.restaurant_rounded;
-      case 'Transport': return Icons.directions_car_rounded;
-      case 'Health': return Icons.medical_services_rounded;
-      case 'Education': return Icons.school_rounded;
-      case 'Entertainment': return Icons.movie_rounded;
-      default: return Icons.category_rounded;
-    }
-  }
-
-  void _showAddExpense(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const AddExpenseModal(),
-    );
-  }
-
-  void _showCategoryManagement(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => const CategoryManagementModal(),
-    );
-  }
+  void _showAddExpense(BuildContext context) => showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const AddExpenseModal(),
+  );
+  void _showCategoryManagement(BuildContext context) => showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => const CategoryManagementModal(),
+  );
 
   void _showFilter(BuildContext context) async {
     final settings = context.read<SettingsBloc>().state;
-    final result = await showModalBottomSheet<Map<String, dynamic>>(
+    final res = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ExpenseFilterModal(currencySymbol: settings.currencySymbol),
+      builder: (context) =>
+          ExpenseFilterModal(currencySymbol: settings.currencySymbol),
     );
-
-    if (result != null && context.mounted) {
-      context.read<ExpensesBloc>().add(LoadExpenses(
-        dateRange: result['date_range'] as DateTimeRange?,
-        amountRange: result['amount_range'] as RangeValues?,
-      ));
-    }
+    if (res != null && context.mounted)
+      context.read<ExpensesBloc>().add(
+        LoadExpenses(
+          dateRange: res['date_range'] as DateTimeRange?,
+          amountRange: res['amount_range'] as RangeValues?,
+        ),
+      );
   }
 
   void _showExpenseOptions(BuildContext context, LocalExpense expense) {
@@ -262,7 +172,10 @@ class ExpensesPage extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.edit_rounded),
-                title: Text('edit_transaction'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                title: Text(
+                  'edit_transaction'.tr(),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   showModalBottomSheet(
@@ -275,7 +188,13 @@ class ExpensesPage extends StatelessWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.delete_rounded, color: Colors.red),
-                title: Text('delete_transaction'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: Colors.red)),
+                title: Text(
+                  'delete_transaction'.tr(),
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.red,
+                  ),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _confirmDelete(context, expense);
@@ -293,57 +212,75 @@ class ExpensesPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('delete_confirmation_title'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-        content: Text('delete_confirmation_message'.tr(), style: GoogleFonts.outfit()),
+        title: Text(
+          'delete_confirmation_title'.tr(),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'delete_confirmation_message'.tr(),
+          style: GoogleFonts.outfit(),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('cancel'.tr(), style: GoogleFonts.outfit(color: Colors.grey)),
+            child: Text(
+              'cancel'.tr(),
+              style: GoogleFonts.outfit(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
               context.read<ExpensesBloc>().add(DeleteExpense(expense.id));
               Navigator.pop(context);
             },
-            child: Text('delete_transaction'.tr(), style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.w700)),
+            child: Text(
+              'delete_transaction'.tr(),
+              style: GoogleFonts.outfit(
+                color: Colors.red,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildShimmer(ThemeData theme) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: 6,
-      itemBuilder: (context, index) => Shimmer.fromColors(
-        baseColor: theme.cardColor,
-        highlightColor: theme.dividerColor,
-        child: Container(
-          height: 80,
-          margin: const EdgeInsets.only(bottom: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
+  Widget _buildShimmer(ThemeData theme) => ListView.builder(
+    padding: const EdgeInsets.all(20),
+    itemCount: 6,
+    itemBuilder: (context, index) => Shimmer.fromColors(
+      baseColor: theme.cardColor,
+      highlightColor: theme.dividerColor,
+      child: Container(
+        height: 80,
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
         ),
       ),
-    );
-  }
-
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.receipt_long_rounded, size: 80, color: theme.disabledColor.withValues(alpha: 0.2)),
-          const SizedBox(height: 24),
-          Text(
-            'no_transactions'.tr(),
-            style: GoogleFonts.outfit(fontSize: 18, color: theme.disabledColor, fontWeight: FontWeight.w600),
+    ),
+  );
+  Widget _buildEmptyState(ThemeData theme) => Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.receipt_long_rounded,
+          size: 80,
+          color: theme.disabledColor.withValues(alpha: 0.2),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'no_transactions'.tr(),
+          style: GoogleFonts.outfit(
+            fontSize: 18,
+            color: theme.disabledColor,
+            fontWeight: FontWeight.w600,
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }

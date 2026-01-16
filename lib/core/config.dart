@@ -21,6 +21,6 @@ class FlavorConfig {
   FlavorConfig._internal(this.flavor, this.name);
 
   static FlavorConfig get instance => _instance!;
-  
+
   static bool get isDev => _instance?.flavor == AppFlavor.dev;
 }

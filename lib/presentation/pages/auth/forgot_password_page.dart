@@ -20,7 +20,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     setState(() => _isLoading = true);
     final email = (_formKey.currentState!.value['email'] as String).trim();
-    
+
     try {
       await Supabase.instance.client.auth.resetPasswordForEmail(email);
       if (mounted) {
@@ -81,9 +81,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Send Reset Link', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Send Reset Link',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
             ],
           ),

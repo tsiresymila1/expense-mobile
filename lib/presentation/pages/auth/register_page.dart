@@ -21,7 +21,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     setState(() => _isLoading = true);
     final values = _formKey.currentState!.value;
-    
+
     try {
       await Supabase.instance.client.auth.signUp(
         email: (values['email'] as String).trim(),
@@ -30,7 +30,11 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful! Please check your email for confirmation.')),
+          const SnackBar(
+            content: Text(
+              'Registration successful! Please check your email for confirmation.',
+            ),
+          ),
         );
         Navigator.of(context).pop();
       }
@@ -95,8 +99,13 @@ class _RegisterPageState extends State<RegisterPage> {
                   labelText: 'Password',
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 obscureText: _obscurePassword,
@@ -129,9 +138,17 @@ class _RegisterPageState extends State<RegisterPage> {
                         backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                       ),
-                      child: const Text('Register', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: const Text(
+                        'Register',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
             ],
           ),

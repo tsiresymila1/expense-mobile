@@ -12,12 +12,13 @@ class LocalExpenses extends Table {
   TextColumn get userId => text()();
   TextColumn get categoryId => text().nullable()();
   RealColumn get amount => real()();
-  TextColumn get type => text().withDefault(const Constant('expense'))(); // 'expense' or 'income'
+  TextColumn get type =>
+      text().withDefault(const Constant('expense'))(); // 'expense' or 'income'
   DateTimeColumn get date => dateTime()();
   TextColumn get note => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
-  
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -30,7 +31,7 @@ class LocalCategories extends Table {
   TextColumn get color => text().nullable()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
-  
+
   @override
   Set<Column> get primaryKey => {id};
 }
@@ -68,20 +69,29 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  Future<void> _addColumnSafely(Migrator m, TableInfo table, String columnName) async {
+  Future<void> _addColumnSafely(
+    Migrator m,
+    TableInfo table,
+    String columnName,
+  ) async {
     try {
       // Check if column exists
-      final result = await customSelect('PRAGMA table_info("${table.actualTableName}")').get();
+      final result = await customSelect(
+        'PRAGMA table_info("${table.actualTableName}")',
+      ).get();
       final hasColumn = result.any((row) => row.data['name'] == columnName);
-      
+
       if (!hasColumn) {
         // Find the column by its entity name (camelCase in Dart, usually matches the getter name)
-        final column = table.columnsByName[columnName] ?? 
-                       table.columnsByName.values.firstWhere((c) => c.name == columnName);
+        final column =
+            table.columnsByName[columnName] ??
+            table.columnsByName.values.firstWhere((c) => c.name == columnName);
         await m.addColumn(table, column);
       }
     } catch (e) {
-      debugPrint('Error adding column $columnName to ${table.actualTableName}: $e');
+      debugPrint(
+        'Error adding column $columnName to ${table.actualTableName}: $e',
+      );
     }
   }
 }

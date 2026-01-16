@@ -2,7 +2,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthEvent {}
+
 class AuthSubscriptionRequested extends AuthEvent {}
+
 class AuthLogoutRequested extends AuthEvent {}
 
 enum AuthStatus { authenticated, unauthenticated, loading }
@@ -23,7 +25,9 @@ class AuthBloc extends Bloc<AuthEvent, AppAuthState> {
         onData: (data) {
           final user = data.session?.user;
           return AppAuthState(
-            user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+            user != null
+                ? AuthStatus.authenticated
+                : AuthStatus.unauthenticated,
             user: user,
           );
         },

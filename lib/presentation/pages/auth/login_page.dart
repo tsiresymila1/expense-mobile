@@ -22,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _isLoading = true);
     final values = _formKey.currentState!.value;
-    
+
     try {
       await Supabase.instance.client.auth.signInWithPassword(
         email: (values['email'] as String).trim(),
@@ -55,7 +55,11 @@ class _LoginPageState extends State<LoginPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.account_balance_wallet, size: 80, color: AppTheme.primaryColor),
+                const Icon(
+                  Icons.account_balance_wallet,
+                  size: 80,
+                  color: AppTheme.primaryColor,
+                ),
                 const SizedBox(height: 32),
                 const Text(
                   'Welcome Back',
@@ -88,8 +92,13 @@ class _LoginPageState extends State<LoginPage> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   obscureText: _obscurePassword,
@@ -114,9 +123,17 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor: AppTheme.primaryColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                        child: const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                 const SizedBox(height: 24),
                 Row(

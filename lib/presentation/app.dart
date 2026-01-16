@@ -34,17 +34,19 @@ class ExpenseApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (_) => AuthBloc(Supabase.instance.client)
-              ..add(AuthSubscriptionRequested()),
+            create: (_) =>
+                AuthBloc(Supabase.instance.client)
+                  ..add(AuthSubscriptionRequested()),
           ),
           BlocProvider(create: (_) => SettingsBloc()),
           BlocProvider(
-            create: (context) => ExpensesBloc(context.read<AppDatabase>())
-              ..add(LoadExpenses()),
+            create: (context) =>
+                ExpensesBloc(context.read<AppDatabase>())..add(LoadExpenses()),
           ),
           BlocProvider(
-            create: (context) => CategoriesBloc(context.read<AppDatabase>())
-              ..add(LoadCategories()),
+            create: (context) =>
+                CategoriesBloc(context.read<AppDatabase>())
+                  ..add(LoadCategories()),
           ),
         ],
         child: BlocBuilder<SettingsBloc, SettingsState>(
@@ -54,7 +56,7 @@ class ExpenseApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               localizationsDelegates: [
                 ...context.localizationDelegates,
-                FormBuilderLocalizationsDelegate()
+                FormBuilderLocalizationsDelegate(),
               ],
               supportedLocales: context.supportedLocales,
               locale: context.locale,

@@ -42,13 +42,13 @@ _$CategoryEntityImpl _$$CategoryEntityImplFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$$CategoryEntityImplToJson(
-        _$CategoryEntityImpl instance) =>
-    <String, dynamic>{
-      'id': instance.id,
-      'userId': instance.userId,
-      'name': instance.name,
-      'icon': instance.icon,
-      'color': instance.color,
-      'isDefault': instance.isDefault,
-      'updatedAt': instance.updatedAt.toIso8601String(),
-    };
+  _$CategoryEntityImpl instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'userId': instance.userId,
+  'name': instance.name,
+  'icon': instance.icon,
+  'color': instance.color,
+  'isDefault': instance.isDefault,
+  'updatedAt': instance.updatedAt.toIso8601String(),
+};

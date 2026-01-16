@@ -15,7 +15,7 @@ class AppTheme {
   }
 
   static const primaryColor = Color(0xFF3ECF8E); // Supabase Green
-  static const secondaryColor = Color(0xFF2EAA7B); 
+  static const secondaryColor = Color(0xFF2EAA7B);
   static const accentColor = Color(0xFF34D399);
   static const backgroundColor = Color(0xFFF9FAFB);
   static const darkBackgroundColor = Color(0xFF161616);
@@ -26,11 +26,15 @@ class AppTheme {
     if (colorStr == null || colorStr.isEmpty) {
       return primaryColor;
     }
-    
+
     try {
       String hex = colorStr.replaceAll('#', '').replaceAll('0x', '');
-      if (hex.length == 6) { hex = 'FF$hex'; }
-      if (hex.length != 8) { return primaryColor; }
+      if (hex.length == 6) {
+        hex = 'FF$hex';
+      }
+      if (hex.length != 8) {
+        return primaryColor;
+      }
       return Color(int.parse(hex, radix: 16));
     } catch (_) {
       return primaryColor;
@@ -64,9 +68,7 @@ class AppTheme {
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       color: surfaceColor,
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -93,7 +95,10 @@ class AppTheme {
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
+        textStyle: GoogleFonts.outfit(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
       ),
     ),
   );
@@ -126,9 +131,7 @@ class AppTheme {
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       color: darkSurfaceColor,
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -155,7 +158,10 @@ class AppTheme {
         elevation: 0,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
+        textStyle: GoogleFonts.outfit(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
       ),
     ),
   );

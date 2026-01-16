@@ -13,14 +13,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 
 class AppRouter {
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   static final config = GoRouter(
+    observers: [routeObserver],
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
+    refreshListenable: GoRouterRefreshStream(
+      Supabase.instance.client.auth.onAuthStateChange,
+    ),
     redirect: (context, state) {
       final session = Supabase.instance.client.auth.currentSession;
-      final isAuthPath = state.matchedLocation == '/login' || 
-                         state.matchedLocation == '/register' || 
-                         state.matchedLocation == '/forgot-password';
+      final isAuthPath =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/forgot-password';
 
       if (session == null && !isAuthPath) {
         return '/login';
@@ -31,10 +38,7 @@ class AppRouter {
       return null;
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterPage(),
@@ -43,10 +47,7 @@ class AppRouter {
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordPage(),
       ),
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const DashboardPage(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
       GoRoute(
         path: '/expenses',
         builder: (context, state) => const ExpensesPage(),
@@ -59,10 +60,7 @@ class AppRouter {
         path: '/settings',
         builder: (context, state) => const SettingsPage(),
       ),
-      GoRoute(
-        path: '/stats',
-        builder: (context, state) => const StatsPage(),
-      ),
+      GoRoute(path: '/stats', builder: (context, state) => const StatsPage()),
     ],
   );
 }
@@ -71,8 +69,8 @@ class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {
     notifyListeners();
     _subscription = stream.asBroadcastStream().listen(
-          (dynamic _) => notifyListeners(),
-        );
+      (dynamic _) => notifyListeners(),
+    );
   }
 
   late final StreamSubscription<dynamic> _subscription;

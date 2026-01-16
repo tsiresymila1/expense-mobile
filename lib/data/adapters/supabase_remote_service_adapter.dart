@@ -17,7 +17,11 @@ class SupabaseRemoteServiceAdapter implements RemoteServiceAdapter {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> fetch(String table, DateTime since, {String updatedAtColumn = 'updated_at'}) async {
+  Future<List<Map<String, dynamic>>> fetch(
+    String table,
+    DateTime since, {
+    String updatedAtColumn = 'updated_at',
+  }) async {
     final response = await _client
         .from(table)
         .select()

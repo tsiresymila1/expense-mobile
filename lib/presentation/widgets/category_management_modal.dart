@@ -1,11 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/widgets/add_category_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:expense/presentation/widgets/add_category_modal.dart';
 
 class CategoryManagementModal extends StatelessWidget {
   const CategoryManagementModal({super.key});
@@ -13,36 +13,20 @@ class CategoryManagementModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 24),
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            _handle(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -51,7 +35,6 @@ class CategoryManagementModal extends StatelessWidget {
                   style: GoogleFonts.outfit(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 IconButton(
@@ -70,7 +53,10 @@ class CategoryManagementModal extends StatelessWidget {
                       color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.add_rounded, color: theme.colorScheme.primary),
+                    child: Icon(
+                      Icons.add_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ),
               ],
@@ -79,56 +65,54 @@ class CategoryManagementModal extends StatelessWidget {
             Flexible(
               child: BlocBuilder<CategoriesBloc, CategoriesState>(
                 builder: (context, state) {
-                  if (state.isLoading && state.categories.isEmpty) {
+                  if (state.isLoading && state.categories.isEmpty)
                     return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
+                      padding: EdgeInsets.all(40),
                       child: CircularProgressIndicator(),
                     );
-                  }
-                  
-                  if (state.categories.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 40),
-                      child: Column(
-                        children: [
-                          Icon(Icons.category_outlined, size: 48, color: theme.disabledColor),
-                          const SizedBox(height: 16),
-                          Text('no_data'.tr(), style: GoogleFonts.outfit(color: Colors.grey)),
-                        ],
-                      ),
-                    );
-                  }
-                  
+                  if (state.categories.isEmpty) return _empty(theme);
                   return ListView.builder(
                     shrinkWrap: true,
                     itemCount: state.categories.length,
                     itemBuilder: (context, index) {
                       final cat = state.categories[index];
-                      final catColor = AppTheme.parseColor(cat.color).withValues(alpha: 1.0);
-
+                      final color = AppTheme.parseColor(
+                        cat.color,
+                      ).withValues(alpha: 1.0);
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+                          border: Border.all(
+                            color: theme.dividerColor.withValues(alpha: 0.5),
+                          ),
                         ),
                         child: ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: catColor.withValues(alpha: 0.1),
+                              color: color.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: Icon(_getIconData(cat.icon), color: catColor, size: 24),
+                            child: Icon(
+                              _icon(cat.icon),
+                              color: color,
+                              size: 24,
+                            ),
                           ),
                           title: Text(
-                            cat.name, 
-                            style: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16),
+                            cat.name,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           trailing: IconButton(
-                            icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
-                            onPressed: () => _confirmDelete(context, cat.id, cat.name),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.red,
+                            ),
+                            onPressed: () =>
+                                _confirm(context, cat.id, cat.name),
                           ),
                         ),
                       );
@@ -143,42 +127,76 @@ class CategoryManagementModal extends StatelessWidget {
     );
   }
 
-  IconData _getIconData(String? iconName) {
-    switch (iconName) {
-      case 'Shopping': return Icons.shopping_bag_rounded;
-      case 'Food': return Icons.restaurant_rounded;
-      case 'Transport': return Icons.directions_car_rounded;
-      case 'Health': return Icons.medical_services_rounded;
-      case 'Education': return Icons.school_rounded;
-      case 'Entertainment': return Icons.movie_rounded;
-      default: return Icons.category_rounded;
+  Widget _handle() => Container(
+    width: 40,
+    height: 4,
+    margin: const EdgeInsets.only(bottom: 24),
+    decoration: BoxDecoration(
+      color: Colors.grey.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
+  Widget _empty(ThemeData t) => Padding(
+    padding: const EdgeInsets.all(40),
+    child: Column(
+      children: [
+        Icon(Icons.category_outlined, size: 48, color: t.disabledColor),
+        const SizedBox(height: 16),
+        Text('no_data'.tr(), style: const TextStyle(color: Colors.grey)),
+      ],
+    ),
+  );
+
+  IconData _icon(String? n) {
+    switch (n) {
+      case 'Shopping':
+        return Icons.shopping_bag_rounded;
+      case 'Food':
+        return Icons.restaurant_rounded;
+      case 'Transport':
+        return Icons.directions_car_rounded;
+      case 'Health':
+        return Icons.medical_services_rounded;
+      case 'Education':
+        return Icons.school_rounded;
+      case 'Entertainment':
+        return Icons.movie_rounded;
+      default:
+        return Icons.category_rounded;
     }
   }
 
-  void _confirmDelete(BuildContext context, String id, String name) {
-    final expensesState = context.read<ExpensesBloc>().state;
-    final isAttached = expensesState.expenses.any((e) => e.categoryId == id);
-
+  void _confirm(BuildContext context, String id, String name) {
+    final hasE = context.read<ExpensesBloc>().state.expenses.any(
+      (e) => e.categoryId == id,
+    );
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('delete_category_title'.tr(args: [name]), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text('delete_category_title'.tr(args: [name])),
         content: Text(
-          isAttached ? 'delete_category_warning'.tr() : 'delete_confirmation_message'.tr(),
-          style: GoogleFonts.outfit(),
+          hasE
+              ? 'delete_category_warning'.tr()
+              : 'delete_confirmation_message'.tr(),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('cancel'.tr(), style: GoogleFonts.outfit(color: Colors.grey)),
+            onPressed: () => Navigator.pop(c),
+            child: Text('cancel'.tr()),
           ),
           TextButton(
             onPressed: () {
               context.read<CategoriesBloc>().add(DeleteCategory(id));
-              Navigator.pop(context);
+              Navigator.pop(c);
             },
-            child: Text('delete_transaction'.tr(), style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
+            child: Text(
+              'delete_transaction'.tr(),
+              style: const TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

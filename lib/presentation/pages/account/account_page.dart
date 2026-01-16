@@ -8,15 +8,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
-
   @override
   State<AccountPage> createState() => _AccountPageState();
 }
 
 class _AccountPageState extends State<AccountPage> {
-  final _formKey = GlobalKey<FormBuilderState>();
+  final _key = GlobalKey<FormBuilderState>();
   User? _user;
-  bool _isLoading = false;
+  bool _loading = false;
 
   @override
   void initState() {
@@ -24,165 +23,159 @@ class _AccountPageState extends State<AccountPage> {
     _user = Supabase.instance.client.auth.currentUser;
   }
 
-  Future<void> _updateProfile() async {
-    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
-
-    setState(() => _isLoading = true);
-    final values = _formKey.currentState!.value;
-    final name = (values['name'] as String).trim();
-
+  Future<void> _update() async {
+    if (!(_key.currentState?.saveAndValidate() ?? false)) return;
+    setState(() => _loading = true);
     try {
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(
-          data: {'name': name},
+          data: {'name': (_key.currentState!.value['name'] as String).trim()},
         ),
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('profile_updated'.tr())),
-        );
-      }
-    } on AuthException catch (e) {
-      _showError(e.message);
+      if (mounted)
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('profile_updated'.tr())));
     } catch (e) {
-      _showError('error_unexpected'.tr());
+      _err(e is AuthException ? e.message : 'error_unexpected'.tr());
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
+    final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('logout'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
-        content: Text('logout_confirmation'.tr(), style: GoogleFonts.outfit()),
+        title: Text(
+          'logout'.tr(),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        content: Text('logout_confirmation'.tr()),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('cancel'.tr(), style: GoogleFonts.outfit(color: Colors.grey)),
+            onPressed: () => Navigator.pop(c, false),
+            child: Text('cancel'.tr()),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('logout'.tr(), style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.bold)),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(
+              'logout'.tr(),
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
     );
-
-    if (confirmed == true) {
+    if (ok == true) {
       await Supabase.instance.client.auth.signOut();
       if (mounted) context.go('/login');
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Theme.of(context).colorScheme.error),
-    );
-  }
+  void _err(String m) => ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(m),
+      backgroundColor: Theme.of(context).colorScheme.error,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
+    final t = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
+      backgroundColor: t.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('account'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text(
+          'account'.tr(),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: FormBuilder(
-          key: _formKey,
+          key: _key,
           initialValue: {
             'name': _user?.userMetadata?['name'] ?? '',
             'email': _user?.email ?? '',
           },
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2), width: 2),
-                ),
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  child: Icon(Icons.person_rounded, size: 50, color: theme.colorScheme.primary),
-                ),
-              ),
+              _avatar(t),
               const SizedBox(height: 32),
-              FormBuilderTextField(
-                name: 'name',
-                style: GoogleFonts.outfit(),
-                decoration: InputDecoration(
-                  labelText: 'full_name'.tr(),
-                  prefixIcon: const Icon(Icons.person_outline_rounded),
-                  filled: true,
-                  fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.03),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+              _field(
+                'name',
+                'full_name'.tr(),
+                Icons.person_outline_rounded,
+                t,
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
                   FormBuilderValidators.minLength(2),
                 ]),
               ),
               const SizedBox(height: 16),
-              FormBuilderTextField(
-                name: 'email',
-                style: GoogleFonts.outfit(),
-                decoration: InputDecoration(
-                  labelText: 'email'.tr(),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  filled: true,
-                  fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.03),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
+              _field(
+                'email',
+                'email'.tr(),
+                Icons.email_outlined,
+                t,
                 enabled: false,
               ),
               const SizedBox(height: 32),
-              if (_isLoading)
+              if (_loading)
                 const CircularProgressIndicator()
               else
                 ElevatedButton(
-                  onPressed: _updateProfile,
+                  onPressed: _update,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
+                    backgroundColor: t.colorScheme.primary,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
-                  child: Text('update_profile'.tr(), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600)),
+                  child: Text(
+                    'update_profile'.tr(),
+                    style: GoogleFonts.outfit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               const SizedBox(height: 16),
               OutlinedButton(
-                onPressed: () => _showChangePasswordDialog(context),
+                onPressed: () => _showPwDialog(context),
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  side: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.5)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-                child: Text('change_password'.tr(), style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'change_password'.tr(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               const SizedBox(height: 48),
               TextButton.icon(
                 onPressed: _logout,
                 icon: const Icon(Icons.logout_rounded, color: Colors.red),
-                label: Text('logout'.tr(), style: GoogleFonts.outfit(color: Colors.red, fontWeight: FontWeight.w600)),
+                label: Text(
+                  'logout'.tr(),
+                  style: GoogleFonts.outfit(
+                    color: Colors.red,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -191,26 +184,59 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final dialogFormKey = GlobalKey<FormBuilderState>();
-    
+  Widget _avatar(ThemeData t) => Container(
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(
+        color: t.colorScheme.primary.withValues(alpha: 0.2),
+        width: 2,
+      ),
+    ),
+    child: CircleAvatar(
+      radius: 50,
+      backgroundColor: t.colorScheme.primary.withValues(alpha: 0.1),
+      child: Icon(Icons.person_rounded, size: 50, color: t.colorScheme.primary),
+    ),
+  );
+  Widget _field(
+    String name,
+    String label,
+    IconData icon,
+    ThemeData t, {
+    String? Function(String?)? validator,
+    bool enabled = true,
+  }) => FormBuilderTextField(
+    name: name,
+    enabled: enabled,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon),
+      filled: true,
+      fillColor: t.colorScheme.onSurface.withValues(alpha: 0.03),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+    ),
+    validator: validator,
+  );
+
+  void _showPwDialog(BuildContext context) {
+    final key = GlobalKey<FormBuilderState>();
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: theme.colorScheme.surface,
+      builder: (c) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('change_password'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text('change_password'.tr()),
         content: FormBuilder(
-          key: dialogFormKey,
+          key: key,
           child: FormBuilderTextField(
             name: 'password',
             obscureText: true,
-            style: GoogleFonts.outfit(),
             decoration: InputDecoration(
               labelText: 'password'.tr(),
               filled: true,
-              fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.03),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -224,33 +250,30 @@ class _AccountPageState extends State<AccountPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('cancel'.tr(), style: GoogleFonts.outfit(color: Colors.grey)),
+            onPressed: () => Navigator.pop(c),
+            child: Text('cancel'.tr()),
           ),
           ElevatedButton(
             onPressed: () async {
-              if (dialogFormKey.currentState?.saveAndValidate() ?? false) {
+              if (key.currentState?.saveAndValidate() ?? false) {
                 try {
                   await Supabase.instance.client.auth.updateUser(
-                    UserAttributes(password: dialogFormKey.currentState!.value['password']),
+                    UserAttributes(
+                      password: key.currentState!.value['password'],
+                    ),
                   );
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('password_changed'.tr())),
-                  );
-                }
+                  if (mounted) {
+                    Navigator.pop(c);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('password_changed'.tr())),
+                    );
+                  }
                 } catch (e) {
-                  _showError('error_unexpected'.tr());
+                  _err('error_unexpected'.tr());
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Text('save'.tr(), style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+            child: Text('save'.tr()),
           ),
         ],
       ),

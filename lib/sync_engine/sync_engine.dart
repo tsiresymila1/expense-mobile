@@ -15,11 +15,7 @@ class SyncState {
   SyncState({required this.status, this.lastSync, this.errorMessage});
 }
 
-enum SyncConflictStrategy {
-  lastWriteWins,
-  localWins,
-  remoteWins,
-}
+enum SyncConflictStrategy { lastWriteWins, localWins, remoteWins }
 
 class TableSyncConfig {
   final String tableName;
@@ -40,7 +36,7 @@ class SyncEngine {
   final RemoteServiceAdapter remoteService;
   final Duration syncInterval;
   final _logger = Logger();
-  
+
   final _syncStateController = StreamController<SyncState>.broadcast();
   Stream<SyncState> get syncState => _syncStateController.stream;
 
@@ -57,7 +53,9 @@ class SyncEngine {
   });
 
   void start() {
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
       if (results.any((result) => result != ConnectivityResult.none)) {
         triggerSync();
       }
@@ -73,33 +71,37 @@ class SyncEngine {
     _syncStateController.close();
   }
 
+  Completer<void>? _syncCompleter;
+
   Future<void> triggerSync() async {
-    if (_isSyncing) return;
+    if (_isSyncing) return _syncCompleter?.future;
+
     _isSyncing = true;
+    _syncCompleter = Completer<void>();
     _syncStateController.add(SyncState(status: SyncStatus.syncing));
 
     try {
       await _pushUnits();
       await _pullUnits();
-      
-      _syncStateController.add(SyncState(
-        status: SyncStatus.success,
-        lastSync: DateTime.now(),
-      ));
+
+      _syncStateController.add(
+        SyncState(status: SyncStatus.success, lastSync: DateTime.now()),
+      );
     } catch (e, stack) {
       _logger.e('Sync failed', error: e, stackTrace: stack);
-      _syncStateController.add(SyncState(
-        status: SyncStatus.error,
-        errorMessage: e.toString(),
-      ));
+      _syncStateController.add(
+        SyncState(status: SyncStatus.error, errorMessage: e.toString()),
+      );
     } finally {
       _isSyncing = false;
+      _syncCompleter?.complete();
+      _syncCompleter = null;
     }
   }
 
   Future<void> _pushUnits() async {
     final queue = await localDb.getSyncQueue();
-    
+
     for (final op in queue) {
       try {
         await _processOp(op);
@@ -141,12 +143,17 @@ class SyncEngine {
         .toSet();
 
     for (final config in tableConfigs) {
+      _logger.i('SyncEngine: Pulling ${config.tableName}...');
       final remoteData = await remoteService.fetch(
         config.tableName,
         lastSync,
         updatedAtColumn: config.updatedAtColumn,
       );
-      
+
+      _logger.i(
+        'SyncEngine: Found ${remoteData.length} records for ${config.tableName}',
+      );
+
       for (final data in remoteData) {
         final id = data[config.primaryKey]?.toString();
         if (id == null) continue;
