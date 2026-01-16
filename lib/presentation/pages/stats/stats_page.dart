@@ -4,6 +4,7 @@ import 'package:expense/presentation/pages/stats/widgets/summary_stats_cards.dar
 import 'package:expense/presentation/pages/stats/widgets/category_breakdown_chart.dart';
 import 'package:expense/presentation/pages/stats/widgets/monthly_overview_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -102,19 +103,32 @@ class _StatsPageState extends State<StatsPage> {
                   : state.expenses.isEmpty
                   ? _buildEmpty(theme)
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SummaryStatsCards(state: state),
+                          SummaryStatsCards(state: state)
+                              .animate()
+                              .fadeIn(duration: 600.ms)
+                              .slideY(begin: 0.1, end: 0),
                           const SizedBox(height: 32),
-                          _header('category_breakdown'.tr()),
+                          _header('category_breakdown'.tr())
+                              .animate()
+                              .fadeIn(delay: 200.ms, duration: 600.ms),
                           const SizedBox(height: 16),
-                          CategoryBreakdownChart(state: state),
+                          CategoryBreakdownChart(state: state)
+                              .animate()
+                              .fadeIn(delay: 300.ms, duration: 600.ms)
+                              .scale(),
                           const SizedBox(height: 32),
-                          _header('monthly_overview'.tr()),
+                          _header('monthly_overview'.tr())
+                              .animate()
+                              .fadeIn(delay: 400.ms, duration: 600.ms),
                           const SizedBox(height: 16),
-                          MonthlyOverviewChart(state: state),
+                          MonthlyOverviewChart(state: state)
+                              .animate()
+                              .fadeIn(delay: 500.ms, duration: 600.ms)
+                              .slideX(begin: 0.1, end: 0),
                           const SizedBox(height: 32),
                         ],
                       ),
@@ -150,6 +164,7 @@ class _StatsPageState extends State<StatsPage> {
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.only(top: 16),
       child: Row(
         children: list
             .map(

@@ -3,6 +3,7 @@ import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SummarySection extends StatelessWidget {
@@ -49,7 +50,7 @@ class SummarySection extends StatelessWidget {
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
-          ),
+          ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 8),
           Text(
             AppTheme.formatMoney(state.thisMonthTotal, settings.currencySymbol),
@@ -58,8 +59,11 @@ class SummarySection extends StatelessWidget {
               fontSize: 36,
               fontWeight: FontWeight.w700,
             ),
-          ),
-          const SizedBox(height: 24),
+          )
+              .animate()
+              .fadeIn(delay: 500.ms, duration: 600.ms)
+              .slideY(begin: -0.4, end: 0, delay: 500.ms),
+          const SizedBox(height: 4),
           Row(
             children: [
               Container(
@@ -83,9 +87,12 @@ class SummarySection extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          )
+              .animate()
+              .fadeIn(delay: 400.ms, duration: 600.ms)
+              .slideY(begin: 0.1, end: 0, delay: 700.ms),  
         ],
       ),
-    );
+    ).animate().fadeIn(duration: 700.ms).slideY(begin: 0.1, end: 0, delay: 200.ms);
   }
 }

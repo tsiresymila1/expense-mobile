@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
@@ -20,7 +21,10 @@ class QuickActions extends StatelessWidget {
             theme.colorScheme.secondary,
             () => context.push('/expenses'),
           ),
-        ),
+        )
+            .animate()
+            .fadeIn(delay: 200.ms, duration: 600.ms)
+            .slideY(begin: 0.1, end: 0),
         const SizedBox(width: 16),
         Expanded(
           child: _buildActionCard(
@@ -31,7 +35,10 @@ class QuickActions extends StatelessWidget {
             theme.colorScheme.primary,
             () => context.push('/stats'),
           ),
-        ),
+        )
+            .animate()
+            .fadeIn(delay: 300.ms, duration: 600.ms)
+            .slideY(begin: 0.1, end: 0),
       ],
     );
   }
@@ -55,8 +62,8 @@ class QuickActions extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: 1,
+              offset: const Offset(0, 1),
             ),
           ],
         ),

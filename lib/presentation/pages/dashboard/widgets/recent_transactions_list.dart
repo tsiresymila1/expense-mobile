@@ -6,6 +6,7 @@ import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/category_icon.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -32,7 +33,7 @@ class RecentTransactionsList extends StatelessWidget {
           'no_transactions'.tr(),
           style: GoogleFonts.outfit(color: theme.disabledColor),
         ),
-      );
+      ).animate().fadeIn(duration: 600.ms);
     }
 
     return ListView.builder(
@@ -78,6 +79,14 @@ class RecentTransactionsList extends StatelessWidget {
               ),
             ),
           ),
+        )
+            .animate(delay: (100 * index).ms)
+            .fadeIn(duration: 600.ms)
+            .slideY(
+          begin: 0.1,
+          end: 0,
+          duration: 600.ms,
+          curve: Curves.easeOut,
         );
       },
     );

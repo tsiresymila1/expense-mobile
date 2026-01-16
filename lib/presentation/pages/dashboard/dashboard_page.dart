@@ -11,6 +11,7 @@ import 'package:expense/presentation/router.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/sync_engine/sync_engine.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -84,7 +85,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                             const SizedBox(height: 24),
                             const QuickActions(),
                             const SizedBox(height: 32),
-                            _buildSectionHeader('daily_expenses'.tr(), theme),
+                            _buildSectionHeader('daily_expenses'.tr(), theme)
+                                .animate()
+                                .fadeIn(delay: 300.ms, duration: 600.ms)
+                                .slideY(begin: 0.1, end: 0),
                             const SizedBox(height: 16),
                             SpendingChart(state: state),
                             const SizedBox(height: 32),
@@ -93,7 +97,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               theme,
                               actionLabel: 'see_all'.tr(),
                               onAction: () => context.go('/expenses'),
-                            ),
+                            )
+                                .animate()
+                                .fadeIn(delay: 500.ms, duration: 600.ms)
+                                .slideY(begin: 0.1, end: 0),
                             const SizedBox(height: 16),
                             RecentTransactionsList(
                               state: state,
@@ -115,7 +122,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         onPressed: () => _showAddExpense(context),
         backgroundColor: theme.colorScheme.primary,
         child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
-      ),
+      )
+          .animate()
+          .fadeIn(delay: 600.ms, duration: 600.ms)
+          .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
     );
   }
 

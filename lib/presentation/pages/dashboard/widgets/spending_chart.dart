@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SpendingChart extends StatelessWidget {
@@ -20,7 +21,7 @@ class SpendingChart extends StatelessWidget {
           'no_data'.tr(),
           style: GoogleFonts.outfit(color: theme.disabledColor),
         ),
-      );
+      ).animate().fadeIn(duration: 600.ms);
     }
 
     return Container(
@@ -62,6 +63,6 @@ class SpendingChart extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ).animate().fadeIn(delay: 400.ms, duration: 600.ms).slideY(begin: 0.1, end: 0);
   }
 }

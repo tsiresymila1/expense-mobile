@@ -1,6 +1,7 @@
 import 'package:expense/core/theme.dart';
 import 'package:expense/sync_engine/sync_engine.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class SyncIndicator extends StatelessWidget {
   final SyncStatus status;
@@ -12,35 +13,31 @@ class SyncIndicator extends StatelessWidget {
     final theme = Theme.of(context);
     IconData icon;
     Color color;
-    bool rotating = false;
 
     switch (status) {
       case SyncStatus.syncing:
         icon = Icons.sync_rounded;
         color = theme.colorScheme.primary;
-        rotating = true;
-        break;
+        return Icon(icon, color: color, size: 24)
+            .animate(onPlay: (controller) => controller.repeat())
+            .rotate(duration: 1.seconds);
       case SyncStatus.error:
         icon = Icons.sync_problem_rounded;
         color = theme.colorScheme.error;
-        break;
+        return Icon(icon, color: color, size: 24)
+            .animate()
+            .shake(duration: 500.ms);
       case SyncStatus.success:
         icon = Icons.check_circle_rounded;
         color = AppTheme.primaryColor;
-        break;
+        return Icon(icon, color: color, size: 24)
+            .animate()
+            .scale(duration: 300.ms, curve: Curves.easeOutBack)
+            .fadeIn();
       default:
         icon = Icons.sync_rounded;
         color = theme.colorScheme.onSurface.withValues(alpha: 0.3);
+        return Icon(icon, color: color, size: 24).animate().fadeIn();
     }
-
-    if (rotating) {
-      return const SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2.5),
-      );
-    }
-
-    return Icon(icon, color: color, size: 24);
   }
 }
