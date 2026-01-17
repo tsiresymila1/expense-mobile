@@ -12,8 +12,7 @@ part of 'expense_entity.dart';
 T _$identity<T>(T value) => value;
 
 final _privateConstructorUsedError = UnsupportedError(
-  'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
-);
+    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 ExpenseEntity _$ExpenseEntityFromJson(Map<String, dynamic> json) {
   return _ExpenseEntity.fromJson(json);
@@ -39,20 +38,18 @@ mixin _$ExpenseEntity {
 /// @nodoc
 abstract class $ExpenseEntityCopyWith<$Res> {
   factory $ExpenseEntityCopyWith(
-    ExpenseEntity value,
-    $Res Function(ExpenseEntity) then,
-  ) = _$ExpenseEntityCopyWithImpl<$Res, ExpenseEntity>;
+          ExpenseEntity value, $Res Function(ExpenseEntity) then) =
+      _$ExpenseEntityCopyWithImpl<$Res, ExpenseEntity>;
   @useResult
-  $Res call({
-    String id,
-    String userId,
-    String? categoryId,
-    double amount,
-    DateTime date,
-    String? note,
-    DateTime updatedAt,
-    DateTime createdAt,
-  });
+  $Res call(
+      {String id,
+      String userId,
+      String? categoryId,
+      double amount,
+      DateTime date,
+      String? note,
+      DateTime updatedAt,
+      DateTime createdAt});
 }
 
 /// @nodoc
@@ -77,43 +74,40 @@ class _$ExpenseEntityCopyWithImpl<$Res, $Val extends ExpenseEntity>
     Object? updatedAt = null,
     Object? createdAt = null,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: null == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String,
-            categoryId: freezed == categoryId
-                ? _value.categoryId
-                : categoryId // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            amount: null == amount
-                ? _value.amount
-                : amount // ignore: cast_nullable_to_non_nullable
-                      as double,
-            date: null == date
-                ? _value.date
-                : date // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            note: freezed == note
-                ? _value.note
-                : note // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            updatedAt: null == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-            createdAt: null == createdAt
-                ? _value.createdAt
-                : createdAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      categoryId: freezed == categoryId
+          ? _value.categoryId
+          : categoryId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      amount: null == amount
+          ? _value.amount
+          : amount // ignore: cast_nullable_to_non_nullable
+              as double,
+      date: null == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ) as $Val);
   }
 }
 
@@ -121,21 +115,19 @@ class _$ExpenseEntityCopyWithImpl<$Res, $Val extends ExpenseEntity>
 abstract class _$$ExpenseEntityImplCopyWith<$Res>
     implements $ExpenseEntityCopyWith<$Res> {
   factory _$$ExpenseEntityImplCopyWith(
-    _$ExpenseEntityImpl value,
-    $Res Function(_$ExpenseEntityImpl) then,
-  ) = __$$ExpenseEntityImplCopyWithImpl<$Res>;
+          _$ExpenseEntityImpl value, $Res Function(_$ExpenseEntityImpl) then) =
+      __$$ExpenseEntityImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String userId,
-    String? categoryId,
-    double amount,
-    DateTime date,
-    String? note,
-    DateTime updatedAt,
-    DateTime createdAt,
-  });
+  $Res call(
+      {String id,
+      String userId,
+      String? categoryId,
+      double amount,
+      DateTime date,
+      String? note,
+      DateTime updatedAt,
+      DateTime createdAt});
 }
 
 /// @nodoc
@@ -143,9 +135,8 @@ class __$$ExpenseEntityImplCopyWithImpl<$Res>
     extends _$ExpenseEntityCopyWithImpl<$Res, _$ExpenseEntityImpl>
     implements _$$ExpenseEntityImplCopyWith<$Res> {
   __$$ExpenseEntityImplCopyWithImpl(
-    _$ExpenseEntityImpl _value,
-    $Res Function(_$ExpenseEntityImpl) _then,
-  ) : super(_value, _then);
+      _$ExpenseEntityImpl _value, $Res Function(_$ExpenseEntityImpl) _then)
+      : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -159,58 +150,55 @@ class __$$ExpenseEntityImplCopyWithImpl<$Res>
     Object? updatedAt = null,
     Object? createdAt = null,
   }) {
-    return _then(
-      _$ExpenseEntityImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: null == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String,
-        categoryId: freezed == categoryId
-            ? _value.categoryId
-            : categoryId // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        amount: null == amount
-            ? _value.amount
-            : amount // ignore: cast_nullable_to_non_nullable
-                  as double,
-        date: null == date
-            ? _value.date
-            : date // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        note: freezed == note
-            ? _value.note
-            : note // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-        createdAt: null == createdAt
-            ? _value.createdAt
-            : createdAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-      ),
-    );
+    return _then(_$ExpenseEntityImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: null == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String,
+      categoryId: freezed == categoryId
+          ? _value.categoryId
+          : categoryId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      amount: null == amount
+          ? _value.amount
+          : amount // ignore: cast_nullable_to_non_nullable
+              as double,
+      date: null == date
+          ? _value.date
+          : date // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      note: freezed == note
+          ? _value.note
+          : note // ignore: cast_nullable_to_non_nullable
+              as String?,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+      createdAt: null == createdAt
+          ? _value.createdAt
+          : createdAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$ExpenseEntityImpl implements _ExpenseEntity {
-  const _$ExpenseEntityImpl({
-    required this.id,
-    required this.userId,
-    this.categoryId,
-    required this.amount,
-    required this.date,
-    this.note,
-    required this.updatedAt,
-    required this.createdAt,
-  });
+  const _$ExpenseEntityImpl(
+      {required this.id,
+      required this.userId,
+      this.categoryId,
+      required this.amount,
+      required this.date,
+      this.note,
+      required this.updatedAt,
+      required this.createdAt});
 
   factory _$ExpenseEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$ExpenseEntityImplFromJson(json);
@@ -257,17 +245,8 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    categoryId,
-    amount,
-    date,
-    note,
-    updatedAt,
-    createdAt,
-  );
+  int get hashCode => Object.hash(runtimeType, id, userId, categoryId, amount,
+      date, note, updatedAt, createdAt);
 
   @JsonKey(ignore: true)
   @override
@@ -277,21 +256,22 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$ExpenseEntityImplToJson(this);
+    return _$$ExpenseEntityImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _ExpenseEntity implements ExpenseEntity {
-  const factory _ExpenseEntity({
-    required final String id,
-    required final String userId,
-    final String? categoryId,
-    required final double amount,
-    required final DateTime date,
-    final String? note,
-    required final DateTime updatedAt,
-    required final DateTime createdAt,
-  }) = _$ExpenseEntityImpl;
+  const factory _ExpenseEntity(
+      {required final String id,
+      required final String userId,
+      final String? categoryId,
+      required final double amount,
+      required final DateTime date,
+      final String? note,
+      required final DateTime updatedAt,
+      required final DateTime createdAt}) = _$ExpenseEntityImpl;
 
   factory _ExpenseEntity.fromJson(Map<String, dynamic> json) =
       _$ExpenseEntityImpl.fromJson;
@@ -341,19 +321,17 @@ mixin _$CategoryEntity {
 /// @nodoc
 abstract class $CategoryEntityCopyWith<$Res> {
   factory $CategoryEntityCopyWith(
-    CategoryEntity value,
-    $Res Function(CategoryEntity) then,
-  ) = _$CategoryEntityCopyWithImpl<$Res, CategoryEntity>;
+          CategoryEntity value, $Res Function(CategoryEntity) then) =
+      _$CategoryEntityCopyWithImpl<$Res, CategoryEntity>;
   @useResult
-  $Res call({
-    String id,
-    String? userId,
-    String name,
-    String? icon,
-    String? color,
-    bool isDefault,
-    DateTime updatedAt,
-  });
+  $Res call(
+      {String id,
+      String? userId,
+      String name,
+      String? icon,
+      String? color,
+      bool isDefault,
+      DateTime updatedAt});
 }
 
 /// @nodoc
@@ -377,60 +355,55 @@ class _$CategoryEntityCopyWithImpl<$Res, $Val extends CategoryEntity>
     Object? isDefault = null,
     Object? updatedAt = null,
   }) {
-    return _then(
-      _value.copyWith(
-            id: null == id
-                ? _value.id
-                : id // ignore: cast_nullable_to_non_nullable
-                      as String,
-            userId: freezed == userId
-                ? _value.userId
-                : userId // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            name: null == name
-                ? _value.name
-                : name // ignore: cast_nullable_to_non_nullable
-                      as String,
-            icon: freezed == icon
-                ? _value.icon
-                : icon // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            color: freezed == color
-                ? _value.color
-                : color // ignore: cast_nullable_to_non_nullable
-                      as String?,
-            isDefault: null == isDefault
-                ? _value.isDefault
-                : isDefault // ignore: cast_nullable_to_non_nullable
-                      as bool,
-            updatedAt: null == updatedAt
-                ? _value.updatedAt
-                : updatedAt // ignore: cast_nullable_to_non_nullable
-                      as DateTime,
-          )
-          as $Val,
-    );
+    return _then(_value.copyWith(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: freezed == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String?,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ) as $Val);
   }
 }
 
 /// @nodoc
 abstract class _$$CategoryEntityImplCopyWith<$Res>
     implements $CategoryEntityCopyWith<$Res> {
-  factory _$$CategoryEntityImplCopyWith(
-    _$CategoryEntityImpl value,
-    $Res Function(_$CategoryEntityImpl) then,
-  ) = __$$CategoryEntityImplCopyWithImpl<$Res>;
+  factory _$$CategoryEntityImplCopyWith(_$CategoryEntityImpl value,
+          $Res Function(_$CategoryEntityImpl) then) =
+      __$$CategoryEntityImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({
-    String id,
-    String? userId,
-    String name,
-    String? icon,
-    String? color,
-    bool isDefault,
-    DateTime updatedAt,
-  });
+  $Res call(
+      {String id,
+      String? userId,
+      String name,
+      String? icon,
+      String? color,
+      bool isDefault,
+      DateTime updatedAt});
 }
 
 /// @nodoc
@@ -438,9 +411,8 @@ class __$$CategoryEntityImplCopyWithImpl<$Res>
     extends _$CategoryEntityCopyWithImpl<$Res, _$CategoryEntityImpl>
     implements _$$CategoryEntityImplCopyWith<$Res> {
   __$$CategoryEntityImplCopyWithImpl(
-    _$CategoryEntityImpl _value,
-    $Res Function(_$CategoryEntityImpl) _then,
-  ) : super(_value, _then);
+      _$CategoryEntityImpl _value, $Res Function(_$CategoryEntityImpl) _then)
+      : super(_value, _then);
 
   @pragma('vm:prefer-inline')
   @override
@@ -453,53 +425,50 @@ class __$$CategoryEntityImplCopyWithImpl<$Res>
     Object? isDefault = null,
     Object? updatedAt = null,
   }) {
-    return _then(
-      _$CategoryEntityImpl(
-        id: null == id
-            ? _value.id
-            : id // ignore: cast_nullable_to_non_nullable
-                  as String,
-        userId: freezed == userId
-            ? _value.userId
-            : userId // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        name: null == name
-            ? _value.name
-            : name // ignore: cast_nullable_to_non_nullable
-                  as String,
-        icon: freezed == icon
-            ? _value.icon
-            : icon // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        color: freezed == color
-            ? _value.color
-            : color // ignore: cast_nullable_to_non_nullable
-                  as String?,
-        isDefault: null == isDefault
-            ? _value.isDefault
-            : isDefault // ignore: cast_nullable_to_non_nullable
-                  as bool,
-        updatedAt: null == updatedAt
-            ? _value.updatedAt
-            : updatedAt // ignore: cast_nullable_to_non_nullable
-                  as DateTime,
-      ),
-    );
+    return _then(_$CategoryEntityImpl(
+      id: null == id
+          ? _value.id
+          : id // ignore: cast_nullable_to_non_nullable
+              as String,
+      userId: freezed == userId
+          ? _value.userId
+          : userId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      name: null == name
+          ? _value.name
+          : name // ignore: cast_nullable_to_non_nullable
+              as String,
+      icon: freezed == icon
+          ? _value.icon
+          : icon // ignore: cast_nullable_to_non_nullable
+              as String?,
+      color: freezed == color
+          ? _value.color
+          : color // ignore: cast_nullable_to_non_nullable
+              as String?,
+      isDefault: null == isDefault
+          ? _value.isDefault
+          : isDefault // ignore: cast_nullable_to_non_nullable
+              as bool,
+      updatedAt: null == updatedAt
+          ? _value.updatedAt
+          : updatedAt // ignore: cast_nullable_to_non_nullable
+              as DateTime,
+    ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
 class _$CategoryEntityImpl implements _CategoryEntity {
-  const _$CategoryEntityImpl({
-    required this.id,
-    this.userId,
-    required this.name,
-    this.icon,
-    this.color,
-    this.isDefault = false,
-    required this.updatedAt,
-  });
+  const _$CategoryEntityImpl(
+      {required this.id,
+      this.userId,
+      required this.name,
+      this.icon,
+      this.color,
+      this.isDefault = false,
+      required this.updatedAt});
 
   factory _$CategoryEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$CategoryEntityImplFromJson(json);
@@ -544,41 +513,32 @@ class _$CategoryEntityImpl implements _CategoryEntity {
   @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
-    runtimeType,
-    id,
-    userId,
-    name,
-    icon,
-    color,
-    isDefault,
-    updatedAt,
-  );
+      runtimeType, id, userId, name, icon, color, isDefault, updatedAt);
 
   @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CategoryEntityImplCopyWith<_$CategoryEntityImpl> get copyWith =>
       __$$CategoryEntityImplCopyWithImpl<_$CategoryEntityImpl>(
-        this,
-        _$identity,
-      );
+          this, _$identity);
 
   @override
   Map<String, dynamic> toJson() {
-    return _$$CategoryEntityImplToJson(this);
+    return _$$CategoryEntityImplToJson(
+      this,
+    );
   }
 }
 
 abstract class _CategoryEntity implements CategoryEntity {
-  const factory _CategoryEntity({
-    required final String id,
-    final String? userId,
-    required final String name,
-    final String? icon,
-    final String? color,
-    final bool isDefault,
-    required final DateTime updatedAt,
-  }) = _$CategoryEntityImpl;
+  const factory _CategoryEntity(
+      {required final String id,
+      final String? userId,
+      required final String name,
+      final String? icon,
+      final String? color,
+      final bool isDefault,
+      required final DateTime updatedAt}) = _$CategoryEntityImpl;
 
   factory _CategoryEntity.fromJson(Map<String, dynamic> json) =
       _$CategoryEntityImpl.fromJson;

@@ -11,8 +11,8 @@ class SettingsState with _$SettingsState {
 
   const factory SettingsState({
     @Default('en') String language,
-    @Default(ThemeMode.system) ThemeMode themeMode,
-    @Default('USD') String currency,
+    @Default(ThemeMode.dark) ThemeMode themeMode,
+    @Default('MGA') String currency,
   }) = _SettingsState;
 
   factory SettingsState.fromJson(Map<String, dynamic> json) =>

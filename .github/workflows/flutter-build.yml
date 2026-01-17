@@ -27,8 +27,16 @@ jobs:
           channel: 'stable'
           cache: true # Enable caching for faster subsequent builds
 
+      - name: Create .env.prod file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env.prod
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.prod
+
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Run build_runner
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Decode and save the release keystore
         run: |
