@@ -48,16 +48,18 @@ class ExpensesPage extends StatelessWidget {
         builder: (context, settings) =>
             BlocBuilder<ExpensesBloc, ExpensesState>(
               builder: (context, state) {
-                if (state.isLoading && state.expenses.isEmpty)
+                if (state.isLoading && state.expenses.isEmpty) {
                   return _buildShimmer(theme);
+                }
                 if (state.expenses.isEmpty) return _buildEmptyState(theme);
 
                 return RefreshIndicator(
                   onRefresh: () async {
                     context.read<ExpensesBloc>().add(LoadExpenses());
                     await context.read<SyncEngine>().triggerSync();
-                    if (context.mounted)
+                    if (context.mounted) {
                       context.read<ExpensesBloc>().add(LoadExpenses());
+                    }
                   },
                   child: ListView.builder(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
@@ -159,13 +161,14 @@ class ExpensesPage extends StatelessWidget {
       builder: (context) =>
           ExpenseFilterModal(currencySymbol: settings.currencySymbol),
     );
-    if (res != null && context.mounted)
+    if (res != null && context.mounted) {
       context.read<ExpensesBloc>().add(
         LoadExpenses(
           dateRange: res['date_range'] as DateTimeRange?,
           amountRange: res['amount_range'] as RangeValues?,
         ),
       );
+    }
   }
 
   void _showExpenseOptions(BuildContext context, LocalExpense expense) {

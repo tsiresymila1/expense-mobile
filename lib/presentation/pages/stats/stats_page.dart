@@ -52,8 +52,9 @@ class _StatsPageState extends State<StatsPage> {
         break;
     }
     setState(() => _range = label);
-    if (label != 'custom')
+    if (label != 'custom') {
       context.read<ExpensesBloc>().add(LoadExpenses(dateRange: range));
+    }
   }
 
   Future<void> _pickCustom() async {
@@ -73,8 +74,9 @@ class _StatsPageState extends State<StatsPage> {
     );
     if (picked != null) {
       setState(() => _range = 'custom');
-      if (mounted)
+      if (mounted) {
         context.read<ExpensesBloc>().add(LoadExpenses(dateRange: picked));
+      }
     }
   }
 

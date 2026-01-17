@@ -26,7 +26,7 @@ class CategoryBreakdownChart extends StatelessWidget {
           (totals[e.categoryId ?? 'other'] ?? 0) + e.amount;
     }
 
-    if (totals.isEmpty)
+    if (totals.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(40),
@@ -36,6 +36,7 @@ class CategoryBreakdownChart extends StatelessWidget {
           ),
         ),
       );
+    }
     final totalExpense = totals.values.fold(0.0, (sum, val) => sum + val);
 
     return Container(

@@ -52,18 +52,23 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
 
     if (table == 'expenses') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
-      if (data.containsKey('category_id'))
+      if (data.containsKey('category_id')) {
         result['categoryId'] = data['category_id'];
-      if (data.containsKey('updated_at'))
+      }
+      if (data.containsKey('updated_at')) {
         result['updatedAt'] = data['updated_at'];
-      if (data.containsKey('created_at'))
+      }
+      if (data.containsKey('created_at')) {
         result['createdAt'] = data['created_at'];
+      }
     } else if (table == 'categories') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
-      if (data.containsKey('is_default'))
+      if (data.containsKey('is_default')) {
         result['isDefault'] = data['is_default'];
-      if (data.containsKey('updated_at'))
+      }
+      if (data.containsKey('updated_at')) {
         result['updatedAt'] = data['updated_at'];
+      }
     }
 
     return result;
@@ -77,12 +82,15 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
 
     if (table == 'expenses') {
       if (data.containsKey('userId')) result['user_id'] = data['userId'];
-      if (data.containsKey('categoryId'))
+      if (data.containsKey('categoryId')) {
         result['category_id'] = data['categoryId'];
-      if (data.containsKey('updatedAt'))
+      }
+      if (data.containsKey('updatedAt')) {
         result['updated_at'] = _toIso(data['updatedAt']);
-      if (data.containsKey('createdAt'))
+      }
+      if (data.containsKey('createdAt')) {
         result['created_at'] = _toIso(data['createdAt']);
+      }
       if (data.containsKey('date')) result['date'] = _toIso(data['date']);
 
       // Remove camelCase keys
@@ -92,10 +100,12 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       result.remove('createdAt');
     } else if (table == 'categories') {
       if (data.containsKey('userId')) result['user_id'] = data['userId'];
-      if (data.containsKey('isDefault'))
+      if (data.containsKey('isDefault')) {
         result['is_default'] = data['isDefault'];
-      if (data.containsKey('updatedAt'))
+      }
+      if (data.containsKey('updatedAt')) {
         result['updated_at'] = _toIso(data['updatedAt']);
+      }
 
       result.remove('userId');
       result.remove('isDefault');

@@ -32,10 +32,11 @@ class _AccountPageState extends State<AccountPage> {
           data: {'name': (_key.currentState!.value['name'] as String).trim()},
         ),
       );
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('profile_updated'.tr())));
+      }
     } catch (e) {
       _err(e is AuthException ? e.message : 'error_unexpected'.tr());
     } finally {
@@ -223,60 +224,103 @@ class _AccountPageState extends State<AccountPage> {
   );
 
   void _showPwDialog(BuildContext context) {
-    final key = GlobalKey<FormBuilderState>();
     showDialog(
       context: context,
-      builder: (c) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('change_password'.tr()),
-        content: FormBuilder(
-          key: key,
-          child: FormBuilderTextField(
-            name: 'password',
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: 'password'.tr(),
-              filled: true,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-            ),
-            validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(),
-              FormBuilderValidators.minLength(6),
-            ]),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('cancel'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (key.currentState?.saveAndValidate() ?? false) {
-                try {
-                  await Supabase.instance.client.auth.updateUser(
-                    UserAttributes(
-                      password: key.currentState!.value['password'],
-                    ),
-                  );
-                  if (mounted) {
-                    Navigator.pop(c);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('password_changed'.tr())),
-                    );
-                  }
-                } catch (e) {
-                  _err('error_unexpected'.tr());
-                }
-              }
-            },
-            child: Text('save'.tr()),
-          ),
-        ],
+      builder: (c) => _PasswordChangeDialog(
+        onError: _err,
+        parentContext: context,
       ),
+    );
+  }
+}
+
+class _PasswordChangeDialog extends StatefulWidget {
+  final Function(String) onError;
+  final BuildContext parentContext;
+
+  const _PasswordChangeDialog({
+    required this.onError,
+    required this.parentContext,
+  });
+
+  @override
+  State<_PasswordChangeDialog> createState() => _PasswordChangeDialogState();
+}
+
+class _PasswordChangeDialogState extends State<_PasswordChangeDialog> {
+  final _key = GlobalKey<FormBuilderState>();
+  bool _isLoading = false;
+
+  Future<void> _handleSave() async {
+    if (!(_key.currentState?.saveAndValidate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await Supabase.instance.client.auth.updateUser(
+        UserAttributes(
+          password: _key.currentState!.value['password'],
+        ),
+      );
+      if (mounted) {
+        Navigator.pop(context);
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
+          SnackBar(
+            content: Text('password_changed'.tr())
+          ),
+        );
+      }
+    } catch (e) {
+      widget.onError('error_unexpected'.tr());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Text('change_password'.tr()),
+      content: FormBuilder(
+        key: _key,
+        child: FormBuilderTextField(
+          name: 'password',
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: 'password'.tr(),
+            filled: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          validator: FormBuilderValidators.compose([
+            FormBuilderValidators.required(),
+            FormBuilderValidators.minLength(6),
+          ]),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _isLoading ? null : () => Navigator.pop(context),
+          child: Text('cancel'.tr()),
+        ),
+        ElevatedButton(
+          onPressed: _isLoading ? null : _handleSave,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text('save'.tr()),
+        ),
+      ],
     );
   }
 }

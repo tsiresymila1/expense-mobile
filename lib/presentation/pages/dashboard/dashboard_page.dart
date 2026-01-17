@@ -27,7 +27,10 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    AppRouter.routeObserver.subscribe(this, ModalRoute.of(context)!);
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      AppRouter.routeObserver.subscribe(this, route);
+    }
   }
 
   @override
@@ -37,19 +40,29 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   }
 
   @override
-  void didPush() => _onFocus();
+  void didPush() {
+    if (ModalRoute.of(context) is PageRoute) {
+      _onFocus(freshSync: true);
+    }
+  }
 
   @override
-  void didPopNext() => _onFocus();
+  void didPopNext() {
+    if (ModalRoute.of(context) is PageRoute) {
+      _onFocus(freshSync: false);
+    }
+  }
 
-  void _onFocus() async {
+  void _onFocus({bool freshSync = false}) async {
     if (mounted) {
       context.read<ExpensesBloc>().add(LoadExpenses());
       context.read<CategoriesBloc>().add(LoadCategories());
-      await context.read<SyncEngine>().triggerSync();
-      if (mounted) {
-        context.read<ExpensesBloc>().add(LoadExpenses());
-        context.read<CategoriesBloc>().add(LoadCategories());
+      if (freshSync) {
+        await context.read<SyncEngine>().triggerSync();
+        if (mounted) {
+          context.read<ExpensesBloc>().add(LoadExpenses());
+          context.read<CategoriesBloc>().add(LoadCategories());
+        }
       }
     }
   }

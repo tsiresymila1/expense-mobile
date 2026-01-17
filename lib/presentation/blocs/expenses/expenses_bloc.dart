@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:expense/sync_engine/sync_engine.dart';
 import 'expenses_event.dart';
 import 'expenses_state.dart';
 
@@ -12,8 +13,10 @@ export 'expenses_state.dart';
 
 class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
   final AppDatabase database;
+  final SyncEngine syncEngine;
 
-  ExpensesBloc(this.database) : super(ExpensesState(expenses: [])) {
+  ExpensesBloc(this.database, this.syncEngine)
+      : super(ExpensesState(expenses: [])) {
     on<LoadExpenses>(_onLoad);
     on<AddExpense>(_onAdd);
     on<UpdateExpense>(_onUpdate);
@@ -40,20 +43,22 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
 
     var query = database.select(database.localExpenses)
       ..where((t) => t.userId.equals(userId));
-    if (event.dateRange != null)
+    if (event.dateRange != null) {
       query.where(
         (t) => t.date.isBetweenValues(
           event.dateRange!.start,
           event.dateRange!.end,
         ),
       );
-    if (event.amountRange != null)
+    }
+    if (event.amountRange != null) {
       query.where(
         (t) => t.amount.isBetweenValues(
           event.amountRange!.start,
           event.amountRange!.end,
         ),
       );
+    }
     final expenses = await (query..orderBy([(t) => OrderingTerm.desc(t.date)]))
         .get();
 
@@ -67,12 +72,13 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
       final isIn = e.type == 'income';
       if (e.date.isAfter(thisMonthStart) ||
           e.date.isAtSameMomentAs(thisMonthStart)) {
-        if (isIn)
+        if (isIn) {
           thisIn += e.amount;
-        else {
+        } else {
           thisEx += e.amount;
-          if (e.date.month == now.month && e.date.year == now.year)
+          if (e.date.month == now.month && e.date.year == now.year) {
             dailyMap[e.date.day] = (dailyMap[e.date.day] ?? 0) + e.amount;
+          }
         }
       } else if (e.date.isAfter(lastMonthStart) &&
           e.date.isBefore(lastMonthEnd)) {
@@ -80,10 +86,11 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
       }
     }
     for (var e in expenses) {
-      if (e.type == 'income')
+      if (e.type == 'income') {
         filtIn += e.amount;
-      else
+      } else {
         filtEx += e.amount;
+      }
     }
 
     emit(
@@ -133,6 +140,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               createdAt: DateTime.now(),
             ),
           );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error adding expense: $e');
     }
@@ -170,6 +178,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               createdAt: DateTime.now(),
             ),
           );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error updating expense: $e');
     }
@@ -198,6 +207,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               createdAt: DateTime.now(),
             ),
           );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error deleting expense: $e');
     }

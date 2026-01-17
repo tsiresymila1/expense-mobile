@@ -55,6 +55,7 @@ dependencies:
   flutter_form_builder: ^10.2.0
   form_builder_validators: ^11.2.0
   flutter_animate: ^4.5.2
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -73,7 +74,6 @@ dev_dependencies:
 
   # Assets
   flutter_launcher_icons: ^0.14.2
-  flutter_native_splash: ^2.4.3
 
 flutter:
   uses-material-design: true
@@ -89,12 +89,12 @@ flavorizr:
     android:
       flavorDimensions: "flavor-type"
     ios:
-      name: "Expense"
+      name: "G-SPEND"
 
   flavors:
     dev:
       app:
-        name: "Expense"
+        name: "G-SPEND"
       android:
         applicationId: "ts.mila.expense.dev"
       ios:
@@ -102,7 +102,7 @@ flavorizr:
     
     prod:
       app:
-        name: "Expense"
+        name: "G-SPEND"
       android:
         applicationId: "ts.mila.expense"
       ios:

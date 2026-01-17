@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -30,10 +31,8 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Registration successful! Please check your email for confirmation.',
-            ),
+          SnackBar(
+            content: Text('registration_successful'.tr()),
           ),
         );
         Navigator.of(context).pop();
@@ -41,7 +40,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } on AuthException catch (e) {
       _showError(e.message);
     } catch (e) {
-      _showError('An unexpected error occurred');
+      _showError('unexpected_error'.tr());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -53,10 +52,13 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        title: Text('create_account'.tr()),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: FormBuilder(
@@ -65,15 +67,15 @@ class _RegisterPageState extends State<RegisterPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Start managing your finances today',
+                'start_managing_finances'.tr(),
                 style: TextStyle(color: Colors.grey.shade600),
               ),
               const SizedBox(height: 32),
               FormBuilderTextField(
                 name: 'name',
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
+                decoration: InputDecoration(
+                  labelText: 'full_name_label'.tr(),
+                  prefixIcon: const Icon(Icons.person_outline),
                 ),
                 validator: FormBuilderValidators.compose([
                   FormBuilderValidators.required(),
@@ -82,9 +84,9 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 16),
               FormBuilderTextField(
                 name: 'email',
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: 'email'.tr(),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: FormBuilderValidators.compose([
@@ -96,7 +98,7 @@ class _RegisterPageState extends State<RegisterPage> {
               FormBuilderTextField(
                 name: 'password',
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: 'password'.tr(),
                   prefixIcon: const Icon(Icons.lock_outlined),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -117,14 +119,14 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 16),
               FormBuilderTextField(
                 name: 'confirm_password',
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: Icon(Icons.lock_outline),
+                decoration: InputDecoration(
+                  labelText: 'confirm_password'.tr(),
+                  prefixIcon: const Icon(Icons.lock_outline),
                 ),
                 obscureText: _obscurePassword,
                 validator: (val) {
                   if (val != _formKey.currentState?.fields['password']?.value) {
-                    return 'Passwords do not match';
+                    return 'passwords_dont_match'.tr();
                   }
                   return null;
                 },
@@ -142,9 +144,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(
+                      child: Text(
+                        'register'.tr(),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),

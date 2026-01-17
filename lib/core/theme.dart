@@ -17,9 +17,9 @@ class AppTheme {
   static const primaryColor = Color(0xFF3ECF8E); // Supabase Green
   static const secondaryColor = Color(0xFF2EAA7B);
   static const accentColor = Color(0xFF34D399);
-  static const backgroundColor = Color(0xFFF9FAFB);
+  static const backgroundColor = Color(0xFFF5F5F5);
   static const darkBackgroundColor = Color(0xFF161616);
-  static const surfaceColor = Colors.white;
+  static const surfaceColor = Color(0xFFF4F4F4);
   static const darkSurfaceColor = Color(0xFF1F1F1F);
 
   static Color parseColor(String? colorStr) {
@@ -88,6 +88,19 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: surfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      titleTextStyle: GoogleFonts.outfit(
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+        color: const Color(0xFF111827),
+      ),
+      contentTextStyle: GoogleFonts.outfit(
+        fontSize: 16,
+        color: const Color(0xFF111827),
+      ),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
@@ -100,6 +113,12 @@ class AppTheme {
           fontSize: 16,
         ),
       ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFF323232),
+      contentTextStyle: GoogleFonts.outfit(color: Colors.white),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
 
@@ -151,6 +170,19 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
     ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: darkSurfaceColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      titleTextStyle: GoogleFonts.outfit(
+        fontWeight: FontWeight.w700,
+        fontSize: 20,
+        color: Colors.white,
+      ),
+      contentTextStyle: GoogleFonts.outfit(
+        fontSize: 16,
+        color: Colors.white,
+      ),
+    ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: primaryColor,
@@ -163,6 +195,12 @@ class AppTheme {
           fontSize: 16,
         ),
       ),
+    ),
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: const Color(0xFF2E2E2E),
+      contentTextStyle: GoogleFonts.outfit(color: Colors.white),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   );
 }

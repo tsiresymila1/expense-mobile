@@ -75,5 +75,20 @@
   "period": "Période",
   "this_month": "Ce Mois",
   "this_year": "Cette Année",
-  "custom": "Personnalisé"
+  "custom": "Personnalisé",
+  "welcome_back": "Bienvenue",
+  "login_subtitle": "Connectez-vous pour gérer vos dépenses",
+  "forgot_password": "Mot de passe oublié ?",
+  "dont_have_account": "Vous n'avez pas de compte ?",
+  "create_account": "Créer un compte",
+  "start_managing_finances": "Commencez à gérer vos finances dès aujourd'hui",
+  "full_name_label": "Nom complet",
+  "confirm_password": "Confirmer le mot de passe",
+  "passwords_dont_match": "Les mots de passe ne correspondent pas",
+  "reset_password": "Réinitialiser le mot de passe",
+  "reset_password_instruction": "Entrez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.",
+  "send_reset_link": "Envoyer le lien",
+  "password_reset_sent": "E-mail de réinitialisation envoyé !",
+  "registration_successful": "Inscription réussie ! Veuillez vérifier votre e-mail pour confirmation.",
+  "unexpected_error": "Une erreur inattendue s'est produite"
 }

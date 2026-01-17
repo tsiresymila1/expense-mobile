@@ -18,6 +18,7 @@ class RecentTransactionsList extends StatelessWidget {
     super.key,
     required this.state,
     required this.settings,
+    
   });
 
   @override

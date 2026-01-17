@@ -65,11 +65,12 @@ class CategoryManagementModal extends StatelessWidget {
             Flexible(
               child: BlocBuilder<CategoriesBloc, CategoriesState>(
                 builder: (context, state) {
-                  if (state.isLoading && state.categories.isEmpty)
+                  if (state.isLoading && state.categories.isEmpty) {
                     return const Padding(
                       padding: EdgeInsets.all(40),
                       child: CircularProgressIndicator(),
                     );
+                  }
                   if (state.categories.isEmpty) return _empty(theme);
                   return ListView.builder(
                     shrinkWrap: true,

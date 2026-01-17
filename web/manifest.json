@@ -1,6 +1,6 @@
 {
     "name": "expense",
-    "short_name": "expense",
+    "short_name": "G-SPEND",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",

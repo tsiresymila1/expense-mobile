@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -25,14 +26,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       await Supabase.instance.client.auth.resetPasswordForEmail(email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent!')),
+          SnackBar(content: Text('password_reset_sent'.tr())),
         );
         Navigator.of(context).pop();
       }
     } on AuthException catch (e) {
       _showError(e.message);
     } catch (e) {
-      _showError('An unexpected error occurred');
+      _showError('unexpected_error'.tr());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -44,10 +45,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reset Password')),
+      appBar: AppBar(
+        title: Text('reset_password'.tr()),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: FormBuilder(
@@ -55,16 +59,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Enter your email address and we will send you a link to reset your password.',
-                style: TextStyle(fontSize: 16),
+              Text(
+                'reset_password_instruction'.tr(),
+                style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 32),
               FormBuilderTextField(
                 name: 'email',
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: 'email'.tr(),
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 keyboardType: TextInputType.emailAddress,
                 validator: FormBuilderValidators.compose([
@@ -85,9 +89,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Send Reset Link',
-                        style: TextStyle(
+                      child: Text(
+                        'send_reset_link'.tr(),
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),

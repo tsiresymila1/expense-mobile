@@ -1,4 +1,3 @@
-import 'package:expense/data/local/database.dart';
 
 abstract class CategoriesEvent {}
 

@@ -96,7 +96,8 @@ class SettingsPage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
-            title: Text('English'),
+            leading: const Text('🇺🇸', style: TextStyle(fontSize: 32)),
+            title: const Text('English'),
             onTap: () {
               context.read<SettingsBloc>().add(ChangeLanguage('en'));
               context.setLocale(const Locale('en'));
@@ -104,7 +105,8 @@ class SettingsPage extends StatelessWidget {
             },
           ),
           ListTile(
-            title: Text('Français'),
+            leading: const Text('🇫🇷', style: TextStyle(fontSize: 32)),
+            title: const Text('Français'),
             onTap: () {
               context.read<SettingsBloc>().add(ChangeLanguage('fr'));
               context.setLocale(const Locale('fr'));
@@ -126,17 +128,32 @@ class SettingsPage extends StatelessWidget {
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [ThemeMode.system, ThemeMode.light, ThemeMode.dark]
-            .map(
-              (m) => ListTile(
-                title: Text(_themeName(m).tr()),
-                onTap: () {
-                  context.read<SettingsBloc>().add(ChangeTheme(m));
-                  Navigator.pop(context);
-                },
-              ),
-            )
-            .toList(),
+        children: [
+          ListTile(
+            leading: const Icon(Icons.brightness_auto_rounded),
+            title: Text('system'.tr()),
+            onTap: () {
+              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.system));
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.light_mode_rounded),
+            title: Text('light'.tr()),
+            onTap: () {
+              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.light));
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.dark_mode_rounded),
+            title: Text('dark'.tr()),
+            onTap: () {
+              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.dark));
+              Navigator.pop(context);
+            },
+          ),
+        ],
       ),
     ),
   );
@@ -221,7 +238,9 @@ class SettingsPage extends StatelessWidget {
               Navigator.pop(context);
               ScaffoldMessenger.of(
                 context,
-              ).showSnackBar(SnackBar(content: Text('Local data reset.'.tr())));
+              ).showSnackBar(SnackBar(
+              content: Text('Local data reset.'.tr()
+              )));
             }
           },
           child: Text('reset'.tr(), style: const TextStyle(color: Colors.red)),

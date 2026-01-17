@@ -40,8 +40,10 @@ class ExpenseApp extends StatelessWidget {
           ),
           BlocProvider(create: (_) => SettingsBloc()),
           BlocProvider(
-            create: (context) =>
-                ExpensesBloc(context.read<AppDatabase>())..add(LoadExpenses()),
+            create: (context) => ExpensesBloc(
+              context.read<AppDatabase>(),
+              context.read<SyncEngine>(),
+            )..add(LoadExpenses()),
           ),
           BlocProvider(
             create: (context) =>

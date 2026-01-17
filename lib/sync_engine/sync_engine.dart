@@ -3,7 +3,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:expense/core/adapters/adapters.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:logger/logger.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum SyncStatus { idle, syncing, success, error }
 
@@ -49,7 +48,7 @@ class SyncEngine {
     required this.localDb,
     required this.remoteService,
     this.tableConfigs = const [],
-    this.syncInterval = const Duration(minutes: 5),
+    this.syncInterval = const Duration(seconds: 30),
   });
 
   void start() {

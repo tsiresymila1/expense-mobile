@@ -75,5 +75,20 @@
   "period": "Period",
   "this_month": "This Month",
   "this_year": "This Year",
-  "custom": "Custom"
+  "custom": "Custom",
+  "welcome_back": "Welcome Back",
+  "login_subtitle": "Login to manage your expenses",
+  "forgot_password": "Forgot Password?",
+  "dont_have_account": "Don't have an account?",
+  "create_account": "Create Account",
+  "start_managing_finances": "Start managing your finances today",
+  "full_name_label": "Full Name",
+  "confirm_password": "Confirm Password",
+  "passwords_dont_match": "Passwords do not match",
+  "reset_password": "Reset Password",
+  "reset_password_instruction": "Enter your email address and we will send you a link to reset your password.",
+  "send_reset_link": "Send Reset Link",
+  "password_reset_sent": "Password reset email sent!",
+  "registration_successful": "Registration successful! Please check your email for confirmation.",
+  "unexpected_error": "An unexpected error occurred"
 }

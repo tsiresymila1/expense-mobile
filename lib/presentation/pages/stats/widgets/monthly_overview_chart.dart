@@ -25,10 +25,11 @@ class MonthlyOverviewChart extends StatelessWidget {
       double income = 0, expense = 0;
       for (var e in state.expenses) {
         if (e.date.month == month.month && e.date.year == month.year) {
-          if (e.type == 'income')
+          if (e.type == 'income') {
             income += e.amount;
-          else
+          } else {
             expense += e.amount;
+          }
         }
       }
       return {
