@@ -1,3 +1,4 @@
+import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,7 +8,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddCategoryModal extends StatefulWidget {
-  const AddCategoryModal({super.key});
+  final LocalCategory? category;
+  const AddCategoryModal({super.key, this.category});
   @override
   State<AddCategoryModal> createState() => _AddCategoryModalState();
 }
@@ -55,7 +57,14 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
         child: SingleChildScrollView(
           child: FormBuilder(
             key: _key,
-            initialValue: {'icon': 'Shopping', 'color': Colors.blue.toARGB32()},
+            initialValue: {
+              'name': widget.category?.name,
+              'icon': widget.category?.icon ?? 'Shopping',
+              'color': widget.category?.color != null
+                  ? int.tryParse(widget.category!.color!, radix: 16) ??
+                      Colors.blue.toARGB32()
+                  : Colors.blue.toARGB32(),
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,7 +81,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'new_category'.tr(),
+                  widget.category == null ? 'new_category'.tr() : 'edit_category'.tr(),
                   style: GoogleFonts.outfit(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -238,13 +247,24 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
   void _submit() {
     if (_key.currentState?.saveAndValidate() ?? false) {
       final v = _key.currentState!.value;
-      context.read<CategoriesBloc>().add(
-        AddCategory(
-          name: (v['name'] as String).trim(),
-          icon: v['icon'] as String,
-          color: (v['color'] as int).toRadixString(16).toUpperCase(),
-        ),
-      );
+      if (widget.category == null) {
+        context.read<CategoriesBloc>().add(
+          AddCategory(
+            name: (v['name'] as String).trim(),
+            icon: v['icon'] as String,
+            color: (v['color'] as int).toRadixString(16).toUpperCase(),
+          ),
+        );
+      } else {
+        context.read<CategoriesBloc>().add(
+          UpdateCategory(
+            id: widget.category!.id,
+            name: (v['name'] as String).trim(),
+            icon: v['icon'] as String,
+            color: (v['color'] as int).toRadixString(16).toUpperCase(),
+          ),
+        );
+      }
       Navigator.pop(context);
     }
   }

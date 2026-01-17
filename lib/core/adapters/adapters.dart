@@ -16,9 +16,11 @@ abstract class LocalDatabaseAdapter {
   });
   Future<void> removeFromSyncQueue(int queueId);
   Future<void> incrementRetryCount(int queueId);
+  Future<void> purge(String table, DateTime olderThan);
 }
 
 abstract class RemoteServiceAdapter {
+  String? get currentUserId;
   Future<void> upsert(String table, Map<String, dynamic> data);
   Future<void> delete(String table, String id);
   Future<List<Map<String, dynamic>>> fetch(
@@ -26,4 +28,5 @@ abstract class RemoteServiceAdapter {
     DateTime since, {
     String updatedAtColumn = 'updated_at',
   });
+  Future<void> purge(String table, String userId, DateTime olderThan);
 }

@@ -42,7 +42,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
     final lastMonthEnd = thisMonthStart.subtract(const Duration(seconds: 1));
 
     var query = database.select(database.localExpenses)
-      ..where((t) => t.userId.equals(userId));
+      ..where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
     if (event.dateRange != null) {
       query.where(
         (t) => t.date.isBetweenValues(
@@ -66,7 +66,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
     final dailyMap = <int, double>{};
     final all = await (database.select(
       database.localExpenses,
-    )..where((t) => t.userId.equals(userId))).get();
+    )..where((t) => t.userId.equals(userId) & t.deletedAt.isNull())).get();
 
     for (var e in all) {
       final isIn = e.type == 'income';
@@ -193,9 +193,15 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
   ) async {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
     try {
-      await (database.delete(
+      // Soft delete: mark as deleted instead of removing from database
+      await (database.update(
         database.localExpenses,
-      )..where((t) => t.id.equals(event.id))).go();
+      )..where((t) => t.id.equals(event.id))).write(
+        LocalExpensesCompanion(
+          deletedAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
       await database
           .into(database.syncQueue)
           .insert(
@@ -203,7 +209,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               userId: userId,
               targetTable: 'expenses',
               rowId: event.id,
-              operation: 'DELETE',
+              operation: 'UPDATE', // Changed from DELETE to UPDATE
               createdAt: DateTime.now(),
             ),
           );

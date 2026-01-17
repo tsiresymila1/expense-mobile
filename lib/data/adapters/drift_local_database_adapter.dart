@@ -61,6 +61,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('created_at')) {
         result['createdAt'] = data['created_at'];
       }
+      if (data.containsKey('deleted_at')) {
+        result['deletedAt'] = data['deleted_at'];
+      }
     } else if (table == 'categories') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
       if (data.containsKey('is_default')) {
@@ -68,6 +71,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       }
       if (data.containsKey('updated_at')) {
         result['updatedAt'] = data['updated_at'];
+      }
+      if (data.containsKey('deleted_at')) {
+        result['deletedAt'] = data['deleted_at'];
       }
     }
 
@@ -91,6 +97,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('createdAt')) {
         result['created_at'] = _toIso(data['createdAt']);
       }
+      if (data.containsKey('deletedAt')) {
+        result['deleted_at'] = _toIso(data['deletedAt']);
+      }
       if (data.containsKey('date')) result['date'] = _toIso(data['date']);
 
       // Remove camelCase keys
@@ -98,6 +107,7 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       result.remove('categoryId');
       result.remove('updatedAt');
       result.remove('createdAt');
+      result.remove('deletedAt');
     } else if (table == 'categories') {
       if (data.containsKey('userId')) result['user_id'] = data['userId'];
       if (data.containsKey('isDefault')) {
@@ -106,10 +116,14 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('updatedAt')) {
         result['updated_at'] = _toIso(data['updatedAt']);
       }
+      if (data.containsKey('deletedAt')) {
+        result['deleted_at'] = _toIso(data['deletedAt']);
+      }
 
       result.remove('userId');
       result.remove('isDefault');
       result.remove('updatedAt');
+      result.remove('deletedAt');
     }
 
     return result;
@@ -176,5 +190,18 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
     await (_db.update(_db.syncQueue)..where((t) => t.id.equals(queueId))).write(
       SyncQueueCompanion(retryCount: Value(entry.retryCount + 1)),
     );
+  }
+
+  @override
+  Future<void> purge(String table, DateTime olderThan) async {
+    final tableInfo = _getTable(table);
+    // Simple way to handle deleted_at column access via dynamic casting
+    // In Drift, if a table has a column, it should be accessible this way if we know what we're doing
+    await (_db.delete(tableInfo)
+          ..where((t) {
+            final deletedAt = (t as dynamic).deletedAt as Expression<DateTime>;
+            return deletedAt.isSmallerThanValue(olderThan) & deletedAt.isNotNull();
+          }))
+        .go();
   }
 }

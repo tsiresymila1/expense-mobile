@@ -53,7 +53,11 @@ class SummarySection extends StatelessWidget {
           ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
           const SizedBox(height: 8),
           Text(
-            AppTheme.formatMoney(state.thisMonthTotal, settings.currencySymbol),
+            AppTheme.formatMoney(
+              state.thisMonthTotal,
+              settings.currencySymbol,
+              locale: context.locale.toString(),
+            ),
             style: GoogleFonts.outfit(
               color: Colors.white,
               fontSize: 36,
@@ -80,7 +84,7 @@ class SummarySection extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                '${'last_month'.tr()}: ${AppTheme.formatMoney(state.lastMonthTotal, settings.currencySymbol)}',
+                '${'last_month'.tr()}: ${AppTheme.formatMoney(state.lastMonthTotal, settings.currencySymbol, locale: context.locale.toString())}',
                 style: GoogleFonts.outfit(
                   color: Colors.white,
                   fontWeight: FontWeight.w500,

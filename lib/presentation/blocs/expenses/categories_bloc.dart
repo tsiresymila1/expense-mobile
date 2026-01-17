@@ -27,7 +27,9 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
     final categories = await (database.select(
       database.localCategories,
-    )..where((t) => t.userId.equals(userId) | t.isDefault.equals(true))).get();
+    )..where((t) =>
+            (t.userId.equals(userId) | t.isDefault.equals(true)) &
+            t.deletedAt.isNull())).get();
     emit(state.copyWith(categories: categories, isLoading: false));
   }
 
@@ -103,9 +105,15 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
   ) async {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
     try {
-      await (database.delete(
+      // Soft delete: mark as deleted instead of removing from database
+      await (database.update(
         database.localCategories,
-      )..where((t) => t.id.equals(event.id))).go();
+      )..where((t) => t.id.equals(event.id))).write(
+        LocalCategoriesCompanion(
+          deletedAt: Value(DateTime.now()),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
       await database
           .into(database.syncQueue)
           .insert(
@@ -113,7 +121,7 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
               userId: userId,
               targetTable: 'categories',
               rowId: event.id,
-              operation: 'DELETE',
+              operation: 'UPDATE', // Changed from DELETE to UPDATE
               createdAt: DateTime.now(),
             ),
           );

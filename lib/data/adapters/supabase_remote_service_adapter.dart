@@ -7,6 +7,9 @@ class SupabaseRemoteServiceAdapter implements RemoteServiceAdapter {
   SupabaseRemoteServiceAdapter(this._client);
 
   @override
+  String? get currentUserId => _client.auth.currentUser?.id;
+
+  @override
   Future<void> upsert(String table, Map<String, dynamic> data) async {
     await _client.from(table).upsert(data);
   }
@@ -27,5 +30,14 @@ class SupabaseRemoteServiceAdapter implements RemoteServiceAdapter {
         .select()
         .gt(updatedAtColumn, since.toIso8601String());
     return List<Map<String, dynamic>>.from(response);
+  }
+
+  @override
+  Future<void> purge(String table, String userId, DateTime olderThan) async {
+    await _client
+        .from(table)
+        .delete()
+        .eq('user_id', userId)
+        .lt('deleted_at', olderThan.toIso8601String());
   }
 }

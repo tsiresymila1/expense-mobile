@@ -35,7 +35,7 @@ class MonthlyOverviewChart extends StatelessWidget {
       return {
         'income': income,
         'expense': expense,
-        'month': DateFormat('MMM').format(month),
+        'month': DateFormat('MMM', context.locale.toString()).format(month),
       };
     }).toList();
 
@@ -65,7 +65,7 @@ class MonthlyOverviewChart extends StatelessWidget {
               getTooltipItem: (group, gi, rod, ri) {
                 final cur = context.read<SettingsBloc>().state.currencySymbol;
                 return BarTooltipItem(
-                  AppTheme.formatMoney(rod.toY, cur),
+                  AppTheme.formatMoney(rod.toY, cur, locale: context.locale.toString()),
                   GoogleFonts.outfit(
                     color: rod.color ?? (ri == 0 ? Colors.green : Colors.red),
                     fontWeight: FontWeight.bold,

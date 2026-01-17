@@ -75,7 +75,7 @@ class ExpensesPage extends StatelessWidget {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (showHeader) _buildDateHeader(expense.date, theme),
+                          if (showHeader) _buildDateHeader(context, expense.date, theme),
                           ExpenseCard(
                             expense: expense,
                             settings: settings,
@@ -114,7 +114,7 @@ class ExpensesPage extends StatelessWidget {
   bool _isSameDay(DateTime d1, DateTime d2) =>
       d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
 
-  Widget _buildDateHeader(DateTime date, ThemeData theme) {
+  Widget _buildDateHeader(BuildContext context, DateTime date, ThemeData theme) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -124,7 +124,9 @@ class ExpensesPage extends StatelessWidget {
         ? 'today'.tr()
         : (dateOnly == yesterday
               ? 'yesterday'.tr()
-              : DateFormat('MMM dd, yyyy').format(date).toUpperCase());
+              : DateFormat('MMM dd, yyyy', context.locale.toString())
+                  .format(date)
+                  .toUpperCase());
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 12, left: 4),
       child: Text(

@@ -107,14 +107,36 @@ class CategoryManagementModal extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
-                              color: Colors.red,
-                            ),
-                            onPressed: () =>
-                                _confirm(context, cat.id, cat.name),
-                          ),
+                          trailing: cat.isDefault
+                              ? null
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        color: Colors.blue,
+                                      ),
+                                      onPressed: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) =>
+                                              AddCategoryModal(category: cat),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () =>
+                                          _confirm(context, cat.id, cat.name),
+                                    ),
+                                  ],
+                                ),
                         ),
                       );
                     },

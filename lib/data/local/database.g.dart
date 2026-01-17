@@ -59,9 +59,25 @@ class $LocalExpensesTable extends LocalExpenses
   late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
       'created_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, userId, categoryId, amount, type, date, note, updatedAt, createdAt];
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        userId,
+        categoryId,
+        amount,
+        type,
+        date,
+        note,
+        updatedAt,
+        createdAt,
+        deletedAt
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -121,6 +137,10 @@ class $LocalExpensesTable extends LocalExpenses
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
     return context;
   }
 
@@ -148,6 +168,8 @@ class $LocalExpensesTable extends LocalExpenses
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
     );
   }
 
@@ -167,6 +189,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
   final String? note;
   final DateTime updatedAt;
   final DateTime createdAt;
+  final DateTime? deletedAt;
   const LocalExpense(
       {required this.id,
       required this.userId,
@@ -176,7 +199,8 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       required this.date,
       this.note,
       required this.updatedAt,
-      required this.createdAt});
+      required this.createdAt,
+      this.deletedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -193,6 +217,9 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -209,6 +236,9 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       updatedAt: Value(updatedAt),
       createdAt: Value(createdAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -225,6 +255,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       note: serializer.fromJson<String?>(json['note']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -240,6 +271,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       'note': serializer.toJson<String?>(note),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -252,7 +284,8 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           DateTime? date,
           Value<String?> note = const Value.absent(),
           DateTime? updatedAt,
-          DateTime? createdAt}) =>
+          DateTime? createdAt,
+          Value<DateTime?> deletedAt = const Value.absent()}) =>
       LocalExpense(
         id: id ?? this.id,
         userId: userId ?? this.userId,
@@ -263,6 +296,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
         note: note.present ? note.value : this.note,
         updatedAt: updatedAt ?? this.updatedAt,
         createdAt: createdAt ?? this.createdAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
       );
   LocalExpense copyWithCompanion(LocalExpensesCompanion data) {
     return LocalExpense(
@@ -276,6 +310,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       note: data.note.present ? data.note.value : this.note,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -290,14 +325,15 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, userId, categoryId, amount, type, date, note, updatedAt, createdAt);
+  int get hashCode => Object.hash(id, userId, categoryId, amount, type, date,
+      note, updatedAt, createdAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -310,7 +346,8 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           other.date == this.date &&
           other.note == this.note &&
           other.updatedAt == this.updatedAt &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
@@ -323,6 +360,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
   final Value<String?> note;
   final Value<DateTime> updatedAt;
   final Value<DateTime> createdAt;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const LocalExpensesCompanion({
     this.id = const Value.absent(),
@@ -334,6 +372,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     this.note = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalExpensesCompanion.insert({
@@ -346,6 +385,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     this.note = const Value.absent(),
     required DateTime updatedAt,
     required DateTime createdAt,
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         userId = Value(userId),
@@ -363,6 +403,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     Expression<String>? note,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? createdAt,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -375,6 +416,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       if (note != null) 'note': note,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (createdAt != null) 'created_at': createdAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -389,6 +431,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       Value<String?>? note,
       Value<DateTime>? updatedAt,
       Value<DateTime>? createdAt,
+      Value<DateTime?>? deletedAt,
       Value<int>? rowid}) {
     return LocalExpensesCompanion(
       id: id ?? this.id,
@@ -400,6 +443,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       note: note ?? this.note,
       updatedAt: updatedAt ?? this.updatedAt,
       createdAt: createdAt ?? this.createdAt,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -434,6 +478,9 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -452,6 +499,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
           ..write('note: $note, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('createdAt: $createdAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -505,9 +553,15 @@ class $LocalCategoriesTable extends LocalCategories
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _deletedAtMeta =
+      const VerificationMeta('deletedAt');
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+      'deleted_at', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, userId, name, icon, color, isDefault, updatedAt];
+      [id, userId, name, icon, color, isDefault, updatedAt, deletedAt];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -551,6 +605,10 @@ class $LocalCategoriesTable extends LocalCategories
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('deleted_at')) {
+      context.handle(_deletedAtMeta,
+          deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta));
+    }
     return context;
   }
 
@@ -574,6 +632,8 @@ class $LocalCategoriesTable extends LocalCategories
           .read(DriftSqlType.bool, data['${effectivePrefix}is_default'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      deletedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}deleted_at']),
     );
   }
 
@@ -591,6 +651,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
   final String? color;
   final bool isDefault;
   final DateTime updatedAt;
+  final DateTime? deletedAt;
   const LocalCategory(
       {required this.id,
       this.userId,
@@ -598,7 +659,8 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       this.icon,
       this.color,
       required this.isDefault,
-      required this.updatedAt});
+      required this.updatedAt,
+      this.deletedAt});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -615,6 +677,9 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
     }
     map['is_default'] = Variable<bool>(isDefault);
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
     return map;
   }
 
@@ -629,6 +694,9 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           color == null && nullToAbsent ? const Value.absent() : Value(color),
       isDefault: Value(isDefault),
       updatedAt: Value(updatedAt),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
     );
   }
 
@@ -643,6 +711,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       color: serializer.fromJson<String?>(json['color']),
       isDefault: serializer.fromJson<bool>(json['isDefault']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
   }
   @override
@@ -656,6 +725,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       'color': serializer.toJson<String?>(color),
       'isDefault': serializer.toJson<bool>(isDefault),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
   }
 
@@ -666,7 +736,8 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           Value<String?> icon = const Value.absent(),
           Value<String?> color = const Value.absent(),
           bool? isDefault,
-          DateTime? updatedAt}) =>
+          DateTime? updatedAt,
+          Value<DateTime?> deletedAt = const Value.absent()}) =>
       LocalCategory(
         id: id ?? this.id,
         userId: userId.present ? userId.value : this.userId,
@@ -675,6 +746,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
         color: color.present ? color.value : this.color,
         isDefault: isDefault ?? this.isDefault,
         updatedAt: updatedAt ?? this.updatedAt,
+        deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
       );
   LocalCategory copyWithCompanion(LocalCategoriesCompanion data) {
     return LocalCategory(
@@ -685,6 +757,7 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
       color: data.color.present ? data.color.value : this.color,
       isDefault: data.isDefault.present ? data.isDefault.value : this.isDefault,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
   }
 
@@ -697,14 +770,15 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           ..write('icon: $icon, ')
           ..write('color: $color, ')
           ..write('isDefault: $isDefault, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, userId, name, icon, color, isDefault, updatedAt);
+  int get hashCode => Object.hash(
+      id, userId, name, icon, color, isDefault, updatedAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -715,7 +789,8 @@ class LocalCategory extends DataClass implements Insertable<LocalCategory> {
           other.icon == this.icon &&
           other.color == this.color &&
           other.isDefault == this.isDefault &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.deletedAt == this.deletedAt);
 }
 
 class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
@@ -726,6 +801,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
   final Value<String?> color;
   final Value<bool> isDefault;
   final Value<DateTime> updatedAt;
+  final Value<DateTime?> deletedAt;
   final Value<int> rowid;
   const LocalCategoriesCompanion({
     this.id = const Value.absent(),
@@ -735,6 +811,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     this.color = const Value.absent(),
     this.isDefault = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   LocalCategoriesCompanion.insert({
@@ -745,6 +822,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     this.color = const Value.absent(),
     this.isDefault = const Value.absent(),
     required DateTime updatedAt,
+    this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         name = Value(name),
@@ -757,6 +835,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     Expression<String>? color,
     Expression<bool>? isDefault,
     Expression<DateTime>? updatedAt,
+    Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -767,6 +846,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
       if (color != null) 'color': color,
       if (isDefault != null) 'is_default': isDefault,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -779,6 +859,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
       Value<String?>? color,
       Value<bool>? isDefault,
       Value<DateTime>? updatedAt,
+      Value<DateTime?>? deletedAt,
       Value<int>? rowid}) {
     return LocalCategoriesCompanion(
       id: id ?? this.id,
@@ -788,6 +869,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
       color: color ?? this.color,
       isDefault: isDefault ?? this.isDefault,
       updatedAt: updatedAt ?? this.updatedAt,
+      deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -816,6 +898,9 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -832,6 +917,7 @@ class LocalCategoriesCompanion extends UpdateCompanion<LocalCategory> {
           ..write('color: $color, ')
           ..write('isDefault: $isDefault, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1287,6 +1373,7 @@ typedef $$LocalExpensesTableCreateCompanionBuilder = LocalExpensesCompanion
   Value<String?> note,
   required DateTime updatedAt,
   required DateTime createdAt,
+  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 typedef $$LocalExpensesTableUpdateCompanionBuilder = LocalExpensesCompanion
@@ -1300,6 +1387,7 @@ typedef $$LocalExpensesTableUpdateCompanionBuilder = LocalExpensesCompanion
   Value<String?> note,
   Value<DateTime> updatedAt,
   Value<DateTime> createdAt,
+  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 
@@ -1338,6 +1426,9 @@ class $$LocalExpensesTableFilterComposer
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$LocalExpensesTableOrderingComposer
@@ -1375,6 +1466,9 @@ class $$LocalExpensesTableOrderingComposer
 
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$LocalExpensesTableAnnotationComposer
@@ -1412,6 +1506,9 @@ class $$LocalExpensesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$LocalExpensesTableTableManager extends RootTableManager<
@@ -1449,6 +1546,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             Value<String?> note = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               LocalExpensesCompanion(
@@ -1461,6 +1559,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             note: note,
             updatedAt: updatedAt,
             createdAt: createdAt,
+            deletedAt: deletedAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -1473,6 +1572,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             Value<String?> note = const Value.absent(),
             required DateTime updatedAt,
             required DateTime createdAt,
+            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               LocalExpensesCompanion.insert(
@@ -1485,6 +1585,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             note: note,
             updatedAt: updatedAt,
             createdAt: createdAt,
+            deletedAt: deletedAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -1518,6 +1619,7 @@ typedef $$LocalCategoriesTableCreateCompanionBuilder = LocalCategoriesCompanion
   Value<String?> color,
   Value<bool> isDefault,
   required DateTime updatedAt,
+  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 typedef $$LocalCategoriesTableUpdateCompanionBuilder = LocalCategoriesCompanion
@@ -1529,6 +1631,7 @@ typedef $$LocalCategoriesTableUpdateCompanionBuilder = LocalCategoriesCompanion
   Value<String?> color,
   Value<bool> isDefault,
   Value<DateTime> updatedAt,
+  Value<DateTime?> deletedAt,
   Value<int> rowid,
 });
 
@@ -1561,6 +1664,9 @@ class $$LocalCategoriesTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnFilters(column));
 }
 
 class $$LocalCategoriesTableOrderingComposer
@@ -1592,6 +1698,9 @@ class $$LocalCategoriesTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+      column: $table.deletedAt, builder: (column) => ColumnOrderings(column));
 }
 
 class $$LocalCategoriesTableAnnotationComposer
@@ -1623,6 +1732,9 @@ class $$LocalCategoriesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
 }
 
 class $$LocalCategoriesTableTableManager extends RootTableManager<
@@ -1659,6 +1771,7 @@ class $$LocalCategoriesTableTableManager extends RootTableManager<
             Value<String?> color = const Value.absent(),
             Value<bool> isDefault = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               LocalCategoriesCompanion(
@@ -1669,6 +1782,7 @@ class $$LocalCategoriesTableTableManager extends RootTableManager<
             color: color,
             isDefault: isDefault,
             updatedAt: updatedAt,
+            deletedAt: deletedAt,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -1679,6 +1793,7 @@ class $$LocalCategoriesTableTableManager extends RootTableManager<
             Value<String?> color = const Value.absent(),
             Value<bool> isDefault = const Value.absent(),
             required DateTime updatedAt,
+            Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               LocalCategoriesCompanion.insert(
@@ -1689,6 +1804,7 @@ class $$LocalCategoriesTableTableManager extends RootTableManager<
             color: color,
             isDefault: isDefault,
             updatedAt: updatedAt,
+            deletedAt: deletedAt,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0

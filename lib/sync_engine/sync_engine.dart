@@ -43,12 +43,17 @@ class SyncEngine {
   Timer? _syncTimer;
   bool _isSyncing = false;
   final List<TableSyncConfig> tableConfigs;
+  final Duration purgeInterval; // How often to check for purges
+  final Duration purgeOlderThan; // How old a deleted item must be to be purged
+  DateTime? _lastPurge;
 
   SyncEngine({
     required this.localDb,
     required this.remoteService,
     this.tableConfigs = const [],
     this.syncInterval = const Duration(seconds: 30),
+    this.purgeInterval = const Duration(days: 1),
+    this.purgeOlderThan = const Duration(days: 30),
   });
 
   void start() {
@@ -83,6 +88,13 @@ class SyncEngine {
       await _pushUnits();
       await _pullUnits();
 
+      // Periodic Purge
+      if (_lastPurge == null ||
+          DateTime.now().difference(_lastPurge!) > purgeInterval) {
+        await _purgeDeletedItems();
+        _lastPurge = DateTime.now();
+      }
+
       _syncStateController.add(
         SyncState(status: SyncStatus.success, lastSync: DateTime.now()),
       );
@@ -96,6 +108,29 @@ class SyncEngine {
       _syncCompleter?.complete();
       _syncCompleter = null;
     }
+  }
+
+  Future<void> _purgeDeletedItems() async {
+    _logger.i('SyncEngine: Starting purge of old deleted items...');
+    final cutoff = DateTime.now().subtract(purgeOlderThan);
+    final userId = remoteService.currentUserId;
+
+    if (userId == null) {
+      _logger.w('SyncEngine: Cannot purge remote as userId is null');
+    }
+
+    for (final config in tableConfigs) {
+      try {
+        _logger.i('SyncEngine: Purging ${config.tableName}...');
+        await localDb.purge(config.tableName, cutoff);
+        if (userId != null) {
+          await remoteService.purge(config.tableName, userId, cutoff);
+        }
+      } catch (e) {
+        _logger.e('SyncEngine: Failed to purge ${config.tableName}', error: e);
+      }
+    }
+    _logger.i('SyncEngine: Purge complete');
   }
 
   Future<void> _pushUnits() async {
@@ -120,13 +155,8 @@ class SyncEngine {
   Future<void> _processOp(SyncQueueData op) async {
     final table = op.targetTable;
     final rowId = op.rowId;
-    final operation = op.operation;
 
-    if (operation == 'DELETE') {
-      await remoteService.delete(table, rowId);
-      return;
-    }
-
+    // All operations (INSERT, UPDATE, and soft DELETE) are handled via upsert
     final localData = await localDb.getById(table, rowId);
     if (localData != null) {
       await remoteService.upsert(table, localData);
@@ -135,11 +165,6 @@ class SyncEngine {
 
   Future<void> _pullUnits() async {
     final lastSync = DateTime.fromMillisecondsSinceEpoch(0);
-    final queue = await localDb.getSyncQueue();
-    final pendingDeletes = queue
-        .where((op) => op.operation == 'DELETE')
-        .map((op) => '${op.targetTable}:${op.rowId}')
-        .toSet();
 
     for (final config in tableConfigs) {
       _logger.i('SyncEngine: Pulling ${config.tableName}...');
@@ -156,7 +181,6 @@ class SyncEngine {
       for (final data in remoteData) {
         final id = data[config.primaryKey]?.toString();
         if (id == null) continue;
-        if (pendingDeletes.contains('${config.tableName}:$id')) continue;
 
         // Conflict Resolution
         final localData = await localDb.getById(config.tableName, id);

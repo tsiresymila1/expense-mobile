@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
@@ -42,14 +43,14 @@ class ExpenseCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      expense.note ?? 'No description',
+                      expense.note ?? 'no_description',
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
+                    ).tr(),
                     const SizedBox(height: 4),
                     BlocBuilder<CategoriesBloc, CategoriesState>(
                       builder: (context, state) {
@@ -69,7 +70,7 @@ class ExpenseCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${expense.type == 'income' ? '+' : '-'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol)}',
+                '${expense.type == 'income' ? '+' : '-'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol, locale: context.locale.toString())}',
                 style: GoogleFonts.outfit(
                   color: expense.type == 'income'
                       ? Colors.green

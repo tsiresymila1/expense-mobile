@@ -18,6 +18,7 @@ class LocalExpenses extends Table {
   TextColumn get note => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -31,6 +32,7 @@ class LocalCategories extends Table {
   TextColumn get color => text().nullable()();
   BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
   DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -52,7 +54,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -64,6 +66,10 @@ class AppDatabase extends _$AppDatabase {
         if (from < 3) {
           await _addColumnSafely(m, localCategories, 'user_id');
           await _addColumnSafely(m, syncQueue, 'user_id');
+        }
+        if (from < 4) {
+          await _addColumnSafely(m, localExpenses, 'deleted_at');
+          await _addColumnSafely(m, localCategories, 'deleted_at');
         }
       },
     );

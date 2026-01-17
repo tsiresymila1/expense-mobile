@@ -3,11 +3,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class AppTheme {
-  static String formatMoney(double amount, String symbol) {
+  static String formatMoney(double amount, String symbol, {String? locale}) {
     final capitalizedSymbol = symbol.isNotEmpty
         ? '${symbol[0].toUpperCase()}${symbol.substring(1).toLowerCase()}'
         : '';
     final formatter = NumberFormat.currency(
+      locale: locale,
       symbol: "$capitalizedSymbol ",
       decimalDigits: 2,
     );

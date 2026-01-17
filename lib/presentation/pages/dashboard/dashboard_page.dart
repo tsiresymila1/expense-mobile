@@ -109,7 +109,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               'recent_transactions'.tr(),
                               theme,
                               actionLabel: 'see_all'.tr(),
-                              onAction: () => context.go('/expenses'),
+                              onAction: () => context.push('/expenses'),
                             )
                                 .animate()
                                 .fadeIn(delay: 500.ms, duration: 600.ms)
