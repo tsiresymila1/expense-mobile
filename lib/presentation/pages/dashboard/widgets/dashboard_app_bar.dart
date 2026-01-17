@@ -21,7 +21,7 @@ class DashboardAppBar extends StatelessWidget {
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         title: Text(
-          'G-SPEND'.tr(),
+          'G-spend'.tr(),
           style: GoogleFonts.outfit(
             fontWeight: FontWeight.w700,
             color: theme.colorScheme.onSurface,

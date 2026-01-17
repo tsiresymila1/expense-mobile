@@ -89,12 +89,12 @@ flavorizr:
     android:
       flavorDimensions: "flavor-type"
     ios:
-      name: "G-SPEND"
+      name: "G-spend"
 
   flavors:
     dev:
       app:
-        name: "G-SPEND"
+        name: "G-spend"
       android:
         applicationId: "ts.mila.expense.dev"
       ios:
@@ -102,7 +102,7 @@ flavorizr:
     
     prod:
       app:
-        name: "G-SPEND"
+        name: "G-spend"
       android:
         applicationId: "ts.mila.expense"
       ios:

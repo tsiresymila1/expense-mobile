@@ -1,4 +1,4 @@
-# 💰 G-SPEND - Smart Expense Tracker
+# 💰 G-spend - Smart Expense Tracker
 
 A beautiful, offline-first expense tracking app built with Flutter and Supabase.
 
