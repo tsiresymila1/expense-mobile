@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -78,7 +79,7 @@ class ProjectShortcuts extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                (project.icon ?? project.name[0]).toUpperCase(),
+                (project.name[0]).toUpperCase(),
                 style: GoogleFonts.outfit(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -88,7 +89,7 @@ class ProjectShortcuts extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  project.name,
+                  project.name.toString().tr(),
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.outfit(
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,

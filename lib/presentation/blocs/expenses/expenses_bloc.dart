@@ -43,11 +43,12 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
     );
     final lastMonthEnd = thisMonthStart.subtract(const Duration(seconds: 1));
 
-    var query = database.select(database.localExpenses)
-      ..where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
-    
+    var query = database.select(database.localExpenses);
+
     if (projectId != null) {
-      query.where((t) => t.projectId.equals(projectId));
+      query.where((t) => t.projectId.equals(projectId) & t.deletedAt.isNull());
+    } else {
+      query.where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
     }
 
     if (event.dateRange != null) {
@@ -73,10 +74,12 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
     final dailyMap = <int, double>{};
     
     // For totals, we should also filter by project if it's selected
-    var allQuery = database.select(database.localExpenses)
-      ..where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
+    // For totals, we should also filter by project if it's selected
+    var allQuery = database.select(database.localExpenses);
     if (projectId != null) {
-      allQuery.where((t) => t.projectId.equals(projectId));
+      allQuery.where((t) => t.projectId.equals(projectId) & t.deletedAt.isNull());
+    } else {
+      allQuery.where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
     }
     final all = await allQuery.get();
 
@@ -143,6 +146,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               note: Value(event.note),
               updatedAt: DateTime.now(),
               createdAt: DateTime.now(),
+              createdBy: Value(userId),
             ),
           );
       await database

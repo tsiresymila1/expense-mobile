@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
@@ -50,6 +51,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _logout() async {
+    final db = context.read<AppDatabase>();
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
@@ -75,6 +77,10 @@ class _AccountPageState extends State<AccountPage> {
       ),
     );
     if (ok == true) {
+      await db.transaction(() async {
+        await db.delete(db.localExpenses).go();
+        await db.delete(db.syncQueue).go();
+      });
       await Supabase.instance.client.auth.signOut();
       if (mounted) context.go('/login');
     }
@@ -101,6 +107,16 @@ class _AccountPageState extends State<AccountPage> {
           'account'.tr(),
           style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
+        actions: [
+          IconButton(
+            onPressed: () => context.push("/settings"),
+            icon: Icon(
+              Icons.settings,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -120,62 +136,85 @@ class _AccountPageState extends State<AccountPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader('profile_info'.tr(), t),
+                    _buildSectionHeader('profile_info'.tr(), t)
+                        .animate(delay: 400.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(color: t.dividerColor.withValues(alpha: 0.05)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            _field(
-                              'name',
-                              'full_name'.tr(),
-                              Icons.person_outline_rounded,
-                              t,
-                              validator: FormBuilderValidators.compose([
-                                FormBuilderValidators.required(),
-                                FormBuilderValidators.minLength(2),
-                              ]),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(
+                              color: t.dividerColor.withValues(alpha: 0.05),
                             ),
-                            const SizedBox(height: 16),
-                            _field(
-                              'email',
-                              'email'.tr(),
-                              Icons.email_outlined,
-                              t,
-                              enabled: false,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Column(
+                              children: [
+                                _field(
+                                  'name',
+                                  'full_name'.tr(),
+                                  Icons.person_outline_rounded,
+                                  t,
+                                  validator: FormBuilderValidators.compose([
+                                    FormBuilderValidators.required(),
+                                    FormBuilderValidators.minLength(2),
+                                  ]),
+                                ),
+                                const SizedBox(height: 16),
+                                _field(
+                                  'email',
+                                  'email'.tr(),
+                                  Icons.email_outlined,
+                                  t,
+                                  enabled: false,
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                          ),
+                        )
+                        .animate(delay: 400.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 24),
-                    _buildSectionHeader('security'.tr(), t),
+                    _buildSectionHeader('security'.tr(), t)
+                        .animate(delay: 500.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     _buildMenuCard(
-                      icon: Icons.lock_outline_rounded,
-                      title: 'change_password'.tr(),
-                      color: Colors.blue,
-                      onTap: () => _showPwDialog(context),
-                    ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                          icon: Icons.lock_outline_rounded,
+                          title: 'change_password'.tr(),
+                          color: Colors.blue,
+                          onTap: () => _showPwDialog(context),
+                        )
+                        .animate(delay: 500.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 24),
-                    _buildSectionHeader('management'.tr(), t),
+                    _buildSectionHeader('management'.tr(), t)
+                        .animate(delay: 600.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     _buildMenuCard(
-                      icon: Icons.folder_open_rounded,
-                      title: 'manage_projects'.tr(),
-                      color: t.colorScheme.primary,
-                      onTap: () => context.push('/projects'),
-                    ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                          icon: Icons.folder_open_rounded,
+                          title: 'manage_projects'.tr(),
+                          color: t.colorScheme.primary,
+                          onTap: () => context.push('/projects'),
+                        )
+                        .animate(delay: 600.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 12),
                     _buildMenuCard(
-                      icon: Icons.settings_outlined,
-                      title: 'settings'.tr(),
-                      color: Colors.blueGrey,
-                      onTap: () => context.push('/settings'),
-                    ).animate(delay: 650.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                          icon: Icons.settings_outlined,
+                          title: 'settings'.tr(),
+                          color: Colors.blueGrey,
+                          onTap: () => context.push('/settings'),
+                        )
+                        .animate(delay: 650.ms)
+                        .fadeIn()
+                        .slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 40),
                     if (_loading)
                       const Center(child: CircularProgressIndicator())
@@ -185,7 +224,9 @@ class _AccountPageState extends State<AccountPage> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: t.colorScheme.primary.withValues(alpha: 0.2),
+                              color: t.colorScheme.primary.withValues(
+                                alpha: 0.2,
+                              ),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -206,7 +247,11 @@ class _AccountPageState extends State<AccountPage> {
                     Center(
                       child: TextButton.icon(
                         onPressed: _logout,
-                        icon: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: Colors.red,
+                          size: 20,
+                        ),
                         label: Text(
                           'logout'.tr(),
                           style: GoogleFonts.outfit(
@@ -228,75 +273,96 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Widget _buildPremiumHeader(ThemeData t, User? user) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.only(bottom: 32, top: 12),
-        decoration: BoxDecoration(
-          color: t.colorScheme.surface,
-          border: Border(
-            bottom: BorderSide(color: t.dividerColor.withValues(alpha: 0.1)),
-          ),
-        ),
-        child: Column(
+    width: double.infinity,
+    padding: const EdgeInsets.only(bottom: 32, top: 12),
+    decoration: BoxDecoration(
+      color: t.colorScheme.surface,
+      border: Border(
+        bottom: BorderSide(color: t.dividerColor.withValues(alpha: 0.1)),
+      ),
+    ),
+    child: Column(
+      children: [
+        Stack(
           children: [
-            Stack(
-              children: [
-                _avatar(t).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: t.colorScheme.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: t.colorScheme.surface, width: 2),
-                    ),
-                    child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
-                  ),
-                ).animate().scale(delay: 400.ms),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              user?.userMetadata?['name'] ?? 'User',
-              style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: t.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                user?.email ?? '',
-                style: GoogleFonts.outfit(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+            _avatar(
+              t,
+            ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
                   color: t.colorScheme.primary,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: t.colorScheme.surface, width: 2),
+                ),
+                child: const Icon(
+                  Icons.camera_alt_rounded,
+                  size: 14,
+                  color: Colors.white,
                 ),
               ),
-            ).animate().fadeIn(delay: 300.ms),
+            ).animate().scale(delay: 400.ms),
           ],
         ),
-      );
+        const SizedBox(height: 16),
+        Text(
+          user?.userMetadata?['name'] ?? 'user_profile_fallback',
+          style: GoogleFonts.outfit(
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
+        ).tr().animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: t.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            user?.email ?? '',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: t.colorScheme.primary,
+            ),
+          ),
+        ).animate().fadeIn(delay: 300.ms),
+      ],
+    ),
+  );
 
   Widget _buildQuickStats(ThemeData t) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          children: [
-            _buildStatItem('transactions'.tr(), 'exp_count', Icons.receipt_long_rounded, Colors.orange),
-            const SizedBox(width: 12),
-            _buildStatItem('projects'.tr(), 'prj_count', Icons.folder_rounded, Colors.blue),
-            const SizedBox(width: 12),
-            _buildStatItem('categories'.tr(), 'cat_count', Icons.category_rounded, Colors.green),
-          ],
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    child: Row(
+      children: [
+        _buildStatItem(
+          'transactions'.tr(),
+          'exp_count',
+          Icons.receipt_long_rounded,
+          Colors.orange,
         ),
-      ).animate().fadeIn(delay: 400.ms);
+        const SizedBox(width: 12),
+        _buildStatItem(
+          'projects'.tr(),
+          'prj_count',
+          Icons.folder_rounded,
+          Colors.blue,
+        ),
+        const SizedBox(width: 12),
+        _buildStatItem(
+          'categories'.tr(),
+          'cat_count',
+          Icons.category_rounded,
+          Colors.green,
+        ),
+      ],
+    ),
+  ).animate().fadeIn(delay: 400.ms);
 
   Widget _buildStatItem(String label, String key, IconData icon, Color color) {
     return Expanded(
@@ -315,7 +381,11 @@ class _AccountPageState extends State<AccountPage> {
             const SizedBox(height: 2),
             Text(
               label,
-              style: GoogleFonts.outfit(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600),
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -359,31 +429,32 @@ class _AccountPageState extends State<AccountPage> {
     required Color color,
     required VoidCallback onTap,
   }) => Card(
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+    elevation: 0,
+    margin: EdgeInsets.zero,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+      side: BorderSide(
+        color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+      ),
+    ),
+    child: ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: ListTile(
-          onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          leading: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          title: Text(
-            title,
-            style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600),
-          ),
-          trailing: const Icon(Icons.chevron_right_rounded, size: 20),
-        ),
-      );
-
+        child: Icon(icon, color: color, size: 20),
+      ),
+      title: Text(
+        title,
+        style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+    ),
+  );
 
   Widget _avatar(ThemeData t) => Container(
     padding: const EdgeInsets.all(4),
@@ -439,10 +510,8 @@ class _AccountPageState extends State<AccountPage> {
   void _showPwDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (c) => _PasswordChangeDialog(
-        onError: _err,
-        parentContext: context,
-      ),
+      builder: (c) =>
+          _PasswordChangeDialog(onError: _err, parentContext: context),
     );
   }
 }
@@ -471,18 +540,14 @@ class _PasswordChangeDialogState extends State<_PasswordChangeDialog> {
 
     try {
       await Supabase.instance.client.auth.updateUser(
-        UserAttributes(
-          password: _key.currentState!.value['password'],
-        ),
+        UserAttributes(password: _key.currentState!.value['password']),
       );
       if (mounted) {
         Navigator.pop(context);
         // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(widget.parentContext).showSnackBar(
-          SnackBar(
-            content: Text('password_changed'.tr())
-          ),
-        );
+        ScaffoldMessenger.of(
+          widget.parentContext,
+        ).showSnackBar(SnackBar(content: Text('password_changed'.tr())));
       }
     } catch (e) {
       widget.onError('error_unexpected'.tr());

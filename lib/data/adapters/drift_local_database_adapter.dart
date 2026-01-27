@@ -17,6 +17,8 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
         return _db.localProjects;
       case 'project_members':
         return _db.localProjectMembers;
+      case 'profiles':
+        return _db.localProfiles;
       default:
         throw Exception('Table $table not supported for sync');
     }
@@ -49,6 +51,8 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       dataClass = LocalProject.fromJson(normalized);
     } else if (table == 'project_members') {
       dataClass = LocalProjectMember.fromJson(normalized);
+    } else if (table == 'profiles') {
+      dataClass = LocalProfile.fromJson(normalized);
     } else {
       throw Exception('Table $table not supported for sync upsert');
     }
@@ -74,6 +78,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       }
       if (data.containsKey('project_id')) {
         result['projectId'] = data['project_id'];
+      }
+      if (data.containsKey('created_by')) {
+        result['createdBy'] = data['created_by'];
       }
     } else if (table == 'categories') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
@@ -112,6 +119,10 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('updated_at')) {
         result['updatedAt'] = data['updated_at'];
       }
+    } else if (table == 'profiles') {
+      if (data.containsKey('updated_at')) {
+        result['updatedAt'] = data['updated_at'];
+      }
     }
 
     return result;
@@ -141,6 +152,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
         result['project_id'] = data['projectId'];
       }
       if (data.containsKey('date')) result['date'] = _toIso(data['date']);
+      if (data.containsKey('createdBy')) {
+        result['created_by'] = data['createdBy'];
+      }
 
       // Remove camelCase keys
       result.remove('userId');
@@ -149,6 +163,7 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       result.remove('updatedAt');
       result.remove('createdAt');
       result.remove('deletedAt');
+      result.remove('createdBy');
     } else if (table == 'categories') {
       if (data.containsKey('userId')) result['user_id'] = data['userId'];
       if (data.containsKey('isDefault')) {
@@ -208,6 +223,11 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       result.remove('invitedAt');
       result.remove('acceptedAt');
       result.remove('createdAt');
+      result.remove('updatedAt');
+    } else if (table == 'profiles') {
+      if (data.containsKey('updatedAt')) {
+        result['updated_at'] = _toIso(data['updatedAt']);
+      }
       result.remove('updatedAt');
     }
 
@@ -280,7 +300,7 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
   @override
   Future<void> purge(String table, DateTime olderThan) async {
     // Skip tables that don't have a deletedAt column
-    if (table == 'project_members') {
+    if (table == 'project_members' || table == 'profiles') {
       return;
     }
     
@@ -293,5 +313,20 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
             return deletedAt.isSmallerThanValue(olderThan) & deletedAt.isNotNull();
           }))
         .go();
+  }
+
+  @override
+  Future<bool> isProjectMember(String projectId, String userId) async {
+    // Check if explicitly a member
+    final query = _db.select(_db.localProjectMembers)
+      ..where((t) => t.projectId.equals(projectId) & t.userId.equals(userId));
+    final member = await query.getSingleOrNull();
+    if (member != null) return true;
+
+    // Check if owner of the project
+    final projectQuery = _db.select(_db.localProjects)
+      ..where((t) => t.id.equals(projectId));
+    final project = await projectQuery.getSingleOrNull();
+    return project?.ownerId == userId;
   }
 }

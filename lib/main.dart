@@ -68,6 +68,7 @@ Future<void> main() async {
       TableSyncConfig(tableName: 'categories'),
       TableSyncConfig(tableName: 'projects', userIdColumn: 'owner_id'),
       TableSyncConfig(tableName: 'project_members', hasSoftDelete: false),
+      TableSyncConfig(tableName: 'profiles', pullOnly: true, hasSoftDelete: false),
     ],
   );
   syncEngine.start();

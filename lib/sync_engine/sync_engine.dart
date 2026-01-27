@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:expense/core/adapters/adapters.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:logger/logger.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 enum SyncStatus { idle, syncing, success, error }
 
@@ -23,6 +24,7 @@ class TableSyncConfig {
   final SyncConflictStrategy conflictStrategy;
   final bool hasSoftDelete;
   final String userIdColumn;
+  final bool pullOnly;
 
   const TableSyncConfig({
     required this.tableName,
@@ -31,6 +33,7 @@ class TableSyncConfig {
     this.conflictStrategy = SyncConflictStrategy.lastWriteWins,
     this.hasSoftDelete = true,
     this.userIdColumn = 'user_id',
+    this.pullOnly = false,
   });
 }
 
@@ -149,10 +152,39 @@ class SyncEngine {
 
     for (final op in queue) {
       try {
+        // Validate project membership for shared expenses
+        if (op.targetTable == 'expenses') {
+          final row = await localDb.getById('expenses', op.rowId);
+          final projectId = row?['project_id'] ?? row?['projectId'];
+          if (row != null && projectId != null) {
+            final currentUserId = remoteService.currentUserId;
+            if (currentUserId != null) {
+              final isMember = await localDb.isProjectMember(
+                projectId,
+                currentUserId,
+              );
+              if (!isMember) {
+                _logger.w(
+                    'Skipping push for expense ${op.rowId}: User not member of project.');
+                await localDb.removeFromSyncQueue(op.id);
+                continue;
+              }
+            }
+          }
+        }
+
         await _processOp(op);
         await localDb.removeFromSyncQueue(op.id);
       } catch (e) {
         _logger.w('Failed to process sync op ${op.id}', error: e);
+        
+        // Handle duplicate record violation (already exists on server)
+        if (e is PostgrestException && e.code == '23505') {
+          _logger.i('SyncEngine: Op ${op.id} resulted in duplicate. Skipping and removing from queue.');
+          await localDb.removeFromSyncQueue(op.id);
+          continue;
+        }
+
         if (op.retryCount > 5) {
           await localDb.removeFromSyncQueue(op.id);
         } else {
@@ -166,6 +198,12 @@ class SyncEngine {
   Future<void> _processOp(SyncQueueData op) async {
     final table = op.targetTable;
     final rowId = op.rowId;
+
+    if (op.operation == 'DELETE') {
+      _logger.i('SyncEngine: Processing HARD DELETE for $table:$rowId');
+      await remoteService.delete(table, rowId);
+      return;
+    }
 
     // All operations (INSERT, UPDATE, and soft DELETE) are handled via upsert
     final localData = await localDb.getById(table, rowId);

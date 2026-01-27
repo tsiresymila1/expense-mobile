@@ -96,7 +96,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                   FormBuilderDateTimePicker(
                     name: 'date',
                     inputType: InputType.date,
-                    format: DateFormat('MMM dd, yyyy', context.locale.toString()),
+                    format: DateFormat('dd MMM yyyy', context.locale.toString()),
                     decoration: _inputDecoration(
                       theme,
                       Icons.calendar_today_rounded,

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/pages/expenses/widgets/expense_card.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ExpensesPage extends StatelessWidget {
   const ExpensesPage({super.key});
@@ -20,6 +22,8 @@ class ExpensesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final projectsState = context.watch<ProjectsBloc>().state;
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -72,17 +76,41 @@ class ExpensesPage extends StatelessWidget {
                             expense.date,
                             state.expenses[index - 1].date,
                           );
+
+                      // Find creator name
+                      String? creatorName;
+                      final effectiveCreatorId = expense.createdBy ?? expense.userId;
+                      
+                       if (expense.projectId != null) {
+                            if (effectiveCreatorId == currentUserId) {
+                               final user = Supabase.instance.client.auth.currentUser;
+                               creatorName = user?.userMetadata?['name'] ?? 'Me';
+                            } else {
+                               final member = projectsState.projectMembers.where(
+                                 (m) => m['user_id'] == effectiveCreatorId,
+                               ).firstOrNull;
+                               if (member != null) {
+                                 creatorName = member['name'];
+                               } else {
+                                 creatorName = 'unknown_user'.tr();
+                               }
+                            }
+                       }
+
                       return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (showHeader) _buildDateHeader(context, expense.date, theme),
-                          ExpenseCard(
-                            expense: expense,
-                            settings: settings,
-                            onTap: () => _showExpenseOptions(context, expense),
-                          ),
-                        ],
-                      )
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (showHeader)
+                                _buildDateHeader(context, expense.date, theme),
+                              ExpenseCard(
+                                expense: expense,
+                                settings: settings,
+                                creatorName: creatorName,
+                                onTap: () =>
+                                    _showExpenseOptions(context, expense),
+                              ),
+                            ],
+                          )
                           .animate(delay: (100 * (index % 10)).ms)
                           .fadeIn(duration: 500.ms, curve: Curves.easeOut)
                           .slideY(
@@ -97,24 +125,30 @@ class ExpensesPage extends StatelessWidget {
               },
             ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddExpense(context),
-        label: Text(
-          'new_expense'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-        ),
-        icon: const Icon(Icons.add_rounded),
-      )
-          .animate()
-          .scale(delay: 600.ms, duration: 400.ms, curve: Curves.easeOutBack)
-          .shimmer(delay: 1000.ms, duration: 1200.ms),
+      // ... existing floatingActionButton
+      floatingActionButton:
+          FloatingActionButton.extended(
+                onPressed: () => _showAddExpense(context),
+                label: Text(
+                  'new_expense'.tr(),
+                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+                ),
+                icon: const Icon(Icons.add_rounded),
+              )
+              .animate()
+              .scale(delay: 600.ms, duration: 400.ms, curve: Curves.easeOutBack)
+              .shimmer(delay: 1000.ms, duration: 1200.ms),
     );
   }
 
   bool _isSameDay(DateTime d1, DateTime d2) =>
       d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
 
-  Widget _buildDateHeader(BuildContext context, DateTime date, ThemeData theme) {
+  Widget _buildDateHeader(
+    BuildContext context,
+    DateTime date,
+    ThemeData theme,
+  ) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
@@ -124,9 +158,10 @@ class ExpensesPage extends StatelessWidget {
         ? 'today'.tr()
         : (dateOnly == yesterday
               ? 'yesterday'.tr()
-              : DateFormat('MMM dd, yyyy', context.locale.toString())
-                  .format(date)
-                  .toUpperCase());
+              : DateFormat(
+                  'dd MMM yyyy',
+                  context.locale.toString(),
+                ).format(date).toUpperCase());
     return Padding(
       padding: const EdgeInsets.only(top: 24, bottom: 12, left: 4),
       child: Text(
@@ -173,7 +208,25 @@ class ExpensesPage extends StatelessWidget {
     }
   }
 
+  // ... existing helpers
+
   void _showExpenseOptions(BuildContext context, LocalExpense expense) {
+    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+    final projectsState = context.read<ProjectsBloc>().state;
+    final isProjectOwner =
+        projectsState.currentProject?.ownerId == currentUserId;
+    final isCreator =
+        expense.createdBy == currentUserId || expense.createdBy == null;
+
+    final canEdit = isProjectOwner || isCreator;
+
+    if (!canEdit) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('viewer_cannot_edit'.tr())));
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

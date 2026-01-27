@@ -17,6 +17,7 @@ abstract class LocalDatabaseAdapter {
   Future<void> removeFromSyncQueue(int queueId);
   Future<void> incrementRetryCount(int queueId);
   Future<void> purge(String table, DateTime olderThan);
+  Future<bool> isProjectMember(String projectId, String userId);
 }
 
 abstract class RemoteServiceAdapter {

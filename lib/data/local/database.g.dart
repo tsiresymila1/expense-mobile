@@ -1036,6 +1036,12 @@ class $LocalExpensesTable extends LocalExpenses
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _createdByMeta =
+      const VerificationMeta('createdBy');
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+      'created_by', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -1059,6 +1065,7 @@ class $LocalExpensesTable extends LocalExpenses
         date,
         note,
         updatedAt,
+        createdBy,
         createdAt,
         deletedAt
       ];
@@ -1119,6 +1126,10 @@ class $LocalExpensesTable extends LocalExpenses
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
     }
+    if (data.containsKey('created_by')) {
+      context.handle(_createdByMeta,
+          createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta));
+    }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
           createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
@@ -1156,6 +1167,8 @@ class $LocalExpensesTable extends LocalExpenses
           .read(DriftSqlType.string, data['${effectivePrefix}note']),
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      createdBy: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_by']),
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       deletedAt: attachedDatabase.typeMapping
@@ -1179,6 +1192,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
   final DateTime date;
   final String? note;
   final DateTime updatedAt;
+  final String? createdBy;
   final DateTime createdAt;
   final DateTime? deletedAt;
   const LocalExpense(
@@ -1191,6 +1205,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       required this.date,
       this.note,
       required this.updatedAt,
+      this.createdBy,
       required this.createdAt,
       this.deletedAt});
   @override
@@ -1211,6 +1226,9 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       map['note'] = Variable<String>(note);
     }
     map['updated_at'] = Variable<DateTime>(updatedAt);
+    if (!nullToAbsent || createdBy != null) {
+      map['created_by'] = Variable<String>(createdBy);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || deletedAt != null) {
       map['deleted_at'] = Variable<DateTime>(deletedAt);
@@ -1233,6 +1251,9 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       date: Value(date),
       note: note == null && nullToAbsent ? const Value.absent() : Value(note),
       updatedAt: Value(updatedAt),
+      createdBy: createdBy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdBy),
       createdAt: Value(createdAt),
       deletedAt: deletedAt == null && nullToAbsent
           ? const Value.absent()
@@ -1253,6 +1274,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       date: serializer.fromJson<DateTime>(json['date']),
       note: serializer.fromJson<String?>(json['note']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      createdBy: serializer.fromJson<String?>(json['createdBy']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
     );
@@ -1270,6 +1292,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       'date': serializer.toJson<DateTime>(date),
       'note': serializer.toJson<String?>(note),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'createdBy': serializer.toJson<String?>(createdBy),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'deletedAt': serializer.toJson<DateTime?>(deletedAt),
     };
@@ -1285,6 +1308,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           DateTime? date,
           Value<String?> note = const Value.absent(),
           DateTime? updatedAt,
+          Value<String?> createdBy = const Value.absent(),
           DateTime? createdAt,
           Value<DateTime?> deletedAt = const Value.absent()}) =>
       LocalExpense(
@@ -1297,6 +1321,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
         date: date ?? this.date,
         note: note.present ? note.value : this.note,
         updatedAt: updatedAt ?? this.updatedAt,
+        createdBy: createdBy.present ? createdBy.value : this.createdBy,
         createdAt: createdAt ?? this.createdAt,
         deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
       );
@@ -1312,6 +1337,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
       date: data.date.present ? data.date.value : this.date,
       note: data.note.present ? data.note.value : this.note,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
     );
@@ -1329,6 +1355,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt')
           ..write(')'))
@@ -1337,7 +1364,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
 
   @override
   int get hashCode => Object.hash(id, userId, projectId, categoryId, amount,
-      type, date, note, updatedAt, createdAt, deletedAt);
+      type, date, note, updatedAt, createdBy, createdAt, deletedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1351,6 +1378,7 @@ class LocalExpense extends DataClass implements Insertable<LocalExpense> {
           other.date == this.date &&
           other.note == this.note &&
           other.updatedAt == this.updatedAt &&
+          other.createdBy == this.createdBy &&
           other.createdAt == this.createdAt &&
           other.deletedAt == this.deletedAt);
 }
@@ -1365,6 +1393,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
   final Value<DateTime> date;
   final Value<String?> note;
   final Value<DateTime> updatedAt;
+  final Value<String?> createdBy;
   final Value<DateTime> createdAt;
   final Value<DateTime?> deletedAt;
   final Value<int> rowid;
@@ -1378,6 +1407,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     this.date = const Value.absent(),
     this.note = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.createdBy = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1392,6 +1422,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     required DateTime date,
     this.note = const Value.absent(),
     required DateTime updatedAt,
+    this.createdBy = const Value.absent(),
     required DateTime createdAt,
     this.deletedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -1411,6 +1442,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     Expression<DateTime>? date,
     Expression<String>? note,
     Expression<DateTime>? updatedAt,
+    Expression<String>? createdBy,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? deletedAt,
     Expression<int>? rowid,
@@ -1425,6 +1457,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       if (date != null) 'date': date,
       if (note != null) 'note': note,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (createdBy != null) 'created_by': createdBy,
       if (createdAt != null) 'created_at': createdAt,
       if (deletedAt != null) 'deleted_at': deletedAt,
       if (rowid != null) 'rowid': rowid,
@@ -1441,6 +1474,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       Value<DateTime>? date,
       Value<String?>? note,
       Value<DateTime>? updatedAt,
+      Value<String?>? createdBy,
       Value<DateTime>? createdAt,
       Value<DateTime?>? deletedAt,
       Value<int>? rowid}) {
@@ -1454,6 +1488,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
       date: date ?? this.date,
       note: note ?? this.note,
       updatedAt: updatedAt ?? this.updatedAt,
+      createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
       deletedAt: deletedAt ?? this.deletedAt,
       rowid: rowid ?? this.rowid,
@@ -1490,6 +1525,9 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1514,6 +1552,7 @@ class LocalExpensesCompanion extends UpdateCompanion<LocalExpense> {
           ..write('date: $date, ')
           ..write('note: $note, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('createdBy: $createdBy, ')
           ..write('createdAt: $createdAt, ')
           ..write('deletedAt: $deletedAt, ')
           ..write('rowid: $rowid')
@@ -2363,6 +2402,272 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   }
 }
 
+class $LocalProfilesTable extends LocalProfiles
+    with TableInfo<$LocalProfilesTable, LocalProfile> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LocalProfilesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name, email, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'local_profiles';
+  @override
+  VerificationContext validateIntegrity(Insertable<LocalProfile> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LocalProfile map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LocalProfile(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $LocalProfilesTable createAlias(String alias) {
+    return $LocalProfilesTable(attachedDatabase, alias);
+  }
+}
+
+class LocalProfile extends DataClass implements Insertable<LocalProfile> {
+  final String id;
+  final String name;
+  final String email;
+  final DateTime updatedAt;
+  const LocalProfile(
+      {required this.id,
+      required this.name,
+      required this.email,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['email'] = Variable<String>(email);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  LocalProfilesCompanion toCompanion(bool nullToAbsent) {
+    return LocalProfilesCompanion(
+      id: Value(id),
+      name: Value(name),
+      email: Value(email),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory LocalProfile.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LocalProfile(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      email: serializer.fromJson<String>(json['email']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'email': serializer.toJson<String>(email),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  LocalProfile copyWith(
+          {String? id, String? name, String? email, DateTime? updatedAt}) =>
+      LocalProfile(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        email: email ?? this.email,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  LocalProfile copyWithCompanion(LocalProfilesCompanion data) {
+    return LocalProfile(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      email: data.email.present ? data.email.value : this.email,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalProfile(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, email, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LocalProfile &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.email == this.email &&
+          other.updatedAt == this.updatedAt);
+}
+
+class LocalProfilesCompanion extends UpdateCompanion<LocalProfile> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<String> email;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const LocalProfilesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.email = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LocalProfilesCompanion.insert({
+    required String id,
+    required String name,
+    required String email,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        email = Value(email),
+        updatedAt = Value(updatedAt);
+  static Insertable<LocalProfile> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<String>? email,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (email != null) 'email': email,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LocalProfilesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? name,
+      Value<String>? email,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return LocalProfilesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LocalProfilesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('email: $email, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2373,6 +2678,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $LocalCategoriesTable localCategories =
       $LocalCategoriesTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
+  late final $LocalProfilesTable localProfiles = $LocalProfilesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2382,7 +2688,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         localProjectMembers,
         localExpenses,
         localCategories,
-        syncQueue
+        syncQueue,
+        localProfiles
       ];
 }
 
@@ -2883,6 +3190,7 @@ typedef $$LocalExpensesTableCreateCompanionBuilder = LocalExpensesCompanion
   required DateTime date,
   Value<String?> note,
   required DateTime updatedAt,
+  Value<String?> createdBy,
   required DateTime createdAt,
   Value<DateTime?> deletedAt,
   Value<int> rowid,
@@ -2898,6 +3206,7 @@ typedef $$LocalExpensesTableUpdateCompanionBuilder = LocalExpensesCompanion
   Value<DateTime> date,
   Value<String?> note,
   Value<DateTime> updatedAt,
+  Value<String?> createdBy,
   Value<DateTime> createdAt,
   Value<DateTime?> deletedAt,
   Value<int> rowid,
@@ -2938,6 +3247,9 @@ class $$LocalExpensesTableFilterComposer
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdBy => $composableBuilder(
+      column: $table.createdBy, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -2982,6 +3294,9 @@ class $$LocalExpensesTableOrderingComposer
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get createdBy => $composableBuilder(
+      column: $table.createdBy, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -3025,6 +3340,9 @@ class $$LocalExpensesTableAnnotationComposer
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
+  GeneratedColumn<String> get createdBy =>
+      $composableBuilder(column: $table.createdBy, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -3067,6 +3385,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             Value<DateTime> date = const Value.absent(),
             Value<String?> note = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
+            Value<String?> createdBy = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -3081,6 +3400,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             date: date,
             note: note,
             updatedAt: updatedAt,
+            createdBy: createdBy,
             createdAt: createdAt,
             deletedAt: deletedAt,
             rowid: rowid,
@@ -3095,6 +3415,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             required DateTime date,
             Value<String?> note = const Value.absent(),
             required DateTime updatedAt,
+            Value<String?> createdBy = const Value.absent(),
             required DateTime createdAt,
             Value<DateTime?> deletedAt = const Value.absent(),
             Value<int> rowid = const Value.absent(),
@@ -3109,6 +3430,7 @@ class $$LocalExpensesTableTableManager extends RootTableManager<
             date: date,
             note: note,
             updatedAt: updatedAt,
+            createdBy: createdBy,
             createdAt: createdAt,
             deletedAt: deletedAt,
             rowid: rowid,
@@ -3564,6 +3886,164 @@ typedef $$SyncQueueTableProcessedTableManager = ProcessedTableManager<
     ),
     SyncQueueData,
     PrefetchHooks Function()>;
+typedef $$LocalProfilesTableCreateCompanionBuilder = LocalProfilesCompanion
+    Function({
+  required String id,
+  required String name,
+  required String email,
+  required DateTime updatedAt,
+  Value<int> rowid,
+});
+typedef $$LocalProfilesTableUpdateCompanionBuilder = LocalProfilesCompanion
+    Function({
+  Value<String> id,
+  Value<String> name,
+  Value<String> email,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$LocalProfilesTableFilterComposer
+    extends Composer<_$AppDatabase, $LocalProfilesTable> {
+  $$LocalProfilesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$LocalProfilesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LocalProfilesTable> {
+  $$LocalProfilesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$LocalProfilesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LocalProfilesTable> {
+  $$LocalProfilesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$LocalProfilesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $LocalProfilesTable,
+    LocalProfile,
+    $$LocalProfilesTableFilterComposer,
+    $$LocalProfilesTableOrderingComposer,
+    $$LocalProfilesTableAnnotationComposer,
+    $$LocalProfilesTableCreateCompanionBuilder,
+    $$LocalProfilesTableUpdateCompanionBuilder,
+    (
+      LocalProfile,
+      BaseReferences<_$AppDatabase, $LocalProfilesTable, LocalProfile>
+    ),
+    LocalProfile,
+    PrefetchHooks Function()> {
+  $$LocalProfilesTableTableManager(_$AppDatabase db, $LocalProfilesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LocalProfilesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LocalProfilesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LocalProfilesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<String> email = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              LocalProfilesCompanion(
+            id: id,
+            name: name,
+            email: email,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            required String email,
+            required DateTime updatedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              LocalProfilesCompanion.insert(
+            id: id,
+            name: name,
+            email: email,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$LocalProfilesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $LocalProfilesTable,
+    LocalProfile,
+    $$LocalProfilesTableFilterComposer,
+    $$LocalProfilesTableOrderingComposer,
+    $$LocalProfilesTableAnnotationComposer,
+    $$LocalProfilesTableCreateCompanionBuilder,
+    $$LocalProfilesTableUpdateCompanionBuilder,
+    (
+      LocalProfile,
+      BaseReferences<_$AppDatabase, $LocalProfilesTable, LocalProfile>
+    ),
+    LocalProfile,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -3578,4 +4058,6 @@ class $AppDatabaseManager {
       $$LocalCategoriesTableTableManager(_db, _db.localCategories);
   $$SyncQueueTableTableManager get syncQueue =>
       $$SyncQueueTableTableManager(_db, _db.syncQueue);
+  $$LocalProfilesTableTableManager get localProfiles =>
+      $$LocalProfilesTableTableManager(_db, _db.localProfiles);
 }

@@ -49,6 +49,7 @@ class LocalExpenses extends Table {
   DateTimeColumn get date => dateTime()();
   TextColumn get note => text().nullable()();
   DateTimeColumn get updatedAt => dateTime()();
+  TextColumn get createdBy => text().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   DateTimeColumn get deletedAt => dateTime().nullable()();
 
@@ -81,12 +82,22 @@ class SyncQueue extends Table {
   DateTimeColumn get createdAt => dateTime()();
 }
 
-@DriftDatabase(tables: [LocalProjects, LocalProjectMembers, LocalExpenses, LocalCategories, SyncQueue])
+class LocalProfiles extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get email => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+@DriftDatabase(tables: [LocalProjects, LocalProjectMembers, LocalExpenses, LocalCategories, SyncQueue, LocalProfiles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -108,6 +119,12 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(localProjects);
           await m.createTable(localProjectMembers);
           await _addColumnSafely(m, localExpenses, 'project_id');
+        }
+        if (from < 6) {
+          await m.createTable(localProfiles);
+        }
+        if (from < 7) {
+          await _addColumnSafely(m, localExpenses, 'created_by');
         }
       },
     );

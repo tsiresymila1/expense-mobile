@@ -54,21 +54,21 @@ class ProjectsPage extends StatelessWidget {
                     ),
                   ),
                   title: Text(
-                    project.name,
+                    project.name.tr(),
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
                       fontSize: 15,
                     ),
                   ),
                   subtitle: Text(
-                    project.description ?? (isOwner ? 'Your personal project' : 'Shared project'),
+                    project.description ?? (isOwner ? 'personal_project_desc' : 'shared_project_desc'),
                     style: GoogleFonts.outfit(color: Colors.grey),
-                  ),
+                  ).tr(),
                   onTap: () {
                     context.read<ProjectsBloc>().add(SwitchProject(project.id));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Switched to ${project.name}'),
+                        content: Text('switched_to'.tr(args: [project.name])),
                         duration: const Duration(seconds: 1),
                       ),
                     );
@@ -250,9 +250,19 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
   final Set<String> _selectedEmails = {};
 
   @override
+  void initState() {
+    super.initState();
+    widget.projectsBloc.add(LoadProjectMembers(widget.project.id));
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  bool _isAlreadyMember(ProjectsState state, String email) {
+    return state.projectMembers.any((m) => m['email'] == email);
   }
 
   @override
@@ -267,93 +277,184 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
           title: Text('share_project'.tr()),
           content: SizedBox(
             width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('invite_member_hint'.tr(), style: GoogleFonts.outfit(fontSize: 14)),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    widget.projectsBloc.add(SearchProfiles(value));
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'search_users'.tr(),
-                    prefixIcon: const Icon(Icons.search_rounded),
-                    suffixIcon: state.isSearching
-                        ? Container(
-                            padding: const EdgeInsets.all(12),
-                            width: 20,
-                            height: 20,
-                            child: const CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (state.searchResults.isNotEmpty) ...[
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.3,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: state.searchResults.length,
-                      itemBuilder: (context, index) {
-                        final profile = state.searchResults[index];
-                        final email = profile['email'] as String;
-                        final name = profile['name'] as String;
-                        final isSelected = _selectedEmails.contains(email);
-
-                        return CheckboxListTile(
-                          value: isSelected,
-                          onChanged: (checked) {
-                            setState(() {
-                              if (checked == true) {
-                                _selectedEmails.add(email);
-                              } else {
-                                _selectedEmails.remove(email);
-                              }
-                            });
-                          },
-                          title: Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
-                          subtitle: Text(email, style: GoogleFonts.outfit(fontSize: 12)),
-                          contentPadding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ] else if (_searchController.text.length >= 2 && !state.isSearching)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Center(
-                      child: Text(
-                        'no_users_found'.tr(),
-                        style: GoogleFonts.outfit(color: Colors.grey),
-                      ),
-                    ),
-                  ),
-                if (_selectedEmails.isNotEmpty) ...[
-                  const Divider(),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text(
-                      'selected_members'.tr(args: [_selectedEmails.length.toString()]),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (state.projectMembers.isNotEmpty)
+                   ...[
+                    Text(
+                      'current_members'.tr(),
                       style: GoogleFonts.outfit(
                         fontWeight: FontWeight.w600,
+                        fontSize: 14,
                         color: theme.colorScheme.primary,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 150),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: state.projectMembers.length,
+                        itemBuilder: (context, index) {
+                          final member = state.projectMembers[index];
+                          final currentUserId = Supabase.instance.client.auth.currentUser?.id;
+                          final isOwner = widget.project.ownerId == currentUserId;
+                          final isMemberThemselves = member['user_id'] == currentUserId;
+                          final invitedByCurrentUser = member['invited_by'] == currentUserId;
+                          final canRemove = isOwner || isMemberThemselves || invitedByCurrentUser;
+
+                          return ListTile(
+                            leading: CircleAvatar(
+                              radius: 14,
+                              child: Text(
+                                (member['name'] as String?)?[0].toUpperCase() ?? 'U',
+                                style: const TextStyle(fontSize: 10),
+                              ),
+                            ),
+                            title: Text(
+                              member['name'] ?? '',
+                              style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w500),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  member['email'] ?? '',
+                                  style: GoogleFonts.outfit(fontSize: 11),
+                                ),
+                                if (member['accepted_at'] != null)
+                                  Text(
+                                    '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(member['accepted_at']))}',
+                                    style: GoogleFonts.outfit(fontSize: 10, color: theme.colorScheme.primary),
+                                  )
+                                else
+                                  Text(
+                                    'pending'.tr(),
+                                    style: GoogleFonts.outfit(fontSize: 10, color: Colors.orange),
+                                  ),
+                              ],
+                            ),
+                            trailing: canRemove
+                                ? IconButton(
+                                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 18),
+                                    onPressed: () {
+                                      widget.projectsBloc.add(RemoveProjectMember(member['member_id']));
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  )
+                                : null,
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(height: 32),
+                  ],
+                  Text('invite_member_hint'.tr(), style: GoogleFonts.outfit(fontSize: 14)),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      widget.projectsBloc.add(SearchProfiles(value));
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'search_users'.tr(),
+                      prefixIcon: const Icon(Icons.search_rounded),
+                      suffixIcon: state.isSearching
+                          ? Container(
+                              padding: const EdgeInsets.all(12),
+                              width: 20,
+                              height: 20,
+                              child: const CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  if (state.searchResults.isNotEmpty) ...[
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.3,
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: state.searchResults.length,
+                        itemBuilder: (context, index) {
+                          final profile = state.searchResults[index];
+                          final email = profile['email'] as String;
+                          final name = profile['name'] as String;
+                          final isAlreadyMember = _isAlreadyMember(state, email);
+                          final isSelected = _selectedEmails.contains(email) || isAlreadyMember;
+
+                          return CheckboxListTile(
+                            value: isSelected,
+                            onChanged: isAlreadyMember 
+                              ? null 
+                              : (checked) {
+                                  setState(() {
+                                    if (checked == true) {
+                                      _selectedEmails.add(email);
+                                    } else {
+                                      _selectedEmails.remove(email);
+                                    }
+                                  });
+                                },
+                            title: Text(name, style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                            subtitle: Row(
+                              children: [
+                                Expanded(child: Text(email, style: GoogleFonts.outfit(fontSize: 12))),
+                                if (isAlreadyMember)
+                                  Text(
+                                    'already_member'.tr(),
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 10,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ] else if (_searchController.text.length >= 2 && !state.isSearching)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Center(
+                        child: Text(
+                          'no_users_found'.tr(),
+                          style: GoogleFonts.outfit(color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  if (_selectedEmails.isNotEmpty) ...[
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'selected_members'.tr(args: [_selectedEmails.length.toString()]),
+                        style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           actions: [

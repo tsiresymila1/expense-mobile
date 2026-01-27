@@ -239,7 +239,7 @@ class SettingsPage extends StatelessWidget {
               ScaffoldMessenger.of(
                 context,
               ).showSnackBar(SnackBar(
-              content: Text('Local data reset.'.tr()
+              content: Text('local_data_reset_success'.tr()
               )));
             }
           },

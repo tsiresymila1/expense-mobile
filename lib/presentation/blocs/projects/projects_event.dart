@@ -63,3 +63,13 @@ class RemoveProjectMember extends ProjectsEvent {
   final String memberId;
   RemoveProjectMember(this.memberId);
 }
+
+class LoadProjectMembers extends ProjectsEvent {
+  final String projectId;
+  LoadProjectMembers(this.projectId);
+}
+
+class ConvertPersonalToProject extends ProjectsEvent {
+  final String name;
+  ConvertPersonalToProject(this.name);
+}

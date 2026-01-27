@@ -80,11 +80,9 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         listenWhen: (previous, current) =>
             previous.currentProject?.id != current.currentProject?.id,
         listener: (context, state) {
-          if (state.currentProject != null) {
-            context.read<ExpensesBloc>().add(
-                  LoadExpenses(projectId: state.currentProject!.id),
-                );
-          }
+          context.read<ExpensesBloc>().add(
+                LoadExpenses(projectId: state.currentProject?.id),
+              );
         },
         child: BlocBuilder<SettingsBloc, SettingsState>(
           builder: (context, settings) {
@@ -113,15 +111,36 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                                 .fadeIn(duration: 800.ms, curve: Curves.easeOutExpo)
                                 .moveY(begin: 30, end: 0, duration: 800.ms, curve: Curves.easeOutExpo),
                             const SizedBox(height: 32),
-                            _buildModule(
+                            _buildSectionHeader(
                               'projects'.tr(),
-                              Icons.folder_copy_rounded,
-                              const ProjectShortcuts(),
                               theme,
+                              icon: Icons.folder_copy_rounded,
+                              actionLabel: 'see_all'.tr(),
+                              onAction: () => context.push('/projects'),
                             ).animate()
                                 .fadeIn(delay: 100.ms, duration: 800.ms)
-                                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
                                 .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.02),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(8),
+                              child: const ProjectShortcuts(),
+                            ).animate()
+                                .fadeIn(delay: 150.ms, duration: 800.ms)
+                                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                                .moveY(begin: 20, end: 0, curve: Curves.easeOutExpo),
                             const SizedBox(height: 28),
                             _buildModule(
                               'toolkit'.tr(),
@@ -148,6 +167,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                             _buildSectionHeader(
                               'recent_transactions'.tr(),
                               theme,
+                              icon: Icons.history_rounded,
                               actionLabel: 'see_all'.tr(),
                               onAction: () => context.push('/expenses'),
                             ).animate().fadeIn(delay: 500.ms),
@@ -288,27 +308,43 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   Widget _buildSectionHeader(
     String title,
     ThemeData theme, {
+    IconData? icon,
     String? actionLabel,
     VoidCallback? onAction,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.outfit(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
-          ),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              title.toUpperCase(),
+              style: GoogleFonts.outfit(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
         ),
         if (actionLabel != null && onAction != null)
           TextButton(
             onPressed: onAction,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             child: Text(
               actionLabel,
               style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
                 color: theme.colorScheme.primary,
               ),
             ),

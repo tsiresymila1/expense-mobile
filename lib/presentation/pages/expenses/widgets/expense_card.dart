@@ -12,12 +12,14 @@ class ExpenseCard extends StatelessWidget {
   final LocalExpense expense;
   final SettingsState settings;
   final VoidCallback onTap;
+  final String? creatorName;
 
   const ExpenseCard({
     super.key,
     required this.expense,
     required this.settings,
     required this.onTap,
+    this.creatorName,
   });
 
   @override
@@ -57,12 +59,27 @@ class ExpenseCard extends StatelessWidget {
                         final cat = state.categories
                             .where((c) => c.id == expense.categoryId)
                             .firstOrNull;
-                        return Text(
-                          cat?.name ?? 'General',
-                          style: GoogleFonts.outfit(
-                            fontSize: 13,
-                            color: Colors.grey,
-                          ),
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              cat?.name ?? 'General',
+                              style: GoogleFonts.outfit(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            if (creatorName != null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                '${'created_by'.tr()} $creatorName',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 10,
+                                  color: theme.colorScheme.primary.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ],
                         );
                       },
                     ),
