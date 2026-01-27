@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/widgets/category_picker_field.dart';
 import 'package:expense/presentation/widgets/expense_type_selector.dart';
@@ -51,6 +52,8 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                 'note': widget.expense?.note ?? '',
                 'date': widget.expense?.date ?? DateTime.now(),
                 'category_id': widget.expense?.categoryId,
+                'project_id': widget.expense?.projectId ??
+                    context.read<ProjectsBloc>().state.currentProject?.id,
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -63,8 +66,8 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                         ? 'new_expense'.tr()
                         : 'edit_transaction'.tr(),
                     style: GoogleFonts.outfit(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -135,7 +138,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
   Widget _buildLabel(String text) => Text(
     text,
     style: GoogleFonts.outfit(
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: FontWeight.w600,
       color: Colors.grey,
     ),
@@ -150,8 +153,8 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
           textAlign: TextAlign.center,
           readOnly: true,
           style: GoogleFonts.outfit(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
           ),
           decoration: _inputDecoration(theme, null, padding: 20),
@@ -163,8 +166,8 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
           name: 'amount',
           autofocus: widget.expense == null,
           style: GoogleFonts.outfit(
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
           ),
           decoration: _inputDecoration(theme, null, hint: '0.00'),
@@ -206,7 +209,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     ),
     child: Text(
       'save'.tr(),
-      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w600),
+      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
     ),
   );
 
@@ -220,6 +223,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
         date: v['date'],
         note: note?.isEmpty ?? true ? null : note,
         categoryId: v['category_id'],
+        projectId: v['project_id'],
         type: v['type'],
       );
       final updE = UpdateExpense(

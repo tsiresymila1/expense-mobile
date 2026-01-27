@@ -22,6 +22,7 @@ ExpenseEntity _$ExpenseEntityFromJson(Map<String, dynamic> json) {
 mixin _$ExpenseEntity {
   String get id => throw _privateConstructorUsedError;
   String get userId => throw _privateConstructorUsedError;
+  String? get projectId => throw _privateConstructorUsedError;
   String? get categoryId => throw _privateConstructorUsedError;
   double get amount => throw _privateConstructorUsedError;
   DateTime get date => throw _privateConstructorUsedError;
@@ -44,6 +45,7 @@ abstract class $ExpenseEntityCopyWith<$Res> {
   $Res call(
       {String id,
       String userId,
+      String? projectId,
       String? categoryId,
       double amount,
       DateTime date,
@@ -67,6 +69,7 @@ class _$ExpenseEntityCopyWithImpl<$Res, $Val extends ExpenseEntity>
   $Res call({
     Object? id = null,
     Object? userId = null,
+    Object? projectId = freezed,
     Object? categoryId = freezed,
     Object? amount = null,
     Object? date = null,
@@ -83,6 +86,10 @@ class _$ExpenseEntityCopyWithImpl<$Res, $Val extends ExpenseEntity>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
+      projectId: freezed == projectId
+          ? _value.projectId
+          : projectId // ignore: cast_nullable_to_non_nullable
+              as String?,
       categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -122,6 +129,7 @@ abstract class _$$ExpenseEntityImplCopyWith<$Res>
   $Res call(
       {String id,
       String userId,
+      String? projectId,
       String? categoryId,
       double amount,
       DateTime date,
@@ -143,6 +151,7 @@ class __$$ExpenseEntityImplCopyWithImpl<$Res>
   $Res call({
     Object? id = null,
     Object? userId = null,
+    Object? projectId = freezed,
     Object? categoryId = freezed,
     Object? amount = null,
     Object? date = null,
@@ -159,6 +168,10 @@ class __$$ExpenseEntityImplCopyWithImpl<$Res>
           ? _value.userId
           : userId // ignore: cast_nullable_to_non_nullable
               as String,
+      projectId: freezed == projectId
+          ? _value.projectId
+          : projectId // ignore: cast_nullable_to_non_nullable
+              as String?,
       categoryId: freezed == categoryId
           ? _value.categoryId
           : categoryId // ignore: cast_nullable_to_non_nullable
@@ -193,6 +206,7 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
   const _$ExpenseEntityImpl(
       {required this.id,
       required this.userId,
+      this.projectId,
       this.categoryId,
       required this.amount,
       required this.date,
@@ -208,6 +222,8 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
   @override
   final String userId;
   @override
+  final String? projectId;
+  @override
   final String? categoryId;
   @override
   final double amount;
@@ -222,7 +238,7 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
 
   @override
   String toString() {
-    return 'ExpenseEntity(id: $id, userId: $userId, categoryId: $categoryId, amount: $amount, date: $date, note: $note, updatedAt: $updatedAt, createdAt: $createdAt)';
+    return 'ExpenseEntity(id: $id, userId: $userId, projectId: $projectId, categoryId: $categoryId, amount: $amount, date: $date, note: $note, updatedAt: $updatedAt, createdAt: $createdAt)';
   }
 
   @override
@@ -232,6 +248,8 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
             other is _$ExpenseEntityImpl &&
             (identical(other.id, id) || other.id == id) &&
             (identical(other.userId, userId) || other.userId == userId) &&
+            (identical(other.projectId, projectId) ||
+                other.projectId == projectId) &&
             (identical(other.categoryId, categoryId) ||
                 other.categoryId == categoryId) &&
             (identical(other.amount, amount) || other.amount == amount) &&
@@ -245,8 +263,8 @@ class _$ExpenseEntityImpl implements _ExpenseEntity {
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(runtimeType, id, userId, categoryId, amount,
-      date, note, updatedAt, createdAt);
+  int get hashCode => Object.hash(runtimeType, id, userId, projectId,
+      categoryId, amount, date, note, updatedAt, createdAt);
 
   @JsonKey(ignore: true)
   @override
@@ -266,6 +284,7 @@ abstract class _ExpenseEntity implements ExpenseEntity {
   const factory _ExpenseEntity(
       {required final String id,
       required final String userId,
+      final String? projectId,
       final String? categoryId,
       required final double amount,
       required final DateTime date,
@@ -280,6 +299,8 @@ abstract class _ExpenseEntity implements ExpenseEntity {
   String get id;
   @override
   String get userId;
+  @override
+  String? get projectId;
   @override
   String? get categoryId;
   @override

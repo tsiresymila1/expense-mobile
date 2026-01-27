@@ -5,6 +5,7 @@ import 'package:expense/presentation/blocs/auth/auth_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/router.dart';
 import 'package:expense/sync_engine/sync_engine.dart';
 import 'package:expense/flavors.dart';
@@ -40,10 +41,17 @@ class ExpenseApp extends StatelessWidget {
           ),
           BlocProvider(create: (_) => SettingsBloc()),
           BlocProvider(
+            create: (context) => ProjectsBloc(
+              database: context.read<AppDatabase>(),
+              syncEngine: context.read<SyncEngine>(),
+              supabase: Supabase.instance.client,
+            )..add(LoadProjects()),
+          ),
+          BlocProvider(
             create: (context) => ExpensesBloc(
               context.read<AppDatabase>(),
               context.read<SyncEngine>(),
-            )..add(LoadExpenses()),
+            ),
           ),
           BlocProvider(
             create: (context) =>

@@ -10,6 +10,7 @@ _$ExpenseEntityImpl _$$ExpenseEntityImplFromJson(Map<String, dynamic> json) =>
     _$ExpenseEntityImpl(
       id: json['id'] as String,
       userId: json['userId'] as String,
+      projectId: json['projectId'] as String?,
       categoryId: json['categoryId'] as String?,
       amount: (json['amount'] as num).toDouble(),
       date: DateTime.parse(json['date'] as String),
@@ -22,6 +23,7 @@ Map<String, dynamic> _$$ExpenseEntityImplToJson(_$ExpenseEntityImpl instance) =>
     <String, dynamic>{
       'id': instance.id,
       'userId': instance.userId,
+      'projectId': instance.projectId,
       'categoryId': instance.categoryId,
       'amount': instance.amount,
       'date': instance.date.toIso8601String(),

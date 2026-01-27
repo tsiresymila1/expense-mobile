@@ -13,6 +13,7 @@ class ExpensesState {
   final bool isLoading;
   final DateTimeRange? dateRange;
   final RangeValues? amountRange;
+  final String? currentProjectId;
 
   ExpensesState({
     required this.expenses,
@@ -26,6 +27,7 @@ class ExpensesState {
     this.isLoading = false,
     this.dateRange,
     this.amountRange,
+    this.currentProjectId,
   });
 
   ExpensesState copyWith({
@@ -40,6 +42,7 @@ class ExpensesState {
     bool? isLoading,
     DateTimeRange? dateRange,
     RangeValues? amountRange,
+    String? currentProjectId,
   }) {
     return ExpensesState(
       expenses: expenses ?? this.expenses,
@@ -51,8 +54,9 @@ class ExpensesState {
       filteredExpense: filteredExpense ?? this.filteredExpense,
       dailySpending: dailySpending ?? this.dailySpending,
       isLoading: isLoading ?? this.isLoading,
-      dateRange: dateRange,
-      amountRange: amountRange,
+      dateRange: dateRange ?? this.dateRange,
+      amountRange: amountRange ?? this.amountRange,
+      currentProjectId: currentProjectId ?? this.currentProjectId,
     );
   }
 }

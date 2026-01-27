@@ -47,7 +47,7 @@ class SummarySection extends StatelessWidget {
             'balance_this_month'.tr(),
             style: GoogleFonts.outfit(
               color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.1, end: 0),
@@ -60,7 +60,7 @@ class SummarySection extends StatelessWidget {
             ),
             style: GoogleFonts.outfit(
               color: Colors.white,
-              fontSize: 36,
+              fontSize: 28,
               fontWeight: FontWeight.w700,
             ),
           )

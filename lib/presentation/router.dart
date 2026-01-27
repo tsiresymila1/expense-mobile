@@ -4,6 +4,7 @@ import 'package:expense/presentation/pages/auth/forgot_password_page.dart';
 import 'package:expense/presentation/pages/dashboard/dashboard_page.dart';
 import 'package:expense/presentation/pages/expenses/expenses_page.dart';
 import 'package:expense/presentation/pages/account/account_page.dart';
+import 'package:expense/presentation/pages/account/projects_page.dart';
 import 'package:expense/presentation/pages/settings/settings_page.dart';
 import 'package:expense/presentation/pages/stats/stats_page.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,10 @@ class AppRouter {
       GoRoute(
         path: '/account',
         builder: (context, state) => const AccountPage(),
+      ),
+      GoRoute(
+        path: '/projects',
+        builder: (context, state) => const ProjectsPage(),
       ),
       GoRoute(
         path: '/settings',

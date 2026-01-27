@@ -13,6 +13,10 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
         return _db.localExpenses;
       case 'categories':
         return _db.localCategories;
+      case 'projects':
+        return _db.localProjects;
+      case 'project_members':
+        return _db.localProjectMembers;
       default:
         throw Exception('Table $table not supported for sync');
     }
@@ -41,6 +45,10 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       dataClass = LocalExpense.fromJson(normalized);
     } else if (table == 'categories') {
       dataClass = LocalCategory.fromJson(normalized);
+    } else if (table == 'projects') {
+      dataClass = LocalProject.fromJson(normalized);
+    } else if (table == 'project_members') {
+      dataClass = LocalProjectMember.fromJson(normalized);
     } else {
       throw Exception('Table $table not supported for sync upsert');
     }
@@ -64,6 +72,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('deleted_at')) {
         result['deletedAt'] = data['deleted_at'];
       }
+      if (data.containsKey('project_id')) {
+        result['projectId'] = data['project_id'];
+      }
     } else if (table == 'categories') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
       if (data.containsKey('is_default')) {
@@ -74,6 +85,32 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       }
       if (data.containsKey('deleted_at')) {
         result['deletedAt'] = data['deleted_at'];
+      }
+    } else if (table == 'projects') {
+      if (data.containsKey('owner_id')) result['ownerId'] = data['owner_id'];
+      if (data.containsKey('is_default')) {
+        result['isDefault'] = data['is_default'];
+      }
+      if (data.containsKey('created_at')) {
+        result['createdAt'] = data['created_at'];
+      }
+      if (data.containsKey('updated_at')) {
+        result['updatedAt'] = data['updated_at'];
+      }
+      if (data.containsKey('deleted_at')) {
+        result['deletedAt'] = data['deleted_at'];
+      }
+    } else if (table == 'project_members') {
+      if (data.containsKey('project_id')) result['projectId'] = data['project_id'];
+      if (data.containsKey('user_id')) result['userId'] = data['user_id'];
+      if (data.containsKey('invited_by')) result['invitedBy'] = data['invited_by'];
+      if (data.containsKey('invited_at')) result['invitedAt'] = data['invited_at'];
+      if (data.containsKey('accepted_at')) result['acceptedAt'] = data['accepted_at'];
+      if (data.containsKey('created_at')) {
+        result['createdAt'] = data['created_at'];
+      }
+      if (data.containsKey('updated_at')) {
+        result['updatedAt'] = data['updated_at'];
       }
     }
 
@@ -100,11 +137,15 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       if (data.containsKey('deletedAt')) {
         result['deleted_at'] = _toIso(data['deletedAt']);
       }
+      if (data.containsKey('projectId')) {
+        result['project_id'] = data['projectId'];
+      }
       if (data.containsKey('date')) result['date'] = _toIso(data['date']);
 
       // Remove camelCase keys
       result.remove('userId');
       result.remove('categoryId');
+      result.remove('projectId');
       result.remove('updatedAt');
       result.remove('createdAt');
       result.remove('deletedAt');
@@ -124,6 +165,50 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       result.remove('isDefault');
       result.remove('updatedAt');
       result.remove('deletedAt');
+    } else if (table == 'projects') {
+      if (data.containsKey('ownerId')) result['owner_id'] = data['ownerId'];
+      if (data.containsKey('isDefault')) {
+        result['is_default'] = data['isDefault'];
+      }
+      if (data.containsKey('createdAt')) {
+        result['created_at'] = _toIso(data['createdAt']);
+      }
+      if (data.containsKey('updatedAt')) {
+        result['updated_at'] = _toIso(data['updatedAt']);
+      }
+      if (data.containsKey('deletedAt')) {
+        result['deleted_at'] = _toIso(data['deletedAt']);
+      }
+
+      result.remove('ownerId');
+      result.remove('isDefault');
+      result.remove('createdAt');
+      result.remove('updatedAt');
+      result.remove('deletedAt');
+    } else if (table == 'project_members') {
+      if (data.containsKey('projectId')) result['project_id'] = data['projectId'];
+      if (data.containsKey('userId')) result['user_id'] = data['userId'];
+      if (data.containsKey('invitedBy')) result['invited_by'] = data['invitedBy'];
+      if (data.containsKey('invitedAt')) {
+        result['invited_at'] = _toIso(data['invitedAt']);
+      }
+      if (data.containsKey('acceptedAt')) {
+        result['accepted_at'] = _toIso(data['acceptedAt']);
+      }
+      if (data.containsKey('createdAt')) {
+        result['created_at'] = _toIso(data['createdAt']);
+      }
+      if (data.containsKey('updatedAt')) {
+        result['updated_at'] = _toIso(data['updatedAt']);
+      }
+
+      result.remove('projectId');
+      result.remove('userId');
+      result.remove('invitedBy');
+      result.remove('invitedAt');
+      result.remove('acceptedAt');
+      result.remove('createdAt');
+      result.remove('updatedAt');
     }
 
     return result;
@@ -194,6 +279,11 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
 
   @override
   Future<void> purge(String table, DateTime olderThan) async {
+    // Skip tables that don't have a deletedAt column
+    if (table == 'project_members') {
+      return;
+    }
+    
     final tableInfo = _getTable(table);
     // Simple way to handle deleted_at column access via dynamic casting
     // In Drift, if a table has a column, it should be accessible this way if we know what we're doing

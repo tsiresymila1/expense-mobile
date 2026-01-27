@@ -1,5 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
+import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
@@ -98,92 +103,280 @@ class _AccountPageState extends State<AccountPage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: FormBuilder(
-          key: _key,
-          initialValue: {
-            'name': _user?.userMetadata?['name'] ?? '',
-            'email': _user?.email ?? '',
-          },
-          child: Column(
-            children: [
-              _avatar(t),
-              const SizedBox(height: 32),
-              _field(
-                'name',
-                'full_name'.tr(),
-                Icons.person_outline_rounded,
-                t,
-                validator: FormBuilderValidators.compose([
-                  FormBuilderValidators.required(),
-                  FormBuilderValidators.minLength(2),
-                ]),
-              ),
-              const SizedBox(height: 16),
-              _field(
-                'email',
-                'email'.tr(),
-                Icons.email_outlined,
-                t,
-                enabled: false,
-              ),
-              const SizedBox(height: 32),
-              if (_loading)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  onPressed: _update,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: t.colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'update_profile'.tr(),
-                    style: GoogleFonts.outfit(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+        child: Column(
+          children: [
+            _buildPremiumHeader(t, _user),
+            const SizedBox(height: 12),
+            _buildQuickStats(t),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: FormBuilder(
+                key: _key,
+                initialValue: {
+                  'name': _user?.userMetadata?['name'] ?? '',
+                  'email': _user?.email ?? '',
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionHeader('profile_info'.tr(), t),
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(color: t.dividerColor.withValues(alpha: 0.05)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          children: [
+                            _field(
+                              'name',
+                              'full_name'.tr(),
+                              Icons.person_outline_rounded,
+                              t,
+                              validator: FormBuilderValidators.compose([
+                                FormBuilderValidators.required(),
+                                FormBuilderValidators.minLength(2),
+                              ]),
+                            ),
+                            const SizedBox(height: 16),
+                            _field(
+                              'email',
+                              'email'.tr(),
+                              Icons.email_outlined,
+                              t,
+                              enabled: false,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ).animate(delay: 400.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('security'.tr(), t),
+                    _buildMenuCard(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'change_password'.tr(),
+                      color: Colors.blue,
+                      onTap: () => _showPwDialog(context),
+                    ).animate(delay: 500.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                    const SizedBox(height: 24),
+                    _buildSectionHeader('management'.tr(), t),
+                    _buildMenuCard(
+                      icon: Icons.folder_open_rounded,
+                      title: 'manage_projects'.tr(),
+                      color: t.colorScheme.primary,
+                      onTap: () => context.push('/projects'),
+                    ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                    const SizedBox(height: 40),
+                    if (_loading)
+                      const Center(child: CircularProgressIndicator())
+                    else
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: t.colorScheme.primary.withValues(alpha: 0.2),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _update,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 56),
+                            backgroundColor: t.colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                          ),
+                          child: Text('update_profile'.tr()),
+                        ),
+                      ).animate(delay: 700.ms).fadeIn(),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout_rounded, color: Colors.red, size: 20),
+                        label: Text(
+                          'logout'.tr(),
+                          style: GoogleFonts.outfit(
+                            color: Colors.red,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ).animate(delay: 800.ms).fadeIn(),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                onPressed: () => _showPwDialog(context),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 56),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  'change_password'.tr(),
-                  style: GoogleFonts.outfit(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
               ),
-              const SizedBox(height: 48),
-              TextButton.icon(
-                onPressed: _logout,
-                icon: const Icon(Icons.logout_rounded, color: Colors.red),
-                label: Text(
-                  'logout'.tr(),
-                  style: GoogleFonts.outfit(
-                    color: Colors.red,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildPremiumHeader(ThemeData t, User? user) => Container(
+        width: double.infinity,
+        padding: const EdgeInsets.only(bottom: 32, top: 12),
+        decoration: BoxDecoration(
+          color: t.colorScheme.surface,
+          border: Border(
+            bottom: BorderSide(color: t.dividerColor.withValues(alpha: 0.1)),
+          ),
+        ),
+        child: Column(
+          children: [
+            Stack(
+              children: [
+                _avatar(t).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: t.colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: t.colorScheme.surface, width: 2),
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                  ),
+                ).animate().scale(delay: 400.ms),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              user?.userMetadata?['name'] ?? 'User',
+              style: GoogleFonts.outfit(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
+              ),
+            ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1, end: 0),
+            const SizedBox(height: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: t.colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                user?.email ?? '',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: t.colorScheme.primary,
+                ),
+              ),
+            ).animate().fadeIn(delay: 300.ms),
+          ],
+        ),
+      );
+
+  Widget _buildQuickStats(ThemeData t) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            _buildStatItem('transactions'.tr(), 'exp_count', Icons.receipt_long_rounded, Colors.orange),
+            const SizedBox(width: 12),
+            _buildStatItem('projects'.tr(), 'prj_count', Icons.folder_rounded, Colors.blue),
+            const SizedBox(width: 12),
+            _buildStatItem('categories'.tr(), 'cat_count', Icons.category_rounded, Colors.green),
+          ],
+        ),
+      ).animate().fadeIn(delay: 400.ms);
+
+  Widget _buildStatItem(String label, String key, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 8),
+            _getStatValue(key),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: GoogleFonts.outfit(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _getStatValue(String key) {
+    if (key == 'exp_count') {
+      return BlocBuilder<ExpensesBloc, ExpensesState>(
+        builder: (context, state) => Text(
+          state.expenses.length.toString(),
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+      );
+    } else if (key == 'prj_count') {
+      return BlocBuilder<ProjectsBloc, ProjectsState>(
+        builder: (context, state) => Text(
+          state.projects.length.toString(),
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+      );
+    } else if (key == 'cat_count') {
+      return BlocBuilder<CategoriesBloc, CategoriesState>(
+        builder: (context, state) => Text(
+          state.categories.length.toString(),
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800),
+        ),
+      );
+    } else {
+      return Text(
+        '0',
+        style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800),
+      );
+    }
+  }
+
+  Widget _buildMenuCard({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) => Card(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Theme.of(context).dividerColor.withValues(alpha: 0.05)),
+        ),
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          title: Text(
+            title,
+            style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+        ),
+      );
+
 
   Widget _avatar(ThemeData t) => Container(
     padding: const EdgeInsets.all(4),
@@ -221,6 +414,19 @@ class _AccountPageState extends State<AccountPage> {
       ),
     ),
     validator: validator,
+  );
+
+  Widget _buildSectionHeader(String title, ThemeData t) => Padding(
+    padding: const EdgeInsets.only(left: 4, bottom: 12),
+    child: Text(
+      title,
+      style: GoogleFonts.outfit(
+        fontSize: 14,
+        fontWeight: FontWeight.w700,
+        color: t.colorScheme.primary,
+        letterSpacing: 0.5,
+      ),
+    ),
   );
 
   void _showPwDialog(BuildContext context) {

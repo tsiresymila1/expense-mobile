@@ -66,6 +66,8 @@ Future<void> main() async {
     tableConfigs: [
       TableSyncConfig(tableName: 'expenses'),
       TableSyncConfig(tableName: 'categories'),
+      TableSyncConfig(tableName: 'projects'),
+      TableSyncConfig(tableName: 'project_members'),
     ],
   );
   syncEngine.start();

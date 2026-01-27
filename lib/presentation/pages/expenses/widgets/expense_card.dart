@@ -74,9 +74,9 @@ class ExpenseCard extends StatelessWidget {
                 style: GoogleFonts.outfit(
                   color: expense.type == 'income'
                       ? Colors.green
-                      : theme.colorScheme.onSurface,
+                      : const Color(0xFFE57373), // Subtle Red
                   fontWeight: FontWeight.w800,
-                  fontSize: 17,
+                  fontSize: 15,
                 ),
               ),
             ],

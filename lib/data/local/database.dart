@@ -7,9 +7,41 @@ import 'package:path/path.dart' as p;
 
 part 'database.g.dart';
 
+class LocalProjects extends Table {
+  TextColumn get id => text()();
+  TextColumn get ownerId => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+  TextColumn get color => text().nullable()();
+  TextColumn get icon => text().nullable()();
+  BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class LocalProjectMembers extends Table {
+  TextColumn get id => text()();
+  TextColumn get projectId => text()();
+  TextColumn get userId => text()();
+  TextColumn get role => text().withDefault(const Constant('viewer'))();
+  TextColumn get invitedBy => text().nullable()();
+  DateTimeColumn get invitedAt => dateTime()();
+  DateTimeColumn get acceptedAt => dateTime().nullable()();
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
 class LocalExpenses extends Table {
   TextColumn get id => text()();
   TextColumn get userId => text()();
+  TextColumn get projectId => text().nullable()();
   TextColumn get categoryId => text().nullable()();
   RealColumn get amount => real()();
   TextColumn get type =>
@@ -49,12 +81,12 @@ class SyncQueue extends Table {
   DateTimeColumn get createdAt => dateTime()();
 }
 
-@DriftDatabase(tables: [LocalExpenses, LocalCategories, SyncQueue])
+@DriftDatabase(tables: [LocalProjects, LocalProjectMembers, LocalExpenses, LocalCategories, SyncQueue])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -70,6 +102,12 @@ class AppDatabase extends _$AppDatabase {
         if (from < 4) {
           await _addColumnSafely(m, localExpenses, 'deleted_at');
           await _addColumnSafely(m, localCategories, 'deleted_at');
+        }
+        if (from < 5) {
+          // Add projects support
+          await m.createTable(localProjects);
+          await m.createTable(localProjectMembers);
+          await _addColumnSafely(m, localExpenses, 'project_id');
         }
       },
     );

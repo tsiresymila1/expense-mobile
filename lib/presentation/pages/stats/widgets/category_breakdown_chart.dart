@@ -9,10 +9,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class CategoryBreakdownChart extends StatelessWidget {
+class CategoryBreakdownChart extends StatefulWidget {
   final ExpensesState state;
 
   const CategoryBreakdownChart({super.key, required this.state});
+
+  @override
+  State<CategoryBreakdownChart> createState() => _CategoryBreakdownChartState();
+}
+
+class _CategoryBreakdownChartState extends State<CategoryBreakdownChart> {
+  int touchedIndex = -1;
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +28,7 @@ class CategoryBreakdownChart extends StatelessWidget {
     final settings = context.read<SettingsBloc>().state;
 
     final totals = <String, double>{};
-    for (var e in state.expenses.where((e) => e.type == 'expense')) {
+    for (var e in widget.state.expenses.where((e) => e.type == 'expense')) {
       totals[e.categoryId ?? 'other'] =
           (totals[e.categoryId ?? 'other'] ?? 0) + e.amount;
     }
@@ -40,22 +47,48 @@ class CategoryBreakdownChart extends StatelessWidget {
     final totalExpense = totals.values.fold(0.0, (sum, val) => sum + val);
 
     return Container(
-      height: 300,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 2,
+          SizedBox(
+            height: 200,
             child: PieChart(
               PieChartData(
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        touchedIndex = -1;
+                        return;
+                      }
+                      touchedIndex =
+                          pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    });
+                  },
+                ),
                 sectionsSpace: 4,
-                centerSpaceRadius: 40,
-                sections: totals.entries.map((entry) {
+                centerSpaceRadius: 50,
+                sections: totals.entries.toList().asMap().entries.map((chartEntry) {
+                  final index = chartEntry.key;
+                  final entry = chartEntry.value;
+                  final isTouched = index == touchedIndex;
+                  final fontSize = isTouched ? 16.0 : 12.0;
+                  final radius = isTouched ? 70.0 : 60.0;
+
                   final cat = categoriesState.categories.firstWhere(
                     (c) => c.id == entry.key,
                     orElse: () => LocalCategory(
@@ -69,11 +102,12 @@ class CategoryBreakdownChart extends StatelessWidget {
                   return PieChartSectionData(
                     color: color,
                     value: entry.value,
-                    title:
-                        '${(entry.value / totalExpense * 100).toStringAsFixed(0)}%',
-                    radius: 60,
+                    title: isTouched 
+                      ? '${AppTheme.formatMoney(entry.value, settings.currencySymbol)}'
+                      : '${(entry.value / totalExpense * 100).toStringAsFixed(0)}%',
+                    radius: radius,
                     titleStyle: GoogleFonts.outfit(
-                      fontSize: 12,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -82,28 +116,28 @@ class CategoryBreakdownChart extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: ListView(
-              shrinkWrap: true,
-              children: totals.entries.map((entry) {
-                final cat = categoriesState.categories.firstWhere(
-                  (c) => c.id == entry.key,
-                  orElse: () => LocalCategory(
-                    id: 'other',
-                    name: 'Other',
-                    updatedAt: DateTime.now(),
-                    isDefault: true,
-                  ),
-                );
-                return _buildLegendItem(
-                  cat.name,
-                  entry.value,
-                  AppTheme.parseColor(cat.color),
-                  settings.currencySymbol,
-                );
-              }).toList(),
-            ),
+          const SizedBox(height: 32),
+          Wrap(
+            spacing: 16,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: totals.entries.map((entry) {
+              final cat = categoriesState.categories.firstWhere(
+                (c) => c.id == entry.key,
+                orElse: () => LocalCategory(
+                  id: 'other',
+                  name: 'Other',
+                  updatedAt: DateTime.now(),
+                  isDefault: true,
+                ),
+              );
+              return _buildLegendItem(
+                cat.name,
+                entry.value,
+                AppTheme.parseColor(cat.color),
+                settings.currencySymbol,
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -116,35 +150,35 @@ class CategoryBreakdownChart extends StatelessWidget {
     Color color,
     String currency,
   ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 12,
-            height: 12,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Text(
-                    name,
-                    style: GoogleFonts.outfit(fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Text(
-                  AppTheme.formatMoney(value, currency),
-                  style: GoogleFonts.outfit(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          Text(
+            name,
+            style: GoogleFonts.outfit(
+              fontSize: 12, 
+              fontWeight: FontWeight.w600,
+              color: color.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            AppTheme.formatMoney(value, currency),
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

@@ -1,12 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/dashboard_app_bar.dart';
+import 'package:expense/presentation/pages/dashboard/widgets/project_shortcuts.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/quick_actions.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/recent_transactions_list.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/spending_chart.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/summary_section.dart';
+import 'package:expense/presentation/pages/stats/widgets/category_breakdown_chart.dart';
 import 'package:expense/presentation/router.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/sync_engine/sync_engine.dart';
@@ -74,62 +77,85 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settings) {
-          return RefreshIndicator(
-            onRefresh: () async {
-              context.read<ExpensesBloc>().add(LoadExpenses());
-              await syncEngine.triggerSync();
-            },
-            child: BlocBuilder<ExpensesBloc, ExpensesState>(
-              builder: (context, state) {
-                return CustomScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    DashboardAppBar(syncEngine: syncEngine),
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 8),
-                            SummarySection(state: state, settings: settings),
-                            const SizedBox(height: 24),
-                            const QuickActions(),
-                            const SizedBox(height: 32),
-                            _buildSectionHeader('daily_expenses'.tr(), theme)
-                                .animate()
-                                .fadeIn(delay: 300.ms, duration: 600.ms)
-                                .slideY(begin: 0.1, end: 0),
-                            const SizedBox(height: 16),
-                            SpendingChart(state: state),
-                            const SizedBox(height: 32),
-                            _buildSectionHeader(
-                              'recent_transactions'.tr(),
-                              theme,
-                              actionLabel: 'see_all'.tr(),
-                              onAction: () => context.push('/expenses'),
-                            )
-                                .animate()
-                                .fadeIn(delay: 500.ms, duration: 600.ms)
-                                .slideY(begin: 0.1, end: 0),
-                            const SizedBox(height: 16),
-                            RecentTransactionsList(
-                              state: state,
-                              settings: settings,
-                            ),
-                            const SizedBox(height: 100),
-                          ],
+      body: BlocListener<ProjectsBloc, ProjectsState>(
+        listenWhen: (previous, current) =>
+            previous.currentProject?.id != current.currentProject?.id,
+        listener: (context, state) {
+          if (state.currentProject != null) {
+            context.read<ExpensesBloc>().add(
+                  LoadExpenses(projectId: state.currentProject!.id),
+                );
+          }
+        },
+        child: BlocBuilder<SettingsBloc, SettingsState>(
+          builder: (context, settings) {
+            return RefreshIndicator(
+              onRefresh: () async {
+                final currentProject = context.read<ProjectsBloc>().state.currentProject;
+                context.read<ExpensesBloc>().add(
+                      LoadExpenses(projectId: currentProject?.id),
+                    );
+                await syncEngine.triggerSync();
+              },
+              child: BlocBuilder<ExpensesBloc, ExpensesState>(
+                builder: (context, state) {
+                  return CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      DashboardAppBar(syncEngine: syncEngine),
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 8),
+                              SummarySection(state: state, settings: settings),
+                              const SizedBox(height: 24),
+                              const ProjectShortcuts(),
+                              const SizedBox(height: 24),
+                              const QuickActions(),
+                              const SizedBox(height: 32),
+                              _buildSectionHeader('category_breakdown'.tr(), theme)
+                                  .animate()
+                                  .fadeIn(delay: 300.ms, duration: 600.ms)
+                                  .slideY(begin: 0.1, end: 0),
+                              const SizedBox(height: 16),
+                              CategoryBreakdownChart(state: state),
+                              const SizedBox(height: 32),
+                              _buildSectionHeader('daily_expenses'.tr(), theme)
+                                  .animate()
+                                  .fadeIn(delay: 400.ms, duration: 600.ms)
+                                  .slideY(begin: 0.1, end: 0),
+                              const SizedBox(height: 16),
+                              SpendingChart(state: state),
+                              const SizedBox(height: 32),
+                              _buildSectionHeader(
+                                'recent_transactions'.tr(),
+                                theme,
+                                actionLabel: 'see_all'.tr(),
+                                onAction: () => context.push('/expenses'),
+                              )
+                                  .animate()
+                                  .fadeIn(delay: 500.ms, duration: 600.ms)
+                                  .slideY(begin: 0.1, end: 0),
+                              const SizedBox(height: 16),
+                              RecentTransactionsList(
+                                state: state,
+                                settings: settings,
+                              ),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          );
-        },
+                    ],
+                  );
+                },
+              ),
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddExpense(context),
@@ -154,7 +180,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         Text(
           title,
           style: GoogleFonts.outfit(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: theme.colorScheme.onSurface,
           ),

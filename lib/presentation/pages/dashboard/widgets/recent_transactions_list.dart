@@ -60,23 +60,23 @@ class RecentTransactionsList extends StatelessWidget {
               expense.note ?? 'no_description',
               style: GoogleFonts.outfit(
                 fontWeight: FontWeight.w600,
-                fontSize: 16,
+                fontSize: 14,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ).tr(),
             subtitle: Text(
               DateFormat('EEE, MMM dd', context.locale.toString()).format(expense.date),
-              style: GoogleFonts.outfit(fontSize: 13, color: Colors.grey),
+              style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey),
             ),
             trailing: Text(
               '${expense.type == 'income' ? '+' : '-'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol, locale: context.locale.toString())}',
               style: GoogleFonts.outfit(
                 color: expense.type == 'income'
                     ? Colors.green
-                    : theme.colorScheme.onSurface,
+                    : const Color(0xFFE57373), // Subtle Red
                 fontWeight: FontWeight.w800,
-                fontSize: 16,
+                fontSize: 14,
               ),
             ),
           ),

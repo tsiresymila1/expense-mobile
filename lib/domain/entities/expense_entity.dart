@@ -8,6 +8,7 @@ class ExpenseEntity with _$ExpenseEntity {
   const factory ExpenseEntity({
     required String id,
     required String userId,
+    String? projectId,
     String? categoryId,
     required double amount,
     required DateTime date,

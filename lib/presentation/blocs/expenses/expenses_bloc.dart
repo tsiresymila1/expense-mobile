@@ -24,11 +24,13 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
   }
 
   Future<void> _onLoad(LoadExpenses event, Emitter<ExpensesState> emit) async {
+    final projectId = event.projectId ?? state.currentProjectId;
     emit(
       state.copyWith(
         isLoading: true,
         dateRange: event.dateRange,
         amountRange: event.amountRange,
+        currentProjectId: projectId,
       ),
     );
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
@@ -43,6 +45,11 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
 
     var query = database.select(database.localExpenses)
       ..where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
+    
+    if (projectId != null) {
+      query.where((t) => t.projectId.equals(projectId));
+    }
+
     if (event.dateRange != null) {
       query.where(
         (t) => t.date.isBetweenValues(
@@ -64,9 +71,14 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
 
     double thisIn = 0, thisEx = 0, lastTot = 0, filtIn = 0, filtEx = 0;
     final dailyMap = <int, double>{};
-    final all = await (database.select(
-      database.localExpenses,
-    )..where((t) => t.userId.equals(userId) & t.deletedAt.isNull())).get();
+    
+    // For totals, we should also filter by project if it's selected
+    var allQuery = database.select(database.localExpenses)
+      ..where((t) => t.userId.equals(userId) & t.deletedAt.isNull());
+    if (projectId != null) {
+      allQuery.where((t) => t.projectId.equals(projectId));
+    }
+    final all = await allQuery.get();
 
     for (var e in all) {
       final isIn = e.type == 'income';
@@ -106,12 +118,15 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
         isLoading: false,
         dateRange: event.dateRange,
         amountRange: event.amountRange,
+        currentProjectId: projectId,
       ),
     );
   }
 
   Future<void> _onAdd(AddExpense event, Emitter<ExpensesState> emit) async {
     final userId = Supabase.instance.client.auth.currentUser?.id ?? '';
+    final projectId = event.projectId ?? state.currentProjectId;
+    
     try {
       final id = const Uuid().v4();
       await database
@@ -120,6 +135,7 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
             LocalExpensesCompanion.insert(
               id: id,
               userId: userId,
+              projectId: Value(projectId),
               categoryId: Value(event.categoryId),
               amount: event.amount,
               type: Value(event.type),
