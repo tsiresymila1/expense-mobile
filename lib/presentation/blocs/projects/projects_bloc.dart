@@ -37,6 +37,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     }
 
     emit(state.copyWith(isSearching: true));
+    final userId = supabase.auth.currentUser?.id;
     try {
       final results = await supabase
           .from('profiles')
@@ -44,8 +45,10 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
           .or('name.ilike.%${event.query}%,email.ilike.%${event.query}%')
           .limit(10);
 
+      final filtered = results.where((r) => r['id'] != userId).toList();
+
       emit(state.copyWith(
-        searchResults: List<Map<String, dynamic>>.from(results),
+        searchResults: List<Map<String, dynamic>>.from(filtered),
         isSearching: false,
       ));
     } catch (e) {
@@ -224,6 +227,10 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       }
 
       final targetUserId = response['id'] as String;
+      if (targetUserId == currentUserId) {
+        emit(state.copyWith(error: 'Cannot share with yourself'));
+        return;
+      }
       final id = const Uuid().v4();
       final now = DateTime.now();
 

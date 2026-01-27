@@ -16,39 +16,67 @@ class DashboardAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = Supabase.instance.client.auth.currentUser;
+    final userName = user?.userMetadata?['name'] ?? 'User';
+
     return BlocBuilder<ProjectsBloc, ProjectsState>(
       builder: (context, state) {
         final currentProject = state.currentProject;
 
         return SliverAppBar(
-          expandedHeight: 120,
+          expandedHeight: 140,
           floating: false,
           pinned: true,
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
           flexibleSpace: FlexibleSpaceBar(
-            title: InkWell(
-              onTap: () => _showProjectPicker(context, state),
+            title: Padding(
+              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    currentProject?.name ?? 'G-spend'.tr(),
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.w700,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 18,
-                    color: theme.colorScheme.onSurface.withAlpha(150),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${'welcome_back'.tr()}, $userName',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      InkWell(
+                        onTap: () => _showProjectPicker(context, state),
+                        child: Row(
+                          children: [
+                            Text(
+                              currentProject?.name ?? 'G-spend'.tr(),
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                                color: theme.colorScheme.onSurface,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+            titlePadding: EdgeInsets.zero,
             centerTitle: false,
           ),
           actions: [
@@ -59,18 +87,36 @@ class DashboardAppBar extends StatelessWidget {
                 return SyncIndicator(status: status);
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.person_outline_rounded),
-              onPressed: () => context.push('/account'),
+            const SizedBox(width: 12),
+            _buildActionIcon(
+              theme,
+              Icons.settings_outlined,
+              () => context.push('/settings'),
             ),
-            IconButton(
-              icon: const Icon(Icons.settings_outlined),
-              onPressed: () => context.push('/settings'),
+            const SizedBox(width: 12),
+            _buildActionIcon(
+              theme,
+              Icons.person_outline_rounded,
+              () => context.push('/account'),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
           ],
         );
       },
+    );
+  }
+
+  Widget _buildActionIcon(ThemeData theme, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
+      ),
     );
   }
 

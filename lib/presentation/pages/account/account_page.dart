@@ -169,6 +169,13 @@ class _AccountPageState extends State<AccountPage> {
                       color: t.colorScheme.primary,
                       onTap: () => context.push('/projects'),
                     ).animate(delay: 600.ms).fadeIn().slideY(begin: 0.1, end: 0),
+                    const SizedBox(height: 12),
+                    _buildMenuCard(
+                      icon: Icons.settings_outlined,
+                      title: 'settings'.tr(),
+                      color: Colors.blueGrey,
+                      onTap: () => context.push('/settings'),
+                    ).animate(delay: 650.ms).fadeIn().slideY(begin: 0.1, end: 0),
                     const SizedBox(height: 40),
                     if (_loading)
                       const Center(child: CircularProgressIndicator())

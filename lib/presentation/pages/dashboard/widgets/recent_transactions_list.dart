@@ -81,13 +81,13 @@ class RecentTransactionsList extends StatelessWidget {
             ),
           ),
         )
-            .animate(delay: (100 * index).ms)
-            .fadeIn(duration: 600.ms)
-            .slideY(
-          begin: 0.1,
+            .animate(delay: (20 * index).ms) // Faster stagger for long lists
+            .fadeIn(duration: 800.ms, curve: Curves.easeOutExpo)
+            .moveX(
+          begin: 30,
           end: 0,
-          duration: 600.ms,
-          curve: Curves.easeOut,
+          duration: 800.ms,
+          curve: Curves.easeOutExpo,
         );
       },
     );

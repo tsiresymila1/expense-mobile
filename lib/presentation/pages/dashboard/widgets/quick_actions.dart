@@ -12,38 +12,28 @@ class QuickActions extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
-        Expanded(
-          child: _buildActionCard(
-            context,
-            theme,
-            'transactions'.tr(),
-            Icons.receipt_long_rounded,
-            theme.colorScheme.secondary,
-            () => context.push('/expenses'),
-          ),
-        )
-            .animate()
-            .fadeIn(delay: 200.ms, duration: 600.ms)
-            .slideY(begin: 0.1, end: 0),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildActionCard(
-            context,
-            theme,
-            'statistics'.tr(),
-            Icons.bar_chart_rounded,
-            theme.colorScheme.primary,
-            () => context.push('/stats'),
-          ),
-        )
-            .animate()
-            .fadeIn(delay: 300.ms, duration: 600.ms)
-            .slideY(begin: 0.1, end: 0),
+        _buildActionItem(
+          context,
+          theme,
+          'transactions'.tr(),
+          Icons.receipt_long_rounded,
+          theme.colorScheme.secondary,
+          () => context.push('/expenses'),
+        ).animate().fadeIn(delay: 400.ms).moveX(begin: 20, end: 0, curve: Curves.easeOutExpo),
+        const SizedBox(width: 12),
+        _buildActionItem(
+          context,
+          theme,
+          'statistics'.tr(),
+          Icons.bar_chart_rounded,
+          theme.colorScheme.primary,
+          () => context.push('/stats'),
+        ).animate().fadeIn(delay: 500.ms).moveX(begin: 20, end: 0, curve: Curves.easeOutExpo),
       ],
     );
   }
 
-  Widget _buildActionCard(
+  Widget _buildActionItem(
     BuildContext context,
     ThemeData theme,
     String title,
@@ -51,42 +41,40 @@ class QuickActions extends StatelessWidget {
     Color color,
     VoidCallback onTap,
   ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(24),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.1),
-              blurRadius: 1,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(icon, color: color, size: 20),
               ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: theme.colorScheme.onSurface,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

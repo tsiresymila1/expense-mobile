@@ -1,6 +1,7 @@
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
@@ -31,7 +32,11 @@ class ProjectShortcuts extends StatelessWidget {
               final project = all[index];
               final isSelected = project.id == state.currentProject?.id;
 
-              return _buildProjectShortcut(context, theme, project, isSelected);
+              return _buildProjectShortcut(context, theme, project, isSelected)
+                  .animate()
+                  .fadeIn(delay: (index * 50).ms, duration: 600.ms)
+                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                  .moveX(begin: 20, end: 0, curve: Curves.easeOutExpo);
             },
           ),
         );

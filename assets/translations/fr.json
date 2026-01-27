@@ -115,5 +115,9 @@
   "selected_members": "{} membres sélectionnés",
   "profile_info": "Informations du profil",
   "security": "Sécurité",
-  "management": "Gestion"
+  "management": "Gestion",
+  "toolkit": "Outils",
+  "daily_spending": "Dépenses journalières",
+  "budget_status": "Statut du budget",
+  "usage_of_income": "Utilisation des revenus"
 }

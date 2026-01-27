@@ -33,11 +33,11 @@ class SupabaseRemoteServiceAdapter implements RemoteServiceAdapter {
   }
 
   @override
-  Future<void> purge(String table, String userId, DateTime olderThan) async {
+  Future<void> purge(String table, String userId, DateTime olderThan, {String userIdColumn = 'user_id'}) async {
     await _client
         .from(table)
         .delete()
-        .eq('user_id', userId)
+        .eq(userIdColumn, userId)
         .lt('deleted_at', olderThan.toIso8601String());
   }
 }

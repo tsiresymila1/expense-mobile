@@ -7,7 +7,6 @@ import 'package:expense/presentation/pages/dashboard/widgets/dashboard_app_bar.d
 import 'package:expense/presentation/pages/dashboard/widgets/project_shortcuts.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/quick_actions.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/recent_transactions_list.dart';
-import 'package:expense/presentation/pages/dashboard/widgets/spending_chart.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/summary_section.dart';
 import 'package:expense/presentation/pages/stats/widgets/category_breakdown_chart.dart';
 import 'package:expense/presentation/router.dart';
@@ -100,53 +99,65 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
               child: BlocBuilder<ExpensesBloc, ExpensesState>(
                 builder: (context, state) {
                   return CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const BouncingScrollPhysics(
+                      parent: AlwaysScrollableScrollPhysics(),
+                    ),
                     slivers: [
                       DashboardAppBar(syncEngine: syncEngine),
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 8),
-                              SummarySection(state: state, settings: settings),
-                              const SizedBox(height: 24),
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                        sliver: SliverList(
+                          delegate: SliverChildListDelegate([
+                            SummarySection(state: state, settings: settings)
+                                .animate()
+                                .fadeIn(duration: 800.ms, curve: Curves.easeOutExpo)
+                                .moveY(begin: 30, end: 0, duration: 800.ms, curve: Curves.easeOutExpo),
+                            const SizedBox(height: 32),
+                            _buildModule(
+                              'projects'.tr(),
+                              Icons.folder_copy_rounded,
                               const ProjectShortcuts(),
-                              const SizedBox(height: 24),
+                              theme,
+                            ).animate()
+                                .fadeIn(delay: 100.ms, duration: 800.ms)
+                                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                                .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
+                            const SizedBox(height: 28),
+                            _buildModule(
+                              'toolkit'.tr(),
+                              Icons.bolt_rounded,
                               const QuickActions(),
-                              const SizedBox(height: 32),
-                              _buildSectionHeader('category_breakdown'.tr(), theme)
-                                  .animate()
-                                  .fadeIn(delay: 300.ms, duration: 600.ms)
-                                  .slideY(begin: 0.1, end: 0),
-                              const SizedBox(height: 16),
+                              theme,
+                            ).animate()
+                                .fadeIn(delay: 200.ms, duration: 800.ms)
+                                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                                .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
+                            const SizedBox(height: 32),
+                            _buildBudgetSection(theme, state),
+                            const SizedBox(height: 32),
+                            _buildModule(
+                              'category_breakdown'.tr(),
+                              Icons.pie_chart_rounded,
                               CategoryBreakdownChart(state: state),
-                              const SizedBox(height: 32),
-                              _buildSectionHeader('daily_expenses'.tr(), theme)
-                                  .animate()
-                                  .fadeIn(delay: 400.ms, duration: 600.ms)
-                                  .slideY(begin: 0.1, end: 0),
-                              const SizedBox(height: 16),
-                              SpendingChart(state: state),
-                              const SizedBox(height: 32),
-                              _buildSectionHeader(
-                                'recent_transactions'.tr(),
-                                theme,
-                                actionLabel: 'see_all'.tr(),
-                                onAction: () => context.push('/expenses'),
-                              )
-                                  .animate()
-                                  .fadeIn(delay: 500.ms, duration: 600.ms)
-                                  .slideY(begin: 0.1, end: 0),
-                              const SizedBox(height: 16),
-                              RecentTransactionsList(
-                                state: state,
-                                settings: settings,
-                              ),
-                              const SizedBox(height: 100),
-                            ],
-                          ),
+                              theme,
+                            ).animate()
+                                .fadeIn(delay: 400.ms, duration: 800.ms)
+                                .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                                .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
+                            const SizedBox(height: 32),
+                            _buildSectionHeader(
+                              'recent_transactions'.tr(),
+                              theme,
+                              actionLabel: 'see_all'.tr(),
+                              onAction: () => context.push('/expenses'),
+                            ).animate().fadeIn(delay: 500.ms),
+                            RecentTransactionsList(
+                              state: state,
+                              settings: settings,
+                            ).animate()
+                                .fadeIn(delay: 600.ms, duration: 800.ms)
+                                .moveY(begin: 20, end: 0, curve: Curves.easeOutExpo),
+                          ]),
                         ),
                       ),
                     ],
@@ -157,14 +168,120 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddExpense(context),
         backgroundColor: theme.colorScheme.primary,
-        child: const Icon(Icons.add_rounded, color: Colors.white, size: 32),
+        foregroundColor: Colors.white,
+        elevation: 8,
+        label: Text(
+          'new_expense'.tr(),
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        ),
+        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
       )
           .animate()
-          .fadeIn(delay: 600.ms, duration: 600.ms)
-          .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+          .fadeIn(delay: 1000.ms, duration: 800.ms)
+          .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1), curve: Curves.easeOutBack),
+    );
+  }
+
+  Widget _buildBudgetSection(ThemeData theme, ExpensesState state) {
+    final income = state.thisMonthIncome;
+    final expense = state.thisMonthExpense;
+    final progress = income > 0 ? (expense / income).clamp(0.0, 1.0) : 0.0;
+    final percentage = (progress * 100).toStringAsFixed(0);
+
+    return _buildModule(
+      'budget_status'.tr(),
+      Icons.speed_rounded,
+      Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'usage_of_income'.tr(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                Text(
+                  '$percentage%',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: progress > 0.8 ? theme.colorScheme.error : theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  progress > 0.8 ? theme.colorScheme.error : theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      theme,
+    ).animate()
+        .fadeIn(delay: 300.ms, duration: 800.ms)
+        .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+        .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo);
+  }
+
+  Widget _buildModule(String title, IconData icon, Widget content, ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Row(
+            children: [
+              Icon(icon, size: 14, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+              const SizedBox(width: 8),
+              Text(
+                title.toUpperCase(),
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.08)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(8), // Balanced padding
+          child: content,
+        ),
+      ],
     );
   }
 

@@ -28,5 +28,5 @@ abstract class RemoteServiceAdapter {
     DateTime since, {
     String updatedAtColumn = 'updated_at',
   });
-  Future<void> purge(String table, String userId, DateTime olderThan);
+  Future<void> purge(String table, String userId, DateTime olderThan, {String userIdColumn = 'user_id'});
 }

@@ -21,12 +21,16 @@ class TableSyncConfig {
   final String primaryKey;
   final String updatedAtColumn;
   final SyncConflictStrategy conflictStrategy;
+  final bool hasSoftDelete;
+  final String userIdColumn;
 
   const TableSyncConfig({
     required this.tableName,
     this.primaryKey = 'id',
     this.updatedAtColumn = 'updated_at',
     this.conflictStrategy = SyncConflictStrategy.lastWriteWins,
+    this.hasSoftDelete = true,
+    this.userIdColumn = 'user_id',
   });
 }
 
@@ -120,11 +124,18 @@ class SyncEngine {
     }
 
     for (final config in tableConfigs) {
+      if (!config.hasSoftDelete) continue;
+      
       try {
         _logger.i('SyncEngine: Purging ${config.tableName}...');
         await localDb.purge(config.tableName, cutoff);
         if (userId != null) {
-          await remoteService.purge(config.tableName, userId, cutoff);
+          await remoteService.purge(
+            config.tableName,
+            userId,
+            cutoff,
+            userIdColumn: config.userIdColumn,
+          );
         }
       } catch (e) {
         _logger.e('SyncEngine: Failed to purge ${config.tableName}', error: e);
