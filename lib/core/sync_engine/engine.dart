@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:expense/core/sync_engine/adapters.dart';
 import 'package:expense/data/local/database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -43,6 +44,8 @@ class TableSyncConfig {
   String get remoteName => remoteTableName ?? tableName;
 }
 
+enum SyncStrategy { polling, realtime }
+
 typedef ShouldPushCallback = Future<bool> Function(SyncQueueData op);
 
 class SyncEngine {
@@ -57,53 +60,115 @@ class SyncEngine {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   Timer? _syncTimer;
   bool _isSyncing = false;
+  bool _needsAnotherSync = false;
   final List<TableSyncConfig> tableConfigs;
   final Duration purgeInterval; // How often to check for purges
   final Duration purgeOlderThan; // How old a deleted item must be to be purged
   DateTime? _lastPurge;
+  final SyncStrategy strategy;
 
   SyncEngine({
     required this.localDb,
     required this.remoteService,
     this.tableConfigs = const [],
     this.syncInterval = const Duration(seconds: 30),
-    this.purgeInterval = const Duration(seconds: 1),
+    this.purgeInterval = const Duration(days: 1),
     this.purgeOlderThan = const Duration(days: 30),
+    this.strategy = SyncStrategy.polling,
   });
 
   void start() {
+    // Listen for connectivity changes
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       results,
     ) {
       if (results.any((result) => result != ConnectivityResult.none)) {
         triggerSync();
+        if (strategy == SyncStrategy.realtime) {
+          _startRealtimeSync();
+        }
+      } else {
+        if (strategy == SyncStrategy.realtime) {
+          _stopRealtimeSync();
+        }
       }
     });
 
-    _syncTimer = Timer.periodic(syncInterval, (_) => triggerSync());
+    if (strategy == SyncStrategy.polling) {
+      _syncTimer = Timer.periodic(syncInterval, (_) => triggerSync());
+    } else if (strategy == SyncStrategy.realtime) {
+      _startRealtimeSync();
+    }
+    
     _syncStateController.add(SyncState(status: SyncStatus.idle));
+    // Trigger initial sync immediately
+    triggerSync();
+  }
+  
+  void _startRealtimeSync() {
+    _logger.i('Starting Realtime Sync...');
+    for (final config in tableConfigs) {
+      debugPrint('SYNC_ENGINE: Subscribing to ${config.remoteName}');
+      remoteService.subscribeToChanges(config.remoteName, (payload) {
+        _logger.i('Realtime event received for ${config.tableName}: $payload');
+        triggerSync(); 
+      });
+    }
+  }
+
+  void _stopRealtimeSync() {
+     _logger.i('Stopping Realtime Sync...');
+     remoteService.unsubscribeAll();
   }
 
   void stop() {
     _connectivitySubscription?.cancel();
     _syncTimer?.cancel();
+    if (strategy == SyncStrategy.realtime) {
+      _stopRealtimeSync();
+    }
     _syncStateController.close();
   }
 
   Completer<void>? _syncCompleter;
 
   Future<void> triggerSync() async {
-    if (_isSyncing) return _syncCompleter?.future;
+    if (_isSyncing) {
+      _logger.i('SyncEngine: Sync already in progress, scheduling re-sync.');
+      _needsAnotherSync = true;
+      return _syncCompleter?.future;
+    }
 
     _isSyncing = true;
+    _needsAnotherSync = false;
     _syncCompleter = Completer<void>();
     _syncStateController.add(SyncState(status: SyncStatus.syncing));
 
     try {
-      await _pushUnits();
-      await _pullUnits();
+      final userId = remoteService.currentUserId;
+      final baseline = DateTime.fromMillisecondsSinceEpoch(0);
 
-      // Periodic Purge
+      for (final config in tableConfigs) {
+        _logger.i('--- Starting Sync for ${config.tableName} ---');
+        
+        // 1. Push local changes for this specific table
+        try {
+          await _pushUnitsForTable(config, userId);
+        } catch (e) {
+          _logger.e('SyncEngine: Push failed for ${config.tableName}', error: e);
+          // Continue to pull even if push fails
+        }
+
+        // 2. Pull remote changes for this specific table
+        try {
+          await _pullUnitsForTable(config, userId, baseline);
+        } catch (e) {
+          _logger.e('SyncEngine: Pull failed for ${config.tableName}', error: e);
+          rethrow; // Pull failures are considered critical for consistency
+        }
+      }
+
+      // 3. Periodic Purge
       if (_lastPurge == null ||
           DateTime.now().difference(_lastPurge!) > purgeInterval) {
         await _purgeDeletedItems();
@@ -114,7 +179,7 @@ class SyncEngine {
         SyncState(status: SyncStatus.success, lastSync: DateTime.now()),
       );
     } catch (e, stack) {
-      _logger.e('Sync failed', error: e, stackTrace: stack);
+      _logger.e('SyncEngine: Sync process failed', error: e, stackTrace: stack);
       _syncStateController.add(
         SyncState(status: SyncStatus.error, errorMessage: e.toString()),
       );
@@ -122,6 +187,12 @@ class SyncEngine {
       _isSyncing = false;
       _syncCompleter?.complete();
       _syncCompleter = null;
+
+      // If a change happened while we were syncing, start again
+      if (_needsAnotherSync) {
+        _logger.i('SyncEngine: Running scheduled re-sync...');
+        triggerSync();
+      }
     }
   }
 
@@ -155,26 +226,21 @@ class SyncEngine {
     _logger.i('SyncEngine: Purge complete');
   }
 
-  Future<void> _pushUnits() async {
-    final queue = await localDb.getSyncQueue();
+  Future<void> _pushUnitsForTable(TableSyncConfig config, String? userId) async {
+    final queue = (await localDb.getSyncQueue(userId: userId))
+        .where((op) => op.targetTable == config.tableName)
+        .toList();
+
+    if (queue.isEmpty) return;
+    _logger.i('SyncEngine: Pushing ${queue.length} ops for ${config.tableName}');
 
     for (final op in queue) {
       try {
-        final config = tableConfigs.firstWhere(
-          (c) => c.tableName == op.targetTable,
-          orElse:
-              () => TableSyncConfig(
-                tableName: op.targetTable,
-              ), // Fallback if no config found
-        );
-
-        // Run pre-push validation hook if defined
+        // Run pre-push validation hook
         if (config.shouldPush != null) {
           final shouldProceed = await config.shouldPush!(op);
           if (!shouldProceed) {
-            _logger.w(
-              'Skipping push for ${op.targetTable} ${op.rowId}: Validation failed.',
-            );
+            _logger.w('Skipping push for ${op.targetTable} ${op.rowId}: Validation failed.');
             await localDb.removeFromSyncQueue(op.id);
             continue;
           }
@@ -184,22 +250,62 @@ class SyncEngine {
         await localDb.removeFromSyncQueue(op.id);
       } catch (e) {
         _logger.w('Failed to process sync op ${op.id}', error: e);
-        
-        // Handle duplicate record violation (already exists on server)
         if (e is PostgrestException && e.code == '23505') {
-          _logger.i('SyncEngine: Op ${op.id} resulted in duplicate. Skipping and removing from queue.');
           await localDb.removeFromSyncQueue(op.id);
           continue;
         }
-
         if (op.retryCount > 5) {
           await localDb.removeFromSyncQueue(op.id);
         } else {
           await localDb.incrementRetryCount(op.id);
-          rethrow;
+          // Don't rethrow here to allow other items/tables to proceed
         }
       }
     }
+  }
+
+  Future<void> _pullUnitsForTable(TableSyncConfig config, String? userId, DateTime baseline) async {
+    _logger.i('SyncEngine: Pulling updates for ${config.tableName}...');
+    
+    // Get full queue again in case pushing cleared some items
+    final queue = await localDb.getSyncQueue(userId: userId);
+
+    final remoteData = await remoteService.fetch(
+      config.remoteName,
+      baseline,
+      updatedAtColumn: config.updatedAtColumn,
+    );
+
+    int updatedCount = 0;
+    int skippedCount = 0;
+
+    for (final data in remoteData) {
+      final id = data[config.primaryKey]?.toString();
+      if (id == null) continue;
+
+      final localData = await localDb.getById(config.tableName, id);
+      if (localData != null) {
+        final isPending = queue.any(
+          (q) => q.targetTable == config.tableName && q.rowId == id,
+        );
+
+        if (!isPending) {
+          await localDb.upsert(config.tableName, data);
+          updatedCount++;
+          continue;
+        }
+
+        final shouldUpdate = _resolveConflict(config, localData, data);
+        if (!shouldUpdate) {
+          skippedCount++;
+          continue;
+        }
+      }
+
+      await localDb.upsert(config.tableName, data);
+      updatedCount++;
+    }
+    _logger.i('SyncEngine: Done ${config.tableName}. Upserted: $updatedCount, Skipped: $skippedCount');
   }
 
   Future<void> _processOp(SyncQueueData op) async {
@@ -229,37 +335,6 @@ class SyncEngine {
     }
   }
 
-  Future<void> _pullUnits() async {
-    final lastSync = DateTime.fromMillisecondsSinceEpoch(0);
-
-    for (final config in tableConfigs) {
-      _logger.i('SyncEngine: Pulling ${config.tableName}...');
-      final remoteData = await remoteService.fetch(
-        config.remoteName,
-        lastSync,
-        updatedAtColumn: config.updatedAtColumn,
-      );
-
-      _logger.i(
-        'SyncEngine: Found ${remoteData.length} records for ${config.tableName}',
-      );
-
-      for (final data in remoteData) {
-        final id = data[config.primaryKey]?.toString();
-        if (id == null) continue;
-
-        // Conflict Resolution
-        final localData = await localDb.getById(config.tableName, id);
-        if (localData != null) {
-          final shouldUpdate = _resolveConflict(config, localData, data);
-          if (!shouldUpdate) continue;
-        }
-
-        await localDb.upsert(config.tableName, data);
-      }
-    }
-  }
-
   bool _resolveConflict(
     TableSyncConfig config,
     Map<String, dynamic> local,
@@ -273,7 +348,8 @@ class SyncEngine {
       case SyncConflictStrategy.lastWriteWins:
         final localUpdated = _parseDate(local[config.updatedAtColumn]);
         final remoteUpdated = _parseDate(remote[config.updatedAtColumn]);
-        return remoteUpdated.isAfter(localUpdated);
+        // Only skip remote if local is strictly newer
+        return !localUpdated.isAfter(remoteUpdated);
     }
   }
 

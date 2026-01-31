@@ -11,7 +11,7 @@ import 'package:expense/presentation/pages/dashboard/widgets/summary_section.dar
 import 'package:expense/presentation/pages/stats/widgets/category_breakdown_chart.dart';
 import 'package:expense/presentation/router.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
   @override
   void didPopNext() {
     if (ModalRoute.of(context) is PageRoute) {
-      _onFocus(freshSync: false);
+      _onFocus(freshSync: true);
     }
   }
 
@@ -108,6 +108,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                           delegate: SliverChildListDelegate([
                             SummarySection(state: state, settings: settings)
                                 .animate()
+                                .visibility()
                                 .fadeIn(duration: 800.ms, curve: Curves.easeOutExpo)
                                 .moveY(begin: 30, end: 0, duration: 800.ms, curve: Curves.easeOutExpo),
                             const SizedBox(height: 32),
@@ -118,6 +119,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               actionLabel: 'see_all'.tr(),
                               onAction: () => context.push('/projects'),
                             ).animate()
+                                .visibility()
                                 .fadeIn(delay: 100.ms, duration: 800.ms)
                                 .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
                             const SizedBox(height: 12),
@@ -138,6 +140,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               padding: const EdgeInsets.all(8),
                               child: const ProjectShortcuts(),
                             ).animate()
+                                .visibility()
                                 .fadeIn(delay: 150.ms, duration: 800.ms)
                                 .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
                                 .moveY(begin: 20, end: 0, curve: Curves.easeOutExpo),
@@ -148,6 +151,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               const QuickActions(),
                               theme,
                             ).animate()
+                                .visibility()
                                 .fadeIn(delay: 200.ms, duration: 800.ms)
                                 .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
                                 .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
@@ -160,6 +164,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               CategoryBreakdownChart(state: state),
                               theme,
                             ).animate()
+                                .visibility()
                                 .fadeIn(delay: 400.ms, duration: 800.ms)
                                 .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
                                 .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
@@ -170,11 +175,12 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
                               icon: Icons.history_rounded,
                               actionLabel: 'see_all'.tr(),
                               onAction: () => context.push('/expenses'),
-                            ).animate().fadeIn(delay: 500.ms),
+                            ).animate().visibility().fadeIn(delay: 500.ms),
                             RecentTransactionsList(
                               state: state,
                               settings: settings,
                             ).animate()
+                                .visibility()
                                 .fadeIn(delay: 600.ms, duration: 800.ms)
                                 .moveY(begin: 20, end: 0, curve: Curves.easeOutExpo),
                           ]),
@@ -200,6 +206,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 24),
       )
           .animate()
+          .visibility()
           .fadeIn(delay: 1000.ms, duration: 800.ms)
           .scale(begin: const Offset(0.3, 0.3), end: const Offset(1, 1), curve: Curves.easeOutBack),
     );
@@ -256,6 +263,7 @@ class _DashboardPageState extends State<DashboardPage> with RouteAware {
       ),
       theme,
     ).animate()
+        .visibility()
         .fadeIn(delay: 300.ms, duration: 800.ms)
         .scale(begin: const Offset(0.95, 0.95), end: const Offset(1, 1), curve: Curves.easeOutExpo)
         .moveY(begin: 30, end: 0, curve: Curves.easeOutExpo);

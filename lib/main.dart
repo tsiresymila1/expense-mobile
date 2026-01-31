@@ -1,24 +1,30 @@
+import 'package:drift/drift.dart' hide Column;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/config.dart';
 import 'package:expense/data/adapters/drift_local_database_adapter.dart';
 import 'package:expense/data/adapters/supabase_remote_service_adapter.dart';
 import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/app.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:marionette_flutter/marionette_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
-
 
 import 'flavors.dart';
 
 Future<void> main() async {
-    WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-    FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  late WidgetsBinding widgetsBinding;
+  if (kDebugMode) {
+    widgetsBinding = MarionetteBinding.ensureInitialized();
+  } else {
+    widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  }
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await EasyLocalization.ensureInitialized();
 
@@ -64,12 +70,46 @@ Future<void> main() async {
     localDb: localDbAdapter,
     remoteService: remoteServiceAdapter,
     tableConfigs: [
-      TableSyncConfig(tableName: 'expenses'),
-      TableSyncConfig(tableName: 'categories'),
+      TableSyncConfig(
+        tableName: 'profiles',
+        pullOnly: true,
+        hasSoftDelete: false,
+      ),
       TableSyncConfig(tableName: 'projects', userIdColumn: 'owner_id'),
       TableSyncConfig(tableName: 'project_members', hasSoftDelete: false),
-      TableSyncConfig(tableName: 'profiles', pullOnly: true, hasSoftDelete: false),
+      TableSyncConfig(tableName: 'categories'),
+      TableSyncConfig(
+        tableName: 'expenses',
+        shouldPush: (op) async {
+          // Check if user is allowed to push this expense (must be project member)
+          final row = await (database.select(
+            database.localExpenses,
+          )..where((t) => t.id.equals(op.rowId))).getSingleOrNull();
+
+          if (row == null || row.projectId == null) return true;
+
+          final userId = remoteServiceAdapter.currentUserId;
+          if (userId == null) return true;
+
+          final member =
+              await (database.select(database.localProjectMembers)..where(
+                    (t) =>
+                        t.projectId.equals(row.projectId!) &
+                        t.userId.equals(userId),
+                  ))
+                  .getSingleOrNull();
+
+          if (member != null) return true;
+
+          final project = await (database.select(
+            database.localProjects,
+          )..where((t) => t.id.equals(row.projectId!))).getSingleOrNull();
+
+          return project?.ownerId == userId;
+        },
+      ),
     ],
+    strategy: SyncStrategy.realtime,
   );
   syncEngine.start();
   FlutterNativeSplash.remove();

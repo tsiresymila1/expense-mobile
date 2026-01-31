@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:expense/core/adapters/adapters.dart';
+import 'package:expense/core/sync_engine/adapters.dart';
 import 'package:expense/data/local/database.dart';
+import 'package:flutter/foundation.dart';
 
 class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
   final AppDatabase _db;
@@ -43,20 +44,26 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
     // Normalize Supabase snake_case to Drift camelCase
     final normalized = _normalizeData(table, data);
 
-    if (table == 'expenses') {
-      dataClass = LocalExpense.fromJson(normalized);
-    } else if (table == 'categories') {
-      dataClass = LocalCategory.fromJson(normalized);
-    } else if (table == 'projects') {
-      dataClass = LocalProject.fromJson(normalized);
-    } else if (table == 'project_members') {
-      dataClass = LocalProjectMember.fromJson(normalized);
-    } else if (table == 'profiles') {
-      dataClass = LocalProfile.fromJson(normalized);
-    } else {
-      throw Exception('Table $table not supported for sync upsert');
+    try {
+      if (table == 'expenses') {
+        dataClass = LocalExpense.fromJson(normalized);
+      } else if (table == 'categories') {
+        dataClass = LocalCategory.fromJson(normalized);
+      } else if (table == 'projects') {
+        dataClass = LocalProject.fromJson(normalized);
+      } else if (table == 'project_members') {
+        dataClass = LocalProjectMember.fromJson(normalized);
+      } else if (table == 'profiles') {
+        dataClass = LocalProfile.fromJson(normalized);
+      } else {
+        throw Exception('Table $table not supported for sync upsert');
+      }
+      await _db.into(_getTable(table)).insertOnConflictUpdate(dataClass);
+    } catch (e) {
+      debugPrint('DRIFT_ADAPTER: Error upserting into $table: $e');
+      debugPrint('DRIFT_ADAPTER: Data was: $normalized');
+      rethrow;
     }
-    await _db.into(_getTable(table)).insertOnConflictUpdate(dataClass);
   }
 
   Map<String, dynamic> _normalizeData(String table, Map<String, dynamic> data) {
@@ -81,6 +88,9 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
       }
       if (data.containsKey('created_by')) {
         result['createdBy'] = data['created_by'];
+      }
+      if (data.containsKey('amount') && data['amount'] is String) {
+        result['amount'] = double.tryParse(data['amount']) ?? 0.0;
       }
     } else if (table == 'categories') {
       if (data.containsKey('user_id')) result['userId'] = data['user_id'];
@@ -315,18 +325,4 @@ class DriftLocalDatabaseAdapter implements LocalDatabaseAdapter {
         .go();
   }
 
-  @override
-  Future<bool> isProjectMember(String projectId, String userId) async {
-    // Check if explicitly a member
-    final query = _db.select(_db.localProjectMembers)
-      ..where((t) => t.projectId.equals(projectId) & t.userId.equals(userId));
-    final member = await query.getSingleOrNull();
-    if (member != null) return true;
-
-    // Check if owner of the project
-    final projectQuery = _db.select(_db.localProjects)
-      ..where((t) => t.id.equals(projectId));
-    final project = await projectQuery.getSingleOrNull();
-    return project?.ownerId == userId;
-  }
 }

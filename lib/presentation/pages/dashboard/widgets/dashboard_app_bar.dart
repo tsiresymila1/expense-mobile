@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/sync_indicator.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -29,135 +29,138 @@ class DashboardAppBar extends StatelessWidget {
           pinned: true,
           backgroundColor: theme.scaffoldBackgroundColor,
           elevation: 0,
-          flexibleSpace: FlexibleSpaceBar(
-            title: Padding(
-              padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [ 
-                      Text(
-                        '${'welcome_back'.tr()} ${userName.toString().padRight(10, '.').substring(0,10)}',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      InkWell(
-                        onTap: () => _showProjectPicker(context, state),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  currentProject?.name.tr() ?? 'G-spend'.tr(),
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                    color: theme.colorScheme.onSurface,
-                                    letterSpacing: -0.5,
-                                  ),
+          flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              final top = constraints.biggest.height;
+              const expandedHeight = 140.0;
+              final toolbarHeight = MediaQuery.of(context).padding.top + kToolbarHeight;
+              
+              // Collapse progress (1.0 = fully expanded, 0.0 = collapsed)
+              final progress = ((top - toolbarHeight) / (expandedHeight - toolbarHeight)).clamp(0.0, 1.0);
+              
+              // Opacity fades out faster than the collapse
+              final opacity = (progress * 2 - 1).clamp(0.0, 1.0);
+
+              return FlexibleSpaceBar(
+                title: Padding(
+                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (opacity > 0.1)
+                            Opacity(
+                              opacity: opacity,
+                              child: Text(
+                                '${'welcome_back'.tr()} ${userName.toString().padRight(10, '.').substring(0, 10)}',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 18,
-                                  color: theme.colorScheme.primary,
-                                ),
-                              ],
+                              ),
                             ),
-                            if (state.projectMembers.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: InkWell(
-                                  onTap: () => _showMembersList(context, state),
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: SizedBox(
-                                    height: 20,
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width:
-                                              (state.projectMembers.length > 5
-                                                      ? 5
-                                                      : state
-                                                            .projectMembers
-                                                            .length) *
-                                                  15.0 +
-                                              10,
-                                          child: Stack(
-                                            children: List.generate(
-                                              state.projectMembers.length > 5
-                                                  ? 5
-                                                  : state.projectMembers.length,
-                                              (i) => Positioned(
-                                                left: i * 15.0,
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    border: Border.all(
-                                                      color: theme
-                                                          .scaffoldBackgroundColor,
-                                                      width: 2,
-                                                    ),
-                                                  ),
-                                                  child: CircleAvatar(
-                                                    radius: 8,
-                                                    backgroundColor: theme
-                                                        .colorScheme
-                                                        .primaryContainer,
-                                                    child: Text(
-                                                      (state.projectMembers[i]['name']
-                                                                  as String?)?[0]
-                                                              .toUpperCase() ??
-                                                          'U',
-                                                      style: TextStyle(
-                                                        fontSize: 8,
-                                                        color: theme
-                                                            .colorScheme
-                                                            .onPrimaryContainer,
-                                                        fontWeight:
-                                                            FontWeight.bold,
+                          const SizedBox(height: 2),
+                          InkWell(
+                            onTap: () => _showProjectPicker(context, state),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      currentProject?.name.tr() ?? 'G-spend'.tr(),
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        color: theme.colorScheme.onSurface,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      size: 18,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ],
+                                ),
+                                if (state.projectMembers.isNotEmpty && opacity > 0.1)
+                                  Opacity(
+                                    opacity: opacity,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: InkWell(
+                                        onTap: () => _showMembersList(context, state),
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: SizedBox(
+                                          height: 20,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: (state.projectMembers.length > 5 ? 5 : state.projectMembers.length) * 15.0 + 10,
+                                                child: Stack(
+                                                  children: List.generate(
+                                                    state.projectMembers.length > 5 ? 5 : state.projectMembers.length,
+                                                    (i) => Positioned(
+                                                      left: i * 15.0,
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          shape: BoxShape.circle,
+                                                          border: Border.all(
+                                                            color: theme.scaffoldBackgroundColor,
+                                                            width: 2,
+                                                          ),
+                                                        ),
+                                                        child: CircleAvatar(
+                                                          radius: 8,
+                                                          backgroundColor: theme.colorScheme.primaryContainer,
+                                                          child: Text(
+                                                            (state.projectMembers[i]['name'] as String?)?[0].toUpperCase() ?? 'U',
+                                                            style: TextStyle(
+                                                              fontSize: 8,
+                                                              color: theme.colorScheme.onPrimaryContainer,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
+                                              if (state.projectMembers.length > 5)
+                                                Text(
+                                                  '+${state.projectMembers.length - 5}',
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 10,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                            ],
                                           ),
                                         ),
-                                        if (state.projectMembers.length > 5)
-                                          Text(
-                                            '+${state.projectMembers.length - 5}',
-                                            style: GoogleFonts.outfit(
-                                              fontSize: 10,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                      ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                          ],
-                        ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            titlePadding: EdgeInsets.zero,
-            centerTitle: false,
+                ),
+                titlePadding: EdgeInsets.zero,
+                centerTitle: false,
+              );
+            },
           ),
           actions: [
             StreamBuilder<SyncState>(

@@ -1,5 +1,3 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 // Events
 abstract class ProjectsEvent {}
 
@@ -15,12 +13,7 @@ class AddProject extends ProjectsEvent {
   final String? description;
   final String? color;
   final String? icon;
-  AddProject({
-    required this.name,
-    this.description,
-    this.color,
-    this.icon,
-  });
+  AddProject({required this.name, this.description, this.color, this.icon});
 }
 
 class UpdateProject extends ProjectsEvent {

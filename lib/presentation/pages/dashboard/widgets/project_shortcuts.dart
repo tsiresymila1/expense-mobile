@@ -34,10 +34,11 @@ class ProjectShortcuts extends StatelessWidget {
               final isSelected = project.id == state.currentProject?.id;
 
               return _buildProjectShortcut(context, theme, project, isSelected)
-                  .animate()
-                  .fadeIn(delay: (index * 50).ms, duration: 600.ms)
-                  .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1), curve: Curves.easeOutExpo)
-                  .moveX(begin: 20, end: 0, curve: Curves.easeOutExpo);
+                  .animate(delay: (index * 50).ms)
+                  .visibility()
+                  .fadeIn(duration: 600.ms, curve: Curves.easeOutExpo)
+                  .scale(begin: const Offset(0.6, 0.6), end: const Offset(1, 1), curve: Curves.easeOutExpo)
+                  .slideX(begin: 0.2, end: 0, curve: Curves.easeOutExpo);
             },
           ),
         );

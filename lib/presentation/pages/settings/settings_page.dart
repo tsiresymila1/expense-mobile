@@ -2,6 +2,8 @@ import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
+import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:expense/presentation/widgets/settings_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -228,19 +230,33 @@ class SettingsPage extends StatelessWidget {
         TextButton(
           onPressed: () async {
             final db = context.read<AppDatabase>();
+            final syncEngine = context.read<SyncEngine>();
+            
             await db.transaction(() async {
               await db.delete(db.localExpenses).go();
+              await db.delete(db.localCategories).go();
+              await db.delete(db.localProjects).go();
+              await db.delete(db.localProjectMembers).go();
+              await db.delete(db.localProfiles).go();
               await db.delete(db.syncQueue).go();
             });
+
             if (context.mounted) {
-              context.read<ExpensesBloc>().add(LoadExpenses());
-              context.read<CategoriesBloc>().add(LoadCategories());
               Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(
-              content: Text('local_data_reset_success'.tr()
-              )));
+              
+              // Show loading or indicator?
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('local_data_reset_success'.tr())),
+              );
+
+              // Trigger a fresh sync to pull everything back
+              await syncEngine.triggerSync();
+              
+              if (context.mounted) {
+                context.read<ExpensesBloc>().add(LoadExpenses());
+                context.read<CategoriesBloc>().add(LoadCategories());
+                context.read<ProjectsBloc>().add(LoadProjects());
+              }
             }
           },
           child: Text('reset'.tr(), style: const TextStyle(color: Colors.red)),

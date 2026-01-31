@@ -1,5 +1,5 @@
 import 'package:expense/core/theme.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 

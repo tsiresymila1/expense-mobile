@@ -7,7 +7,7 @@ import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/router.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:expense/flavors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -55,7 +55,10 @@ class ExpenseApp extends StatelessWidget {
           ),
           BlocProvider(
             create: (context) =>
-                CategoriesBloc(context.read<AppDatabase>())
+                CategoriesBloc(
+                  context.read<AppDatabase>(),
+                  context.read<SyncEngine>(),
+                )
                   ..add(LoadCategories()),
           ),
         ],

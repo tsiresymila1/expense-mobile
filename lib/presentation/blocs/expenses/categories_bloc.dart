@@ -1,9 +1,11 @@
 import 'package:expense/data/local/database.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:drift/drift.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'categories_event.dart';
 import 'categories_state.dart';
 
@@ -12,11 +14,26 @@ export 'categories_state.dart';
 
 class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
   final AppDatabase database;
-  CategoriesBloc(this.database) : super(CategoriesState(categories: [])) {
+  final SyncEngine syncEngine;
+  CategoriesBloc(this.database, this.syncEngine) : super(CategoriesState(categories: [])) {
     on<LoadCategories>(_onLoad);
     on<AddCategory>(_onAdd);
     on<UpdateCategory>(_onUpdate);
     on<DeleteCategory>(_onDelete);
+
+    _syncSubscription = syncEngine.syncState.listen((state) {
+      if (state.status == SyncStatus.success) {
+        add(LoadCategories());
+      }
+    });
+  }
+
+  late final StreamSubscription<SyncState> _syncSubscription;
+
+  @override
+  Future<void> close() {
+    _syncSubscription.cancel();
+    return super.close();
   }
 
   Future<void> _onLoad(
@@ -49,17 +66,13 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
               updatedAt: DateTime.now(),
             ),
           );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'categories',
-              rowId: id,
-              operation: 'INSERT',
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'categories',
+        id,
+        'INSERT',
+      );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error adding category: $e');
     }
@@ -82,17 +95,13 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
           updatedAt: Value(DateTime.now()),
         ),
       );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'categories',
-              rowId: event.id,
-              operation: 'UPDATE',
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'categories',
+        event.id,
+        'UPDATE',
+      );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error updating category: $e');
     }
@@ -114,17 +123,13 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
           updatedAt: Value(DateTime.now()),
         ),
       );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'categories',
-              rowId: event.id,
-              operation: 'UPDATE', // Changed from DELETE to UPDATE
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'categories',
+        event.id,
+        'UPDATE', // Soft Delete
+      );
+      syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error deleting category: $e');
     }

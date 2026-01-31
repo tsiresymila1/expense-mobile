@@ -1,10 +1,11 @@
 import 'package:expense/data/local/database.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'expenses_event.dart';
 import 'expenses_state.dart';
 
@@ -21,6 +22,20 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
     on<AddExpense>(_onAdd);
     on<UpdateExpense>(_onUpdate);
     on<DeleteExpense>(_onDelete);
+
+    _syncSubscription = syncEngine.syncState.listen((state) {
+      if (state.status == SyncStatus.success) {
+        add(LoadExpenses());
+      }
+    });
+  }
+
+  late final StreamSubscription<SyncState> _syncSubscription;
+
+  @override
+  Future<void> close() {
+    _syncSubscription.cancel();
+    return super.close();
   }
 
   Future<void> _onLoad(LoadExpenses event, Emitter<ExpensesState> emit) async {
@@ -149,17 +164,12 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
               createdBy: Value(userId),
             ),
           );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'expenses',
-              rowId: id,
-              operation: 'INSERT',
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'expenses',
+        id,
+        'INSERT',
+      );
       syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error adding expense: $e');
@@ -187,17 +197,12 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
           updatedAt: Value(DateTime.now()),
         ),
       );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'expenses',
-              rowId: event.id,
-              operation: 'UPDATE',
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'expenses',
+        event.id,
+        'UPDATE',
+      );
       syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error updating expense: $e');
@@ -222,17 +227,12 @@ class ExpensesBloc extends Bloc<ExpensesEvent, ExpensesState> {
           updatedAt: Value(DateTime.now()),
         ),
       );
-      await database
-          .into(database.syncQueue)
-          .insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'expenses',
-              rowId: event.id,
-              operation: 'UPDATE', // Changed from DELETE to UPDATE
-              createdAt: DateTime.now(),
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'expenses',
+        event.id,
+        'UPDATE', // Soft Delete
+      );
       syncEngine.triggerSync();
     } catch (e) {
       debugPrint('Error deleting expense: $e');

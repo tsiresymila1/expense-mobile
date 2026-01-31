@@ -133,10 +133,11 @@ class RecentTransactionsList extends StatelessWidget {
                 ),
               ),
             )
-            .animate(delay: (20 * index).ms) // Faster stagger for long lists
+            .animate(delay: (20 * index).ms) 
+            .visibility()
             .fadeIn(duration: 800.ms, curve: Curves.easeOutExpo)
-            .moveX(
-              begin: 30,
+            .slideX(
+              begin: 0.2,
               end: 0,
               duration: 800.ms,
               curve: Curves.easeOutExpo,

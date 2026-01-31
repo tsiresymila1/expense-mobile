@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:drift/drift.dart';
 import 'package:expense/data/local/database.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -34,8 +34,15 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     on<LoadProjectMembers>(_onLoadMembers);
     on<RemoveProjectMember>(_onRemoveMember);
     on<ConvertPersonalToProject>(_onConvertPersonalToProject);
+
+    _syncSubscription = syncEngine.syncState.listen((state) {
+      if (state.status == SyncStatus.success) {
+        add(LoadProjects());
+      }
+    });
   }
 
+  late final StreamSubscription<SyncState> _syncSubscription;
 
   Future<void> _onConvertPersonalToProject(
     ConvertPersonalToProject event,
@@ -48,7 +55,6 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
     try {
       emit(state.copyWith(isLoading: true));
 
-      // 1. Create Project
       final project = LocalProject(
         id: projectId,
         ownerId: userId,
@@ -61,25 +67,17 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
 
       await database.into(database.localProjects).insert(project);
 
-      // 2. Queue Project Create
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'projects',
-              rowId: projectId,
-              operation: 'INSERT',
-              createdAt: now,
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'projects',
+        projectId,
+        'INSERT',
+      );
 
-      // 3. Move Personal Expenses to this Project
-      // Personal Expenses: userId == me AND projectId IS NULL (and not deleted)
-      // Actually, we must be careful. We only want to move ACTIVE personal expenses?
-      // Yes, usually.
-      
       final personalConfig = database.select(database.localExpenses)
-        ..where((t) => t.userId.equals(userId) & t.projectId.isNull() & t.deletedAt.isNull());
-      
+        ..where((t) =>
+            t.userId.equals(userId) & t.projectId.isNull() & t.deletedAt.isNull());
+
       final personalExpenses = await personalConfig.get();
 
       for (var expense in personalExpenses) {
@@ -89,26 +87,18 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
               projectId: Value(projectId),
               updatedAt: Value(now),
             ));
-        
-        // Queue Update for Expense
-        await database.into(database.syncQueue).insert(
-              SyncQueueCompanion.insert(
-                userId: userId,
-                targetTable: 'expenses',
-                rowId: expense.id,
-                operation: 'UPDATE',
-                createdAt: now,
-              ),
-            );
+
+        await syncEngine.localDb.addToSyncQueue(
+          userId,
+          'expenses',
+          expense.id,
+          'UPDATE',
+        );
       }
 
-      // 4. Trigger Sync
       syncEngine.triggerSync();
-
-      // 5. Reload projects and switch
       add(LoadProjects());
       add(SwitchProject(projectId));
-      
     } catch (e) {
       debugPrint('Error converting personal to project: $e');
       emit(state.copyWith(error: e.toString(), isLoading: false));
@@ -117,6 +107,7 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
 
   @override
   Future<void> close() {
+    _syncSubscription.cancel();
     if (_realtimeChannel != null) {
       supabase.removeChannel(_realtimeChannel!);
     }
@@ -358,15 +349,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
             ),
           );
 
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'projects',
-              rowId: id,
-              operation: 'INSERT',
-              createdAt: now,
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'projects',
+        id,
+        'INSERT',
+      );
 
       syncEngine.triggerSync();
       add(LoadProjects());
@@ -391,15 +379,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         ),
       );
 
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'projects',
-              rowId: event.id,
-              operation: 'UPDATE',
-              createdAt: now,
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'projects',
+        event.id,
+        'UPDATE',
+      );
 
       syncEngine.triggerSync();
       add(LoadProjects());
@@ -421,15 +406,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
         ),
       );
 
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: userId,
-              targetTable: 'projects',
-              rowId: event.id,
-              operation: 'UPDATE',
-              createdAt: now,
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        userId,
+        'projects',
+        event.id,
+        'UPDATE',
+      );
 
       syncEngine.triggerSync();
       add(LoadProjects());
@@ -506,15 +488,12 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       ));
 
       // 3. Add to sync queue
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: currentUserId,
-              targetTable: 'project_members',
-              rowId: id,
-              operation: 'INSERT',
-              createdAt: now,
-            ),
-          );
+      await syncEngine.localDb.addToSyncQueue(
+        currentUserId,
+        'project_members',
+        id,
+        'INSERT',
+      );
 
       syncEngine.triggerSync();
       // Optionally reload to ensure sync went well
@@ -549,15 +528,13 @@ class ProjectsBloc extends Bloc<ProjectsEvent, ProjectsState> {
       emit(state.copyWith(projectMembers: updatedMembers));
 
       // 3. Add to sync queue for remote deletion
-      await database.into(database.syncQueue).insert(
-            SyncQueueCompanion.insert(
-              userId: currentUserId,
-              targetTable: 'project_members',
-              rowId: event.memberId,
-              operation: 'DELETE',
-              createdAt: DateTime.now(),
-            ),
-          );
+      // 3. Add to sync queue for remote deletion
+      await syncEngine.localDb.addToSyncQueue(
+        currentUserId,
+        'project_members',
+        event.memberId,
+        'DELETE',
+      );
 
       syncEngine.triggerSync();
       

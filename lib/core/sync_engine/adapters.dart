@@ -17,7 +17,7 @@ abstract class LocalDatabaseAdapter {
   Future<void> removeFromSyncQueue(int queueId);
   Future<void> incrementRetryCount(int queueId);
   Future<void> purge(String table, DateTime olderThan);
-  Future<bool> isProjectMember(String projectId, String userId);
+
 }
 
 abstract class RemoteServiceAdapter {
@@ -30,4 +30,6 @@ abstract class RemoteServiceAdapter {
     String updatedAtColumn = 'updated_at',
   });
   Future<void> purge(String table, String userId, DateTime olderThan, {String userIdColumn = 'user_id'});
+  void subscribeToChanges(String table, void Function(dynamic payload) callback);
+  void unsubscribeAll();
 }

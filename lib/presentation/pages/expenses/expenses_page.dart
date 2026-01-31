@@ -7,7 +7,7 @@ import 'package:expense/presentation/pages/expenses/widgets/expense_card.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'package:expense/presentation/widgets/expense_filter_modal.dart';
-import 'package:expense/sync_engine/sync_engine.dart';
+import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
