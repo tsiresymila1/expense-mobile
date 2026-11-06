@@ -7,6 +7,15 @@ uses it as the GitHub Release body and the Play Store "what's new" notes.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-06
+### Changed
+- Apply the V5 mobile layout with ABeeZee typography and G-spend branding.
+- Use dedicated form screens and contextual headers with readable navigation labels.
+
+### Added
+- Attach expense receipts from the camera, photo library or document picker (up to 10 MiB).
+- View and delete receipts with InstantDB storage permissions.
+
 ## [1.1.1] - 2026-11-06
 ### Fixed
 - Pin release builds to Flutter 3.41.9 to match the tested SDK and resolve the intl dependency conflict.

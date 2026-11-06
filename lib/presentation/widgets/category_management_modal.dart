@@ -1,3 +1,4 @@
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
@@ -33,7 +34,7 @@ class CategoryManagementModal extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'manage_categories'.tr(),
-                    style: GoogleFonts.geist(
+                    style: GoogleFonts.aBeeZee(
                       fontSize: 22,
                       fontWeight: FontWeight.w500,
                     ),
@@ -43,11 +44,10 @@ class CategoryManagementModal extends StatelessWidget {
                   tooltip: 'add_category'.tr(),
                   onPressed: () {
                     Navigator.pop(context);
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => const AddCategoryModal(),
+                    openFormPage(
+                      context,
+                      const AddCategoryModal(),
+                      title: 'new_category'.tr(),
                     );
                   },
                   icon: Container(
@@ -108,7 +108,7 @@ class CategoryManagementModal extends StatelessWidget {
                           ),
                           title: Text(
                             cat.name,
-                            style: GoogleFonts.geist(
+                            style: GoogleFonts.aBeeZee(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -120,12 +120,10 @@ class CategoryManagementModal extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.edit_outlined),
                                       onPressed: () {
-                                        showModalBottomSheet(
-                                          context: context,
-                                          isScrollControlled: true,
-                                          backgroundColor: Colors.transparent,
-                                          builder: (context) =>
-                                              AddCategoryModal(category: cat),
+                                        openFormPage(
+                                          context,
+                                          AddCategoryModal(category: cat),
+                                          title: 'edit_category'.tr(),
                                         );
                                       },
                                     ),

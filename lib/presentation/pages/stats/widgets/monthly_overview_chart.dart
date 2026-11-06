@@ -69,7 +69,7 @@ class MonthlyOverviewChart extends StatelessWidget {
                     cur,
                     locale: context.locale.toString(),
                   ),
-                  GoogleFonts.geist(
+                  GoogleFonts.aBeeZee(
                     color: rod.color ?? (ri == 0 ? Colors.green : Colors.red),
                     fontWeight: FontWeight.bold,
                   ),

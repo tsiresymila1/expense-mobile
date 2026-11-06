@@ -1,3 +1,5 @@
+import 'package:expense/presentation/widgets/expense_attachments.dart';
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/data/models/models.dart';
@@ -36,6 +38,7 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
             'unknown_user'.tr();
   final action = await showModalBottomSheet<String>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (sheet) {
@@ -96,6 +99,12 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
             const Divider(),
             line('projects', project?.name ?? 'personal_workspace'.tr()),
             const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(sheet, 'receipts'),
+              icon: const Icon(Icons.attach_file),
+              label: Text('receipts'.tr()),
+            ),
+            const SizedBox(height: 12),
             if (canEdit) ...[
               ElevatedButton(
                 onPressed: () => Navigator.pop(sheet, 'edit'),
@@ -116,13 +125,21 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
       );
     },
   );
-  if (!context.mounted || !canEdit) return;
+  if (!context.mounted) return;
+  if (action == 'receipts') {
+    await openFormPage(
+      context,
+      ExpenseAttachments(expenseId: expense.id, canEdit: canEdit),
+      title: 'receipts'.tr(),
+    );
+    return;
+  }
+  if (!canEdit) return;
   if (action == 'edit') {
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => AddExpenseModal(expense: expense),
+    await openFormPage(
+      context,
+      AddExpenseModal(expense: expense),
+      title: 'edit_transaction'.tr(),
     );
   }
   if (!context.mounted) return;

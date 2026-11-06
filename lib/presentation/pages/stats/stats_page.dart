@@ -101,13 +101,6 @@ class _StatsPageState extends State<StatsPage> {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          'statistics'.tr(),
-          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
-        ),
-        centerTitle: false,
-      ),
       body: BlocBuilder<ExpensesCubit, ExpensesState>(
         builder: (context, state) => Column(
           children: [
@@ -156,7 +149,7 @@ class _StatsPageState extends State<StatsPage> {
         const SizedBox(height: 16),
         Text(
           'no_transactions'.tr(),
-          style: GoogleFonts.geist(color: Colors.grey),
+          style: GoogleFonts.aBeeZee(color: Colors.grey),
         ),
       ],
     ),
@@ -184,7 +177,7 @@ class _StatsPageState extends State<StatsPage> {
                   onSelected: (_) =>
                       r['l'] == 'custom' ? _pickCustom() : _setRange(r['l']!),
                   selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                  labelStyle: GoogleFonts.geist(
+                  labelStyle: GoogleFonts.aBeeZee(
                     color: _range == r['l']
                         ? AppTheme.primaryColor
                         : Colors.grey,
@@ -209,6 +202,6 @@ class _StatsPageState extends State<StatsPage> {
 
   Widget _header(String t) => Text(
     t,
-    style: GoogleFonts.geist(fontSize: 18, fontWeight: FontWeight.bold),
+    style: GoogleFonts.aBeeZee(fontSize: 18, fontWeight: FontWeight.bold),
   );
 }

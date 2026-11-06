@@ -13,7 +13,7 @@ class SettingsSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: GoogleFonts.geist(
+        style: GoogleFonts.aBeeZee(
           fontSize: 13,
           fontWeight: FontWeight.w500,
           color: theme.disabledColor,

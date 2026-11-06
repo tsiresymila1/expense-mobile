@@ -1,7 +1,7 @@
 name: expense
 description: "A Flutter expense tracking application with local-first architecture"
 publish_to: 'none'
-version: 1.1.1
+version: 1.2.0
 
 environment:
   sdk: ^3.10.0
@@ -57,6 +57,9 @@ dependencies:
   flutter_secure_storage: ^11.2.0
   cupertino_icons: ^1.0.9
   flutter_web_auth_2: ^5.1.0
+  image_picker: ^1.2.4
+  file_picker: ^13.3.2
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

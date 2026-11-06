@@ -67,7 +67,7 @@ class SummaryStatsCards extends StatelessWidget {
             fit: BoxFit.scaleDown,
             child: Text(
               amount,
-              style: GoogleFonts.geistMono(fontSize: 16, color: color),
+              style: GoogleFonts.aBeeZee(fontSize: 16, color: color),
             ),
           ),
         ],

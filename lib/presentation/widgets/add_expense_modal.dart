@@ -1,3 +1,5 @@
+import 'package:expense/presentation/widgets/expense_attachments.dart';
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/data/models/models.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
@@ -22,6 +24,8 @@ class AddExpenseModal extends StatefulWidget {
 
 class _AddExpenseModalState extends State<AddExpenseModal> {
   final _formKey = GlobalKey<FormBuilderState>();
+  bool _saving = false;
+  String? _savedId;
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +33,10 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, settings) => ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: MediaQuery.of(context).size.height,
         ),
         child: Container(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
+          padding: EdgeInsets.only(bottom: 24, left: 24, right: 24, top: 24),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -61,18 +60,6 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _buildHandle(),
-                  const SizedBox(height: 24),
-                  Text(
-                    widget.expense == null
-                        ? 'new_expense'.tr()
-                        : 'edit_transaction'.tr(),
-                    style: GoogleFonts.geist(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                   FormBuilderField<String>(
                     name: 'type',
                     builder: (field) => ExpenseTypeSelector(
@@ -147,6 +134,12 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                     maxLines: 2,
                   ),
                   const SizedBox(height: 32),
+                  OutlinedButton.icon(
+                    onPressed: _saving ? null : () => _submit(attach: true),
+                    icon: const Icon(Icons.attach_file),
+                    label: Text('save_and_attach'.tr()),
+                  ),
+                  const SizedBox(height: 12),
                   _buildSubmitButton(theme),
                 ],
               ),
@@ -157,59 +150,42 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     );
   }
 
-  Widget _buildHandle() => Center(
-    child: Container(
-      width: 40,
-      height: 4,
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(2),
-      ),
-    ),
-  );
   Widget _buildLabel(String text) => Text(
     text,
-    style: GoogleFonts.geist(
+    style: GoogleFonts.aBeeZee(
       fontSize: 13,
       fontWeight: FontWeight.w600,
       color: Colors.grey,
     ),
   );
 
-  Widget _buildAmountRow(ThemeData theme) => Row(
+  Widget _buildAmountRow(ThemeData theme) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      SizedBox(
-        width: 80,
-        child: FormBuilderTextField(
-          name: 'currency',
-          textAlign: TextAlign.center,
-          readOnly: true,
-          style: GoogleFonts.geist(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
-          ),
-          decoration: _inputDecoration(theme, null, padding: 20),
+      Text('amount'.tr(), style: theme.textTheme.bodySmall),
+      FormBuilderTextField(
+        name: 'amount',
+        style: GoogleFonts.aBeeZee(
+          fontSize: 36,
+          color: theme.colorScheme.onSurface,
         ),
+        decoration: const InputDecoration(
+          hintText: '0',
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          contentPadding: EdgeInsets.symmetric(vertical: 12),
+        ),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: FormBuilderValidators.compose([
+          FormBuilderValidators.required(),
+          FormBuilderValidators.numeric(),
+          FormBuilderValidators.min(.01),
+        ]),
       ),
-      const SizedBox(width: 12),
-      Expanded(
-        child: FormBuilderTextField(
-          name: 'amount',
-          autofocus: widget.expense == null,
-          style: GoogleFonts.geist(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.primary,
-          ),
-          decoration: _inputDecoration(theme, null, hint: '0.00'),
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(),
-            FormBuilderValidators.numeric(),
-            FormBuilderValidators.min(0.01),
-          ]),
-        ),
+      Text(
+        context.read<SettingsCubit>().state.currencySymbol,
+        style: theme.textTheme.bodySmall,
       ),
     ],
   );
@@ -232,46 +208,69 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
   );
 
   Widget _buildSubmitButton(ThemeData theme) => ElevatedButton(
-    onPressed: _submit,
+    onPressed: _saving ? null : () => _submit(),
     style: ElevatedButton.styleFrom(
       minimumSize: const Size.fromHeight(56),
-      backgroundColor: theme.colorScheme.primary,
-      foregroundColor: const Color(0xFF10291D),
+      backgroundColor: const Color(0xFF18794E),
+      foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
     ),
     child: Text(
       'save'.tr(),
-      style: GoogleFonts.geist(fontSize: 16, fontWeight: FontWeight.w600),
+      style: GoogleFonts.aBeeZee(fontSize: 16, fontWeight: FontWeight.w600),
     ),
   );
 
-  void _submit() {
+  Future<void> _submit({bool attach = false}) async {
+    if (_saving) return;
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final v = _formKey.currentState!.value;
       final amount = double.tryParse(v['amount'].toString()) ?? 0.0;
       if (!amount.isFinite || amount <= 0) return;
       final note = (v['note'] as String?)?.trim();
       final cubit = context.read<ExpensesCubit>();
-      if (widget.expense == null) {
-        cubit.addExpense(
-          amount: amount,
-          date: v['date'],
-          note: note?.isEmpty ?? true ? null : note,
-          categoryId: v['category_id'],
-          projectId: v['project_id'] == '' ? null : v['project_id'],
-          type: v['type'],
-        );
-      } else {
-        cubit.updateExpense(
-          id: widget.expense!.id,
-          amount: amount,
-          date: v['date'],
-          note: note?.isEmpty ?? true ? null : note,
-          categoryId: v['category_id'],
-          type: v['type'],
-        );
+      setState(() => _saving = true);
+      try {
+        if (widget.expense == null && _savedId == null) {
+          _savedId = await cubit.addExpense(
+            amount: amount,
+            date: v['date'],
+            note: note?.isEmpty ?? true ? null : note,
+            categoryId: v['category_id'],
+            projectId: v['project_id'] == '' ? null : v['project_id'],
+            type: v['type'],
+          );
+        } else {
+          await cubit.updateExpense(
+            id: widget.expense?.id ?? _savedId!,
+            amount: amount,
+            date: v['date'],
+            note: note?.isEmpty ?? true ? null : note,
+            categoryId: v['category_id'],
+            type: v['type'],
+          );
+        }
+        if (!mounted) return;
+        if (attach) {
+          await openFormPage(
+            context,
+            ExpenseAttachments(
+              expenseId: widget.expense?.id ?? _savedId!,
+              canEdit: true,
+            ),
+            title: 'receipts'.tr(),
+          );
+        }
+        if (mounted) context.pop();
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('expense_save_error'.tr())));
+        }
+      } finally {
+        if (mounted) setState(() => _saving = false);
       }
-      context.pop();
     }
   }
 }

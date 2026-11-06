@@ -50,7 +50,7 @@ class ExpenseTypeSelector extends StatelessWidget {
           child: Center(
             child: Text(
               type.tr(),
-              style: GoogleFonts.geist(
+              style: GoogleFonts.aBeeZee(
                 color: isSelected
                     ? color
                     : theme.colorScheme.onSurface.withValues(alpha: 0.5),

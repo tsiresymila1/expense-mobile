@@ -1,3 +1,4 @@
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:flutter/material.dart';
@@ -17,19 +18,17 @@ class ProjectsPage extends StatelessWidget {
       for (final p in [...state.projects, ...state.sharedProjects]) p.id: p,
     }.values.toList();
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('projects'.tr()),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 22),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddProject(context),
-              icon: const Icon(Icons.add, size: 16),
-              label: Text('add'.tr()),
-            ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Align(
+          heightFactor: 1,
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAddProject(context),
+            icon: const Icon(Icons.add),
+            label: Text('add'.tr()),
           ),
-        ],
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(22),
@@ -79,6 +78,7 @@ class ProjectsPage extends StatelessWidget {
         InstantProvider.of(context).auth.currentUser.value?.id;
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       useSafeArea: true,
       isScrollControlled: true,
       builder: (sheet) => Padding(
@@ -195,51 +195,49 @@ class ProjectsPage extends StatelessWidget {
     final descController = TextEditingController(text: project?.description);
     final cubit = context.read<ProjectsCubit>();
 
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text(project == null ? 'new_project'.tr() : 'edit_project'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: InputDecoration(labelText: 'name'.tr()),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descController,
-              decoration: InputDecoration(labelText: 'description'.tr()),
-            ),
-          ],
+    openFormPage(
+      context,
+      Builder(
+        builder: (page) => SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'name'.tr()),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                controller: descController,
+                maxLines: 3,
+                decoration: InputDecoration(labelText: 'description'.tr()),
+              ),
+              const SizedBox(height: 28),
+              ElevatedButton(
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty) return;
+                  if (project == null) {
+                    cubit.addProject(
+                      name: nameController.text.trim(),
+                      description: descController.text.trim(),
+                    );
+                  } else {
+                    cubit.updateProject(
+                      id: project.id,
+                      name: nameController.text.trim(),
+                      description: descController.text.trim(),
+                    );
+                  }
+                  Navigator.pop(page);
+                },
+                child: Text('save'.tr()),
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('cancel'.tr()),
-          ),
-          TextButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                if (project == null) {
-                  cubit.addProject(
-                    name: nameController.text,
-                    description: descController.text,
-                  );
-                } else {
-                  cubit.updateProject(
-                    id: project.id,
-                    name: nameController.text,
-                    description: descController.text,
-                  );
-                }
-                Navigator.pop(c);
-              }
-            },
-            child: Text('save'.tr()),
-          ),
-        ],
       ),
+      title: project == null ? 'new_project'.tr() : 'edit_project'.tr(),
     );
   }
 
@@ -333,7 +331,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                   if (state.projectMembers.isNotEmpty) ...[
                     Text(
                       'current_members'.tr(),
-                      style: GoogleFonts.geist(
+                      style: GoogleFonts.aBeeZee(
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         color: theme.colorScheme.primary,
@@ -372,7 +370,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                             ),
                             title: Text(
                               member['name'] ?? '',
-                              style: GoogleFonts.geist(
+                              style: GoogleFonts.aBeeZee(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -382,12 +380,12 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                               children: [
                                 Text(
                                   member['email'] ?? '',
-                                  style: GoogleFonts.geist(fontSize: 11),
+                                  style: GoogleFonts.aBeeZee(fontSize: 11),
                                 ),
                                 if (member['accepted_at'] != null)
                                   Text(
                                     '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(member['accepted_at']))}',
-                                    style: GoogleFonts.geist(
+                                    style: GoogleFonts.aBeeZee(
                                       fontSize: 10,
                                       color: theme.colorScheme.primary,
                                     ),
@@ -395,7 +393,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                                 else
                                   Text(
                                     'pending'.tr(),
-                                    style: GoogleFonts.geist(
+                                    style: GoogleFonts.aBeeZee(
                                       fontSize: 10,
                                       color: Colors.orange,
                                     ),
@@ -428,7 +426,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                   ],
                   Text(
                     'invite_member_hint'.tr(),
-                    style: GoogleFonts.geist(fontSize: 14),
+                    style: GoogleFonts.aBeeZee(fontSize: 14),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -490,7 +488,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                                   },
                             title: Text(
                               name,
-                              style: GoogleFonts.geist(
+                              style: GoogleFonts.aBeeZee(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -499,13 +497,13 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                                 Expanded(
                                   child: Text(
                                     email,
-                                    style: GoogleFonts.geist(fontSize: 12),
+                                    style: GoogleFonts.aBeeZee(fontSize: 12),
                                   ),
                                 ),
                                 if (isAlreadyMember)
                                   Text(
                                     'already_member'.tr(),
-                                    style: GoogleFonts.geist(
+                                    style: GoogleFonts.aBeeZee(
                                       fontSize: 10,
                                       color: Colors.green,
                                       fontWeight: FontWeight.bold,
@@ -528,7 +526,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                       child: Center(
                         child: Text(
                           'no_users_found'.tr(),
-                          style: GoogleFonts.geist(color: Colors.grey),
+                          style: GoogleFonts.aBeeZee(color: Colors.grey),
                         ),
                       ),
                     ),
@@ -540,7 +538,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                         'selected_members'.tr(
                           args: [_selectedEmails.length.toString()],
                         ),
-                        style: GoogleFonts.geist(
+                        style: GoogleFonts.aBeeZee(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
                         ),

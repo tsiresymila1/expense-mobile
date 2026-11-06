@@ -3,6 +3,7 @@ import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SummarySection extends StatelessWidget {
@@ -21,23 +22,34 @@ class SummarySection extends StatelessWidget {
       settings.currencySymbol,
       locale: context.locale.toString(),
     );
-    final ratio = state.thisMonthIncome > 0
-        ? state.thisMonthExpense / state.thisMonthIncome
-        : 0.0;
+    final incomeTotal = state.dateRange == null
+        ? state.thisMonthIncome
+        : state.filteredIncome;
+    final expenseTotal = state.dateRange == null
+        ? state.thisMonthExpense
+        : state.filteredExpense;
+    final ratio = incomeTotal > 0 ? expenseTotal / incomeTotal : 0.0;
     Widget metric(String label, double amount, bool income) => Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${income ? '↙' : '↗'} ${label.tr()}',
-            style: theme.textTheme.bodySmall,
+          Row(
+            children: [
+              Icon(
+                income ? Icons.south_west : Icons.north_east,
+                size: 12,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Text(label.tr(), style: theme.textTheme.bodySmall),
+            ],
           ),
           const SizedBox(height: 10),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
               '${income ? '+' : '−'}${money(amount)}',
-              style: GoogleFonts.geistMono(
+              style: GoogleFonts.aBeeZee(
                 fontSize: 13,
                 color: income
                     ? AppTheme.link(context)
@@ -51,92 +63,113 @@ class SummarySection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(),
-        const SizedBox(height: 24),
-        Text(
-          'balance_this_month'.tr().toUpperCase(),
-          style: GoogleFonts.geistMono(
-            fontSize: 10,
-            letterSpacing: 1,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'balance_this_month'.tr(),
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton(
+              onPressed: () => showModalBottomSheet<void>(
+                context: context,
+                useRootNavigator: true,
+                useSafeArea: true,
+                builder: (sheet) => SafeArea(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(3, (offset) {
+                      final now = DateTime.now();
+                      final start = DateTime(now.year, now.month - offset);
+                      return ListTile(
+                        title: Text(
+                          DateFormat.yMMMM(
+                            context.locale.toString(),
+                          ).format(start),
+                        ),
+                        onTap: () {
+                          context.read<ExpensesCubit>().loadExpenses(
+                            dateRange: DateTimeRange(
+                              start: start,
+                              end: DateTime(
+                                start.year,
+                                start.month + 1,
+                              ).subtract(const Duration(microseconds: 1)),
+                            ),
+                            amountRange: null,
+                          );
+                          Navigator.pop(sheet);
+                        },
+                      );
+                    }),
+                  ),
+                ),
+              ),
+              child: Text(
+                DateFormat.yMMMM(
+                  context.locale.toString(),
+                ).format(state.dateRange?.start ?? DateTime.now()),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
         FittedBox(
           fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
           child: Text.rich(
             TextSpan(
               children: [
                 TextSpan(
                   text: NumberFormat.decimalPattern(
                     context.locale.toString(),
-                  ).format(state.thisMonthTotal),
+                  ).format(incomeTotal - expenseTotal),
                 ),
                 TextSpan(
                   text: ' ${settings.currencySymbol}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 18,
-                    letterSpacing: 0,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  style: theme.textTheme.bodyMedium,
                 ),
               ],
             ),
-            style: GoogleFonts.geist(
-              fontSize: 46,
-              fontWeight: FontWeight.w400,
-              letterSpacing: -2.3,
-            ),
+            style: GoogleFonts.aBeeZee(fontSize: 36, letterSpacing: -1),
           ),
         ),
-        const SizedBox(height: 12),
-        Text('balance_explanation'.tr(), style: theme.textTheme.bodySmall),
-        const SizedBox(height: 28),
-        Row(
-          children: [
-            metric('income', state.thisMonthIncome, true),
-            const SizedBox(width: 18),
-            metric('expense', state.thisMonthExpense, false),
-          ],
-        ),
-        const SizedBox(height: 26),
-        const Divider(),
-        const SizedBox(height: 18),
-        Row(
-          children: [
-            Expanded(
-              child: Semantics(
-                label: '${(ratio * 100).round()}%',
-                child: Row(
-                  children: List.generate(
-                    20,
-                    (i) => Expanded(
-                      child: Container(
-                        height: 24,
-                        margin: const EdgeInsets.only(right: 3),
-                        color: i < (ratio * 20).ceil()
-                            ? AppTheme.primaryColor
-                            : theme.dividerColor,
-                      ),
-                    ),
-                  ),
-                ),
+        const SizedBox(height: 20),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: .1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              metric('income', incomeTotal, true),
+              Container(
+                height: 42,
+                width: 1,
+                color: theme.dividerColor,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                state.thisMonthIncome > 0
-                    ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
-                    : 'no_income_yet'.tr(),
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ],
+              metric('expense', expenseTotal, false),
+            ],
+          ),
         ),
         const SizedBox(height: 18),
-        const Divider(),
+        Text(
+          incomeTotal > 0
+              ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
+              : 'no_income_yet'.tr(),
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 10),
+        LinearProgressIndicator(
+          value: ratio.clamp(0, 1),
+          minHeight: 4,
+          color: AppTheme.link(context),
+          backgroundColor: theme.dividerColor,
+          borderRadius: BorderRadius.circular(4),
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }

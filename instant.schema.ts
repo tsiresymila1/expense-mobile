@@ -11,6 +11,7 @@ import { i } from '@instantdb/core';
 
 const _schema = i.schema({
   entities: {
+    $files: i.entity({path: i.string().unique().indexed(), url: i.string()}),
     // Built-in identity namespace.
     $users: i.entity({
       email: i.string().unique().indexed(),
@@ -64,6 +65,7 @@ const _schema = i.schema({
   },
 
   links: {
+    expenseFiles: {forward: {on: 'expenses', has: 'many', label: 'files'}, reverse: {on: '$files', has: 'one', label: 'expense'}},
     profileUser: {
       forward: { on: 'profiles', has: 'one', label: 'user' },
       reverse: { on: '$users', has: 'one', label: 'profile' },

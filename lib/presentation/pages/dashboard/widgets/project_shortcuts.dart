@@ -75,7 +75,7 @@ class ProjectShortcuts extends StatelessWidget {
             children: [
               Text(
                 (project.name[0]).toUpperCase(),
-                style: GoogleFonts.geist(
+                style: GoogleFonts.aBeeZee(
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                   color: isSelected ? Colors.white : color,
@@ -86,7 +86,7 @@ class ProjectShortcuts extends StatelessWidget {
                 child: Text(
                   project.name.toString().tr(),
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.geist(
+                  style: GoogleFonts.aBeeZee(
                     fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
                     fontSize: 12,
                     color: isSelected

@@ -61,32 +61,34 @@ class AppTheme {
           error: dark ? const Color(0xFFFF8B95) : const Color(0xFFB42332),
         );
     final text =
-        GoogleFonts.geistTextTheme(ThemeData(brightness: brightness).textTheme)
+        GoogleFonts.aBeeZeeTextTheme(
+              ThemeData(brightness: brightness).textTheme,
+            )
             .apply(bodyColor: ink, displayColor: ink)
             .copyWith(
-              headlineMedium: GoogleFonts.geist(
-                fontSize: 28,
+              headlineMedium: GoogleFonts.aBeeZee(
+                fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -1.2,
                 color: ink,
               ),
-              titleLarge: GoogleFonts.geist(
+              titleLarge: GoogleFonts.aBeeZee(
                 fontSize: 22,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -.8,
                 color: ink,
               ),
-              titleMedium: GoogleFonts.geist(
-                fontSize: 15,
+              titleMedium: GoogleFonts.aBeeZee(
+                fontSize: 17,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -.3,
                 color: ink,
               ),
-              bodyMedium: GoogleFonts.geist(fontSize: 13, color: ink),
-              bodySmall: GoogleFonts.geist(fontSize: 11, color: muted),
+              bodyMedium: GoogleFonts.aBeeZee(fontSize: 15, color: ink),
+              bodySmall: GoogleFonts.aBeeZee(fontSize: 13, color: muted),
             );
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(10),
     );
     return ThemeData(
       useMaterial3: true,
@@ -121,64 +123,64 @@ class AppTheme {
         labelStyle: text.bodyMedium,
         hintStyle: text.bodySmall,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: link, width: 1.5),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: scheme.onPrimary,
+          backgroundColor: secondaryColor,
+          foregroundColor: Colors.white,
           elevation: 0,
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(48, 48),
           shape: shape,
-          textStyle: GoogleFonts.geist(
-            fontSize: 12,
+          textStyle: GoogleFonts.aBeeZee(
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          textStyle: GoogleFonts.geist(
-            fontSize: 12,
+          textStyle: GoogleFonts.aBeeZee(
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          backgroundColor: primaryColor,
-          foregroundColor: scheme.onPrimary,
-          minimumSize: const Size(44, 44),
+          backgroundColor: secondaryColor,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(48, 48),
           shape: shape,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          textStyle: GoogleFonts.geist(
-            fontSize: 12,
+          textStyle: GoogleFonts.aBeeZee(
+            fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
           foregroundColor: ink,
           side: BorderSide(color: border),
-          minimumSize: const Size(44, 44),
+          minimumSize: const Size(48, 48),
           shape: shape,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: link,
-          textStyle: GoogleFonts.geist(fontSize: 12),
+          textStyle: GoogleFonts.aBeeZee(fontSize: 14),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: primaryColor,
-        foregroundColor: scheme.onPrimary,
+        backgroundColor: secondaryColor,
+        foregroundColor: Colors.white,
         elevation: 0,
         shape: shape,
       ),
@@ -207,7 +209,10 @@ class AppTheme {
         backgroundColor: dark
             ? const Color(0xFF303030)
             : const Color(0xFF202020),
-        contentTextStyle: GoogleFonts.geist(color: Colors.white, fontSize: 13),
+        contentTextStyle: GoogleFonts.aBeeZee(
+          color: Colors.white,
+          fontSize: 15,
+        ),
       ),
     );
   }

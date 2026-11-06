@@ -11,39 +11,8 @@ import 'package:go_router/go_router.dart';
 class ExpenseBrand extends StatelessWidget {
   const ExpenseBrand({super.key});
   @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      ExcludeSemantics(
-        child: Container(
-          width: 29,
-          height: 29,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor,
-            borderRadius: BorderRadius.circular(7),
-          ),
-          child: const Text(
-            'e',
-            style: TextStyle(
-              color: Color(0xFF10291D),
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-      const SizedBox(width: 7),
-      const Text(
-        'expense',
-        style: TextStyle(
-          fontSize: 19,
-          fontWeight: FontWeight.w500,
-          letterSpacing: -.8,
-        ),
-      ),
-    ],
-  );
+  Widget build(BuildContext context) =>
+      const Text('G-spend', style: TextStyle(fontSize: 22, letterSpacing: -.6));
 }
 
 class AppShell extends StatelessWidget {
@@ -52,6 +21,9 @@ class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.child, required this.location});
   @override
   Widget build(BuildContext context) {
+    if (!['/', '/expenses', '/stats', '/projects'].contains(location)) {
+      return child;
+    }
     final theme = Theme.of(context);
     final name = context.watch<AuthCubit>().state.displayName ?? '';
     final initials = name
@@ -69,12 +41,19 @@ class AppShell extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           automaticallyImplyLeading: false,
-          toolbarHeight: 68,
-          title: const ExpenseBrand(),
-          bottom: const PreferredSize(
-            preferredSize: Size.fromHeight(1),
-            child: Divider(),
-          ),
+          toolbarHeight: location == '/' ? 88 : 64,
+          title: location == '/'
+              ? const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [ExpenseBrand(), ProjectContext()],
+                )
+              : Text(
+                  ({
+                    '/expenses': 'nav_activity',
+                    '/stats': 'nav_analysis',
+                    '/projects': 'projects',
+                  }[location]!).tr(),
+                ),
           actions: [
             IconButton(
               tooltip: 'theme'.tr(),
@@ -114,7 +93,11 @@ class AppShell extends StatelessWidget {
         ),
         body: Column(
           children: [
-            const ProjectContext(),
+            if (location == '/expenses' || location == '/stats')
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: ProjectContext(),
+              ),
             Expanded(child: child),
           ],
         ),
@@ -167,19 +150,23 @@ class ExpenseNavigation extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(tab.$3, size: 20, color: color),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppTheme.primaryColor.withValues(alpha: .12)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(tab.$3, size: 22, color: color),
+                          ),
                           const SizedBox(height: 7),
                           Text(
                             tab.$2.tr(),
-                            style: TextStyle(fontSize: 10, color: color),
-                          ),
-                          const SizedBox(height: 7),
-                          Container(
-                            width: 14,
-                            height: 2,
-                            color: selected
-                                ? AppTheme.primaryColor
-                                : Colors.transparent,
+                            style: TextStyle(fontSize: 13, color: color),
                           ),
                         ],
                       ),
@@ -207,45 +194,50 @@ class ProjectContext extends StatelessWidget {
     final selected = projects.any((p) => p.id == state.currentProject?.id)
         ? state.currentProject!.id
         : 'personal';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                isExpanded: true,
-                value: selected,
-                iconSize: 16,
-                style: Theme.of(context).textTheme.bodySmall,
-                items: [
-                  DropdownMenuItem(
-                    value: 'personal',
-                    child: Text('personal_workspace'.tr()),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+          padding: EdgeInsets.zero,
+          foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        label: Text(
+          state.currentProject?.name ?? 'personal_workspace'.tr(),
+          overflow: TextOverflow.ellipsis,
+        ),
+        icon: const Icon(Icons.expand_more, size: 16),
+        onPressed: () => showModalBottomSheet<void>(
+          context: context,
+          useRootNavigator: true,
+          useSafeArea: true,
+          builder: (sheet) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text('personal_workspace'.tr()),
+                  trailing: selected == 'personal'
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () {
+                    context.read<ProjectsCubit>().switchProject('');
+                    Navigator.pop(sheet);
+                  },
+                ),
+                ...projects.map(
+                  (p) => ListTile(
+                    title: Text(p.name),
+                    trailing: selected == p.id ? const Icon(Icons.check) : null,
+                    onTap: () {
+                      context.read<ProjectsCubit>().switchProject(p.id);
+                      Navigator.pop(sheet);
+                    },
                   ),
-                  ...projects.map(
-                    (p) => DropdownMenuItem(
-                      value: p.id,
-                      child: Text(p.name.tr(), overflow: TextOverflow.ellipsis),
-                    ),
-                  ),
-                ],
-                onChanged: (id) {
-                  if (id != null) {
-                    context.read<ProjectsCubit>().switchProject(
-                      id == 'personal' ? '' : id,
-                    );
-                  }
-                },
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 16),
-          Text(
-            DateFormat.yMMMM(context.locale.toString()).format(DateTime.now()),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ],
+        ),
       ),
     );
   }

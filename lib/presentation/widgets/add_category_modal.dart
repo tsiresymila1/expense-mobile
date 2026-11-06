@@ -41,15 +41,10 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
     final theme = Theme.of(context);
     return ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: MediaQuery.of(context).size.height,
       ),
       child: Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
+        padding: EdgeInsets.only(bottom: 24, left: 24, right: 24, top: 24),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -69,27 +64,6 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  widget.category == null
-                      ? 'new_category'.tr()
-                      : 'edit_category'.tr(),
-                  style: GoogleFonts.geist(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 24),
                 FormBuilderTextField(
                   name: 'name',
                   decoration: InputDecoration(
@@ -156,7 +130,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                                 const SizedBox(height: 4),
                                 Text(
                                   it['n'] as String,
-                                  style: GoogleFonts.geist(
+                                  style: GoogleFonts.aBeeZee(
                                     fontSize: 10,
                                     color: isS
                                         ? theme.colorScheme.primary
@@ -219,12 +193,12 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: const Color(0xFF10291D),
+                    backgroundColor: const Color(0xFF18794E),
+                    foregroundColor: Colors.white,
                   ),
                   child: Text(
                     'save_category'.tr(),
-                    style: GoogleFonts.geist(
+                    style: GoogleFonts.aBeeZee(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -240,7 +214,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
 
   Widget _label(String t, ThemeData theme) => Text(
     t,
-    style: GoogleFonts.geist(
+    style: GoogleFonts.aBeeZee(
       fontWeight: FontWeight.bold,
       color: theme.colorScheme.onSurface,
     ),

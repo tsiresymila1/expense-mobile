@@ -38,3 +38,18 @@ server-authoritative schema/perms live at the **repo root** (`instant.schema.ts`
 - Permissions enforce: creator/owner/member visibility on expenses, owner-only
   project + membership management — the server-side replacement for the app's
   former client-side push-authorization gate.
+
+## Expense receipts
+
+Before releasing the receipt UI, push **both** the schema and permissions above.
+The existing Storage service alone is not sufficient: `expenseFiles` links
+`expenses.files` to `$files.expense`, and `$files` permissions protect downloads.
+Uploads use `<user-id>/<expense-id>/<random-id>/<filename>` to avoid overwrites.
+The mobile client accepts photos or files up to 10 MiB, opens signed download
+URLs, and allows creators/project owners to remove attachments. Members can read
+receipts on expenses they can view. Failed linking attempts delete the upload.
+
+The upload flow requires a network connection. Validate camera permissions,
+photo-library selection, document selection, and shared-project access on a
+real device after deployment. Files are removed through the receipt screen;
+expense deletion does not currently clean up its stored files.

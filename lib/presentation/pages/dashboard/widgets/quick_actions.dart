@@ -54,6 +54,7 @@ class QuickActions extends StatelessWidget {
   void _showCategories(BuildContext context) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const CategoryManagementModal(),
@@ -95,7 +96,7 @@ class QuickActions extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: GoogleFonts.geist(
+                  style: GoogleFonts.aBeeZee(
                     fontWeight: FontWeight.w500,
                     fontSize: 13,
                     color: theme.colorScheme.onSurface,

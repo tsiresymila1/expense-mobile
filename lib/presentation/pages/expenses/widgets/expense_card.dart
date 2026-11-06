@@ -46,15 +46,16 @@ class ExpenseCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Expanded(
+                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       expense.note ?? 'no_description'.tr(),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 13,
+                        fontSize: 15,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -75,8 +76,8 @@ class ExpenseCard extends StatelessWidget {
                 child: Text(
                   '${expense.type == 'income' ? '+' : '−'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol, locale: context.locale.toString())}',
                   textAlign: TextAlign.end,
-                  style: GoogleFonts.geistMono(
-                    fontSize: 11,
+                  style: GoogleFonts.aBeeZee(
+                    fontSize: 13,
                     color: expense.type == 'income'
                         ? AppTheme.link(context)
                         : theme.colorScheme.onSurface,

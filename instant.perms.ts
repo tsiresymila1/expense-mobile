@@ -9,6 +9,10 @@
 import type { InstantRules } from '@instantdb/core';
 
 const rules = {
+  $files: {
+    bind: ['isUploader', "auth.id != null && data.path.startsWith(auth.id + '/')", 'canReadExpense', "auth.id != null && (auth.id in data.ref('expense.creator.id') || auth.id in data.ref('expense.project.owner.id') || auth.id in data.ref('expense.project.members.user.id'))", 'canEditExpense', "auth.id != null && (auth.id in data.ref('expense.creator.id') || auth.id in data.ref('expense.project.owner.id'))"],
+    allow: {view: 'isUploader || canReadExpense', create: 'isUploader', update: 'isUploader || canEditExpense', delete: 'isUploader || canEditExpense'},
+  },
   profiles: {
     // Any signed-in user can read profiles (needed for member search/sharing).
     allow: {

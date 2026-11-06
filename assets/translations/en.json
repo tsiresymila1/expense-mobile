@@ -176,5 +176,16 @@
   "maximum_amount": "Maximum",
   "invalid_amount_range": "Enter valid amounts, with a maximum greater than the minimum.",
   "you": "You",
-  "close": "Close"
+  "close": "Close",
+  "receipts": "Receipts",
+  "receipt_camera": "Camera",
+  "receipt_gallery": "Photo library",
+  "receipt_file": "File",
+  "receipt_size": "Empty or oversized file. Maximum: 10 MB per file.",
+  "receipt_empty": "No receipts for this expense.",
+  "receipt_error": "Unable to process the receipt. Check your connection and try again.",
+  "receipt_delete": "Permanently delete this receipt?",
+  "save_and_attach": "Save and attach a receipt",
+  "expense_save_error": "Unable to save the expense. Try again.",
+  "receipt_limit": "Photos or documents · Maximum 10 MB per file"
 }

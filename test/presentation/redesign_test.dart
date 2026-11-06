@@ -179,7 +179,13 @@ void main() {
           const AppShell(location: '/', child: DashboardPage()),
           dark: dark,
         );
-        expect(find.text('expense'), findsOneWidget);
+        final theme = Theme.of(tester.element(find.byType(DashboardPage)));
+        expect(theme.textTheme.bodyMedium?.fontFamily, startsWith('ABeeZee'));
+        expect(
+          theme.textTheme.headlineMedium?.fontFamily,
+          startsWith('ABeeZee'),
+        );
+        expect(find.text('G-spend'), findsOneWidget);
         expect(find.text('Accueil'), findsOneWidget);
         expect(find.text('Activité'), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -241,6 +247,34 @@ void main() {
     expect(auth.sentEmail, 'hello@example.com');
     expect(find.byKey(const ValueKey('magic-code-pinput')), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+  testWidgets('V5 entry covers shell and returns to home', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await mount(tester, const AppShell(location: '/', child: DashboardPage()));
+    await tester.tap(find.text('Ajouter'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AddExpenseModal), findsOneWidget);
+    expect(find.byType(ExpenseNavigation), findsNothing);
+    expect(find.text('G-spend'), findsNothing);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    tester.view.resetViewInsets();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.byType(ExpenseNavigation), findsOneWidget);
+  });
+  testWidgets('V5 secondary page has no shared header or tabs', (tester) async {
+    await mount(
+      tester,
+      const AppShell(location: '/settings', child: SettingsPage()),
+    );
+    expect(find.byType(ExpenseNavigation), findsNothing);
+    expect(find.text('G-spend'), findsNothing);
+    expect(find.byType(AppBar), findsOneWidget);
   });
   for (final entry in <String, Widget>{
     'activity': const ExpensesPage(),

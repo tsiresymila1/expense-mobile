@@ -161,7 +161,7 @@ class ExpensesCubit extends Cubit<ExpensesState> {
     );
   }
 
-  Future<void> addExpense({
+  Future<String> addExpense({
     required double amount,
     String? categoryId,
     Object? projectId = _projectIdNotProvided,
@@ -170,36 +170,33 @@ class ExpensesCubit extends Cubit<ExpensesState> {
     String type = 'expense',
   }) async {
     final uid = _uid;
-    if (uid == null) return;
+    if (uid == null) throw StateError('Authentication required');
     final pid = identical(projectId, _projectIdNotProvided)
         ? state.currentProjectId
         : projectId as String?;
     final id = db.id();
     final now = DateTime.now().millisecondsSinceEpoch;
-    try {
-      final ops = <Operation>[
-        ...db.tx['expenses'].create({
-          'id': id,
-          'creatorId': uid,
-          'projectId': pid,
-          'categoryId': categoryId,
-          'amount': amount,
-          'type': type,
-          'date': date.millisecondsSinceEpoch,
-          'note': note,
-          'createdAt': now,
-          'updatedAt': now,
-        }).operations,
-        ...db.tx['expenses'][id].link({
-          'creator': uid,
-          if (pid != null) 'project': pid,
-          if (categoryId != null) 'category': categoryId,
-        }).operations,
-      ];
-      await db.transact(ops);
-    } catch (e) {
-      debugPrint('Error adding expense: $e');
-    }
+    final ops = <Operation>[
+      ...db.tx['expenses'].create({
+        'id': id,
+        'creatorId': uid,
+        'projectId': pid,
+        'categoryId': categoryId,
+        'amount': amount,
+        'type': type,
+        'date': date.millisecondsSinceEpoch,
+        'note': note,
+        'createdAt': now,
+        'updatedAt': now,
+      }).operations,
+      ...db.tx['expenses'][id].link({
+        'creator': uid,
+        if (pid != null) 'project': pid,
+        if (categoryId != null) 'category': categoryId,
+      }).operations,
+    ];
+    await db.transact(ops);
+    return id;
   }
 
   Future<void> updateExpense({
@@ -210,26 +207,23 @@ class ExpensesCubit extends Cubit<ExpensesState> {
     String? note,
     String type = 'expense',
   }) async {
-    try {
-      await db.transact(
-        db.tx['expenses'][id].update({
-          'amount': amount,
-          'type': type,
-          'categoryId': categoryId,
-          'date': date.millisecondsSinceEpoch,
-          'note': note,
-          'updatedAt': DateTime.now().millisecondsSinceEpoch,
-        }),
-      );
-      // ponytail: category link left as-is on edit; scalar categoryId is the
-      // source of truth for the UI. Relink here if category-based perms appear.
-    } catch (e) {
-      debugPrint('Error updating expense: $e');
-    }
+    await db.transact(
+      db.tx['expenses'][id].update({
+        'amount': amount,
+        'type': type,
+        'categoryId': categoryId,
+        'date': date.millisecondsSinceEpoch,
+        'note': note,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      }),
+    );
+    // ponytail: category link left as-is on edit; scalar categoryId is the
+    // source of truth for the UI. Relink here if category-based perms appear.
   }
 
   Future<void> deleteExpense(String id) async {
     try {
+      // shortcut: stored receipts remain after expense deletion; add server cleanup before enforcing storage retention.
       await db.transact(db.tx['expenses'][id].delete());
     } catch (e) {
       debugPrint('Error deleting expense: $e');

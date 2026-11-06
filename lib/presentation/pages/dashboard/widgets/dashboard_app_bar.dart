@@ -63,7 +63,7 @@ class DashboardAppBar extends StatelessWidget {
                               opacity: opacity,
                               child: Text(
                                 '${'welcome_back'.tr()} ${userName.toString().padRight(10, '.').substring(0, 10)}',
-                                style: GoogleFonts.geist(
+                                style: GoogleFonts.aBeeZee(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -81,7 +81,7 @@ class DashboardAppBar extends StatelessWidget {
                                     Text(
                                       currentProject?.name.tr() ??
                                           'personal_workspace'.tr(),
-                                      style: GoogleFonts.geist(
+                                      style: GoogleFonts.aBeeZee(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w500,
                                         color: theme.colorScheme.onSurface,
@@ -173,7 +173,7 @@ class DashboardAppBar extends StatelessWidget {
                                                   5)
                                                 Text(
                                                   '+${state.projectMembers.length - 5}',
-                                                  style: GoogleFonts.geist(
+                                                  style: GoogleFonts.aBeeZee(
                                                     fontSize: 10,
                                                     color: Colors.grey,
                                                     fontWeight: FontWeight.w600,
@@ -217,6 +217,7 @@ class DashboardAppBar extends StatelessWidget {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
@@ -232,7 +233,7 @@ class DashboardAppBar extends StatelessWidget {
                 children: [
                   Text(
                     'current_members'.tr(),
-                    style: GoogleFonts.geist(
+                    style: GoogleFonts.aBeeZee(
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
@@ -244,7 +245,7 @@ class DashboardAppBar extends StatelessWidget {
                       child: Center(
                         child: Text(
                           'no_members'.tr(),
-                          style: GoogleFonts.geist(color: Colors.grey),
+                          style: GoogleFonts.aBeeZee(color: Colors.grey),
                         ),
                       ),
                     )
@@ -291,7 +292,7 @@ class DashboardAppBar extends StatelessWidget {
                             ),
                             title: Text(
                               member['name'] ?? '',
-                              style: GoogleFonts.geist(
+                              style: GoogleFonts.aBeeZee(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -300,7 +301,7 @@ class DashboardAppBar extends StatelessWidget {
                               children: [
                                 Text(
                                   member['email'] ?? '',
-                                  style: GoogleFonts.geist(
+                                  style: GoogleFonts.aBeeZee(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
@@ -308,7 +309,7 @@ class DashboardAppBar extends StatelessWidget {
                                 if (member['accepted_at'] != null)
                                   Text(
                                     '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(member['accepted_at']))}',
-                                    style: GoogleFonts.geist(
+                                    style: GoogleFonts.aBeeZee(
                                       fontSize: 10,
                                       color: theme.colorScheme.primary,
                                     ),
@@ -316,7 +317,7 @@ class DashboardAppBar extends StatelessWidget {
                                 else
                                   Text(
                                     'pending'.tr(),
-                                    style: GoogleFonts.geist(
+                                    style: GoogleFonts.aBeeZee(
                                       fontSize: 10,
                                       color: Colors.orange,
                                     ),
@@ -419,6 +420,7 @@ class DashboardAppBar extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
@@ -432,7 +434,7 @@ class DashboardAppBar extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'select_project'.tr(),
-                  style: GoogleFonts.geist(
+                  style: GoogleFonts.aBeeZee(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
                   ),
@@ -452,7 +454,7 @@ class DashboardAppBar extends StatelessWidget {
                         ),
                         title: Text(
                           'personal_workspace'.tr(),
-                          style: GoogleFonts.geist(
+                          style: GoogleFonts.aBeeZee(
                             fontWeight: isSelected
                                 ? FontWeight.w500
                                 : FontWeight.w500,
@@ -504,7 +506,7 @@ class DashboardAppBar extends StatelessWidget {
                       ),
                       title: Text(
                         project.name.tr(),
-                        style: GoogleFonts.geist(
+                        style: GoogleFonts.aBeeZee(
                           fontWeight: isSelected
                               ? FontWeight.w500
                               : FontWeight.w500,

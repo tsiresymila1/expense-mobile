@@ -52,7 +52,7 @@ class _AccountPageState extends State<AccountPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         title: Text(
           'logout'.tr(),
-          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
+          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
         ),
         content: Text('logout_confirmation'.tr()),
         actions: [

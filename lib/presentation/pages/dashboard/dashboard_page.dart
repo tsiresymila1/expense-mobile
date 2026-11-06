@@ -1,10 +1,10 @@
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/summary_section.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/recent_transactions_list.dart';
-import 'package:expense/presentation/pages/dashboard/widgets/spending_chart.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'package:flutter/material.dart';
@@ -44,49 +44,49 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           TextButton(
             onPressed: () => context.go(route),
-            child: Text('${'see_all'.tr()} ↗'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('see_all'.tr()),
+                const SizedBox(width: 4),
+                const Icon(Icons.north_east, size: 12),
+              ],
+            ),
           ),
         ],
       ),
     );
     return Scaffold(
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Align(
+          heightFactor: 1,
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: () => openFormPage(
+              context,
+              const AddExpenseModal(),
+              title: 'new_expense'.tr(),
+            ),
+            icon: const Icon(Icons.add),
+            label: Text('add'.tr()),
+          ),
+        ),
+      ),
       body: RefreshIndicator(
         onRefresh: () async => context.read<ExpensesCubit>().loadExpenses(),
         child: ListView(
           padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'overview'.tr(),
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () => showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    useSafeArea: true,
-                    builder: (_) => const AddExpenseModal(),
-                  ),
-                  icon: const Icon(Icons.add, size: 16),
-                  label: Text('add'.tr()),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
             if (state.isLoading && state.expenses.isEmpty)
               const LinearProgressIndicator(),
             SummarySection(state: state, settings: settings),
             heading('recent_transactions', '/expenses'),
             RecentTransactionsList(state: state, settings: settings),
-            heading('daily_spending', '/stats'),
-            SpendingChart(state: state),
             TextButton(
               onPressed: () => showModalBottomSheet(
                 context: context,
+                useRootNavigator: true,
                 isScrollControlled: true,
                 useSafeArea: true,
                 builder: (_) => const CategoryManagementModal(),

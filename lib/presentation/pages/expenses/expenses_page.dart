@@ -1,3 +1,4 @@
+import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:expense/presentation/widgets/expense_details.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
@@ -31,19 +32,17 @@ class _ExpensesPageState extends State<ExpensesPage> {
         )
         .toList();
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Text('transactions'.tr()),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 22),
-            child: ElevatedButton.icon(
-              onPressed: () => _showAddExpense(context),
-              icon: const Icon(Icons.add, size: 16),
-              label: Text('add'.tr()),
-            ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        child: Align(
+          heightFactor: 1,
+          alignment: Alignment.centerRight,
+          child: ElevatedButton.icon(
+            onPressed: () => _showAddExpense(context),
+            icon: const Icon(Icons.add),
+            label: Text('add'.tr()),
           ),
-        ],
+        ),
       ),
       body: RefreshIndicator(
         onRefresh: () async => context.read<ExpensesCubit>().loadExpenses(),
@@ -124,14 +123,11 @@ class _ExpensesPageState extends State<ExpensesPage> {
     );
   }
 
-  void _showAddExpense(BuildContext context) => showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) => const AddExpenseModal(),
-  );
+  void _showAddExpense(BuildContext context) =>
+      openFormPage(context, const AddExpenseModal(), title: 'new_expense'.tr());
   void _showCategoryManagement(BuildContext context) => showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => const CategoryManagementModal(),
@@ -141,6 +137,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
     final settings = context.read<SettingsCubit>().state;
     final res = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) =>

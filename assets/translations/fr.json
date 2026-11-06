@@ -177,5 +177,16 @@
   "maximum_amount": "Maximum",
   "invalid_amount_range": "Saisissez des montants valides, avec un maximum supérieur au minimum.",
   "you": "Vous",
-  "close": "Fermer"
+  "close": "Fermer",
+  "receipts": "Justificatifs",
+  "receipt_camera": "Appareil photo",
+  "receipt_gallery": "Photothèque",
+  "receipt_file": "Fichier",
+  "receipt_size": "Fichier vide ou trop volumineux. Maximum : 10 Mo par fichier.",
+  "receipt_empty": "Aucun justificatif pour cette dépense.",
+  "receipt_error": "Impossible de traiter le justificatif. Vérifiez votre connexion et réessayez.",
+  "receipt_delete": "Supprimer définitivement ce justificatif ?",
+  "save_and_attach": "Enregistrer et joindre un justificatif",
+  "expense_save_error": "Impossible d’enregistrer la dépense. Réessayez.",
+  "receipt_limit": "Photos ou documents · 10 Mo maximum par fichier"
 }

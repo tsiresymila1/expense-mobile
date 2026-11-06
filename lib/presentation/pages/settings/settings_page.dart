@@ -26,7 +26,7 @@ class SettingsPage extends StatelessWidget {
         ),
         title: Text(
           'settings'.tr(),
-          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
+          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
         ),
       ),
       body: BlocBuilder<SettingsCubit, SettingsState>(
@@ -95,7 +95,7 @@ class SettingsPage extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       title: Text(
         'select_language'.tr(),
-        style: GoogleFonts.geist(fontWeight: FontWeight.w500),
+        style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -138,7 +138,7 @@ class SettingsPage extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       title: Text(
         'select_theme'.tr(),
-        style: GoogleFonts.geist(fontWeight: FontWeight.w500),
+        style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -180,7 +180,7 @@ class SettingsPage extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         title: Text(
           'currency'.tr(),
-          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
+          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
         ),
         content: FormBuilder(
           key: key,
