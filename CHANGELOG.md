@@ -7,6 +7,10 @@ uses it as the GitHub Release body and the Play Store "what's new" notes.
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-06
+### Fixed
+- Pin release builds to Flutter 3.41.9 to match the tested SDK and resolve the intl dependency conflict.
+
 ## [1.1.0] - 2026-11-06
 ### Changed
 - Refreshed the mobile interface with Geist typography, green accents, light/dark themes and persistent bottom navigation.
