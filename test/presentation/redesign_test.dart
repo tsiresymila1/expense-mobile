@@ -304,6 +304,54 @@ void main() {
     );
     expect(theme.colorScheme.onPrimary, Colors.white);
   });
+  for (final dark in [false, true]) {
+    testWidgets('Filter sheet has an opaque surface with keyboard ($dark)', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await mount(
+        tester,
+        const AppShell(location: '/expenses', child: ExpensesPage()),
+        dark: dark,
+      );
+      await tester.tap(find.byIcon(Icons.filter_list));
+      await tester.pumpAndSettle();
+      final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
+      final context = tester.element(find.byType(BottomSheet));
+      expect(
+        sheet.backgroundColor ??
+            Theme.of(context).bottomSheetTheme.backgroundColor,
+        Theme.of(context).colorScheme.surface,
+      );
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      tester.view.resetViewInsets();
+    });
+  }
+  testWidgets('Project sheet keeps text away from its edges', (tester) async {
+    await mount(tester, const AppShell(location: '/', child: DashboardPage()));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(ProjectContext),
+        matching: find.byType(TextButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final sheet = find.byType(BottomSheet);
+    final tile = find
+        .descendant(of: sheet, matching: find.byType(ListTile))
+        .first;
+    final label = find.descendant(of: tile, matching: find.byType(Text)).first;
+    expect(
+      tester.getTopLeft(label).dx - tester.getTopLeft(sheet).dx,
+      greaterThanOrEqualTo(20),
+    );
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('V5 secondary page has no shared header or tabs', (tester) async {
     await mount(
       tester,

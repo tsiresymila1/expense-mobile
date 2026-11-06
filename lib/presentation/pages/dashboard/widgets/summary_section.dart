@@ -83,6 +83,7 @@ class SummarySection extends StatelessWidget {
                   useRootNavigator: true,
                   useSafeArea: true,
                   builder: (sheet) => SafeArea(
+                    minimum: const EdgeInsets.symmetric(vertical: 16),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: List.generate(3, (offset) {

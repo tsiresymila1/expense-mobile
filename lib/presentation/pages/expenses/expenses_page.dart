@@ -139,7 +139,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    useSafeArea: true,
+    showDragHandle: true,
     builder: (context) => const CategoryManagementModal(),
   );
 
@@ -149,7 +150,8 @@ class _ExpensesPageState extends State<ExpensesPage> {
       context: context,
       useRootNavigator: true,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      useSafeArea: true,
+      showDragHandle: true,
       builder: (context) =>
           ExpenseFilterModal(currencySymbol: settings.currencySymbol),
     );

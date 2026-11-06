@@ -198,6 +198,7 @@ class AppTheme {
         shape: shape,
       ),
       bottomSheetTheme: BottomSheetThemeData(
+        clipBehavior: Clip.antiAlias,
         backgroundColor: background,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
@@ -212,7 +213,7 @@ class AppTheme {
         contentTextStyle: text.bodyMedium,
       ),
       listTileTheme: ListTileThemeData(
-        contentPadding: EdgeInsets.zero,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20),
         titleTextStyle: text.titleMedium,
         subtitleTextStyle: text.bodySmall,
         iconColor: muted,

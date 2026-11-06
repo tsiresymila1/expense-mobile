@@ -7,6 +7,11 @@ uses it as the GitHub Release body and the Play Store "what's new" notes.
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-07
+### Fixed
+- Restore an opaque themed surface for filter sheets, including keyboard and safe-area handling.
+- Add breathing room around project and period selection sheets.
+
 ## [1.3.0] - 2026-11-07
 ### Changed
 - Apply the selected Material Expressive direction with tinted surfaces, rounded cards and Material navigation.
