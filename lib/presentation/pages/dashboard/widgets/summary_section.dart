@@ -60,117 +60,124 @@ class SummarySection extends StatelessWidget {
         ],
       ),
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'balance_this_month'.tr(),
-                style: theme.textTheme.bodySmall,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'balance_this_month'.tr(),
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () => showModalBottomSheet<void>(
-                context: context,
-                useRootNavigator: true,
-                useSafeArea: true,
-                builder: (sheet) => SafeArea(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(3, (offset) {
-                      final now = DateTime.now();
-                      final start = DateTime(now.year, now.month - offset);
-                      return ListTile(
-                        title: Text(
-                          DateFormat.yMMMM(
-                            context.locale.toString(),
-                          ).format(start),
-                        ),
-                        onTap: () {
-                          context.read<ExpensesCubit>().loadExpenses(
-                            dateRange: DateTimeRange(
-                              start: start,
-                              end: DateTime(
-                                start.year,
-                                start.month + 1,
-                              ).subtract(const Duration(microseconds: 1)),
-                            ),
-                            amountRange: null,
-                          );
-                          Navigator.pop(sheet);
-                        },
-                      );
-                    }),
+              TextButton(
+                onPressed: () => showModalBottomSheet<void>(
+                  context: context,
+                  useRootNavigator: true,
+                  useSafeArea: true,
+                  builder: (sheet) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(3, (offset) {
+                        final now = DateTime.now();
+                        final start = DateTime(now.year, now.month - offset);
+                        return ListTile(
+                          title: Text(
+                            DateFormat.yMMMM(
+                              context.locale.toString(),
+                            ).format(start),
+                          ),
+                          onTap: () {
+                            context.read<ExpensesCubit>().loadExpenses(
+                              dateRange: DateTimeRange(
+                                start: start,
+                                end: DateTime(
+                                  start.year,
+                                  start.month + 1,
+                                ).subtract(const Duration(microseconds: 1)),
+                              ),
+                              amountRange: null,
+                            );
+                            Navigator.pop(sheet);
+                          },
+                        );
+                      }),
+                    ),
                   ),
                 ),
-              ),
-              child: Text(
-                DateFormat.yMMMM(
-                  context.locale.toString(),
-                ).format(state.dateRange?.start ?? DateTime.now()),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: NumberFormat.decimalPattern(
+                child: Text(
+                  DateFormat.yMMMM(
                     context.locale.toString(),
-                  ).format(incomeTotal - expenseTotal),
+                  ).format(state.dateRange?.start ?? DateTime.now()),
                 ),
-                TextSpan(
-                  text: ' ${settings.currencySymbol}',
-                  style: theme.textTheme.bodyMedium,
-                ),
-              ],
-            ),
-            style: GoogleFonts.aBeeZee(fontSize: 36, letterSpacing: -1),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withValues(alpha: .1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              metric('income', incomeTotal, true),
-              Container(
-                height: 42,
-                width: 1,
-                color: theme.dividerColor,
-                margin: const EdgeInsets.symmetric(horizontal: 16),
               ),
-              metric('expense', expenseTotal, false),
             ],
           ),
-        ),
-        const SizedBox(height: 18),
-        Text(
-          incomeTotal > 0
-              ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
-              : 'no_income_yet'.tr(),
-          style: theme.textTheme.bodySmall,
-        ),
-        const SizedBox(height: 10),
-        LinearProgressIndicator(
-          value: ratio.clamp(0, 1),
-          minHeight: 4,
-          color: AppTheme.link(context),
-          backgroundColor: theme.dividerColor,
-          borderRadius: BorderRadius.circular(4),
-        ),
-        const SizedBox(height: 16),
-      ],
+          const SizedBox(height: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: NumberFormat.decimalPattern(
+                      context.locale.toString(),
+                    ).format(incomeTotal - expenseTotal),
+                  ),
+                  TextSpan(
+                    text: ' ${settings.currencySymbol}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+              style: GoogleFonts.aBeeZee(fontSize: 34, letterSpacing: -1),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                metric('income', incomeTotal, true),
+                Container(
+                  height: 42,
+                  width: 1,
+                  color: theme.dividerColor,
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                metric('expense', expenseTotal, false),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            incomeTotal > 0
+                ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
+                : 'no_income_yet'.tr(),
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 10),
+          LinearProgressIndicator(
+            value: ratio.clamp(0, 1),
+            minHeight: 4,
+            color: AppTheme.link(context),
+            backgroundColor: theme.dividerColor,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }

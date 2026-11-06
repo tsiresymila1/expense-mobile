@@ -18,23 +18,29 @@ class ProjectsPage extends StatelessWidget {
       for (final p in [...state.projects, ...state.sharedProjects]) p.id: p,
     }.values.toList();
     return Scaffold(
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: Align(
-          heightFactor: 1,
-          alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
+      appBar: AppBar(
+        title: Text('projects'.tr()),
+        actions: [
+          IconButton(
+            tooltip: 'add'.tr(),
             onPressed: () => _showAddProject(context),
             icon: const Icon(Icons.add),
-            label: Text('add'.tr()),
           ),
-        ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(22),
         children: [
           if (state.isLoading) const LinearProgressIndicator(),
           ListTile(
+            tileColor: theme.colorScheme.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             leading: const Icon(Icons.folder_outlined),
             title: Text('personal_workspace'.tr()),
             subtitle: Text('personal_project_desc'.tr()),
@@ -49,10 +55,18 @@ class ProjectsPage extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(),
+          const SizedBox(height: 4),
           ...all.expand(
             (p) => [
               ListTile(
+                tileColor: theme.colorScheme.surfaceContainerLow,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 leading: const Icon(Icons.folder_outlined),
                 title: Text(p.name),
                 subtitle: Text(
@@ -64,7 +78,7 @@ class ProjectsPage extends StatelessWidget {
                     ? Icon(Icons.check, color: theme.colorScheme.secondary)
                     : const Icon(Icons.chevron_right, size: 18),
               ),
-              const Divider(),
+              const SizedBox(height: 4),
             ],
           ),
         ],
@@ -531,7 +545,7 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
                       ),
                     ),
                   if (_selectedEmails.isNotEmpty) ...[
-                    const Divider(),
+                    const SizedBox(height: 4),
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Text(

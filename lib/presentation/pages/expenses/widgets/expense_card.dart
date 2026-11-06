@@ -29,14 +29,16 @@ class ExpenseCard extends StatelessWidget {
         .categories
         .where((c) => c.id == expense.categoryId)
         .firstOrNull;
-    return DecoratedBox(
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(20),
       ),
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 17),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
           child: Row(
             children: [
               CategoryIcon(
@@ -55,7 +57,7 @@ class ExpenseCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 15,
+                        fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 6),

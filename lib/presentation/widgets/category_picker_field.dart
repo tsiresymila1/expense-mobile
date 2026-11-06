@@ -15,6 +15,7 @@ class CategoryPickerField extends StatelessWidget {
   Widget build(BuildContext context) =>
       BlocBuilder<CategoriesCubit, CategoriesState>(
         builder: (context, state) => DropdownButtonFormField<String>(
+          style: Theme.of(context).textTheme.bodyMedium,
           initialValue: state.categories.any((c) => c.id == value)
               ? value
               : null,

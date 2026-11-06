@@ -7,6 +7,12 @@ uses it as the GitHub Release body and the Play Store "what's new" notes.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-07
+### Changed
+- Apply the selected Material Expressive direction with tinted surfaces, rounded cards and Material navigation.
+- Give each tab its own header and actions; keep ABeeZee titles and dropdown text consistent.
+- Use a real FloatingActionButton for expense creation on Home and Activity.
+
 ## [1.2.0] - 2026-11-06
 ### Changed
 - Apply the V5 mobile layout with ABeeZee typography and G-spend branding.

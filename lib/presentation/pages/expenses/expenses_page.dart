@@ -18,6 +18,7 @@ class ExpensesPage extends StatefulWidget {
 
 class _ExpensesPageState extends State<ExpensesPage> {
   String _query = '';
+  bool _searchVisible = false;
   String _type = 'all';
   @override
   Widget build(BuildContext context) {
@@ -32,22 +33,30 @@ class _ExpensesPageState extends State<ExpensesPage> {
         )
         .toList();
     return Scaffold(
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
-        child: Align(
-          heightFactor: 1,
-          alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
-            onPressed: () => _showAddExpense(context),
-            icon: const Icon(Icons.add),
-            label: Text('add'.tr()),
+      appBar: AppBar(
+        title: Text('nav_activity'.tr()),
+        actions: [
+          IconButton(
+            tooltip: 'search_transactions'.tr(),
+            icon: const Icon(Icons.search),
+            onPressed: () => setState(() => _searchVisible = !_searchVisible),
           ),
-        ),
+          IconButton(
+            tooltip: 'filters'.tr(),
+            icon: const Icon(Icons.filter_list),
+            onPressed: () => _showFilter(context),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'new_expense'.tr(),
+        onPressed: () => _showAddExpense(context),
+        child: const Icon(Icons.add),
       ),
       body: RefreshIndicator(
         onRefresh: () async => context.read<ExpensesCubit>().loadExpenses(),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
           children: [
             Row(
               children: [
@@ -67,13 +76,14 @@ class _ExpensesPageState extends State<ExpensesPage> {
               ],
             ),
             const SizedBox(height: 18),
-            TextField(
-              onChanged: (v) => setState(() => _query = v),
-              decoration: InputDecoration(
-                hintText: 'search_transactions'.tr(),
-                prefixIcon: const Icon(Icons.search, size: 18),
+            if (_searchVisible)
+              TextField(
+                onChanged: (v) => setState(() => _query = v),
+                decoration: InputDecoration(
+                  hintText: 'search_transactions'.tr(),
+                  prefixIcon: const Icon(Icons.search, size: 18),
+                ),
               ),
-            ),
             const SizedBox(height: 14),
             Row(
               children:

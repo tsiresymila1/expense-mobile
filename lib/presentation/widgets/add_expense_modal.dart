@@ -83,6 +83,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                   if (widget.expense == null) ...[
                     BlocBuilder<ProjectsCubit, ProjectsState>(
                       builder: (context, state) => FormBuilderDropdown<String>(
+                        style: Theme.of(context).textTheme.bodyMedium,
                         name: 'project_id',
                         decoration: InputDecoration(labelText: 'projects'.tr()),
                         items: [
@@ -201,7 +202,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     filled: true,
     fillColor: theme.inputDecorationTheme.fillColor,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(24),
       borderSide: BorderSide(color: theme.dividerColor),
     ),
     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: padding),
@@ -211,9 +212,9 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     onPressed: _saving ? null : () => _submit(),
     style: ElevatedButton.styleFrom(
       minimumSize: const Size.fromHeight(56),
-      backgroundColor: const Color(0xFF18794E),
+      backgroundColor: const Color(0xFF35652A),
       foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
     ),
     child: Text(
       'save'.tr(),

@@ -254,7 +254,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await mount(tester, const AppShell(location: '/', child: DashboardPage()));
-    await tester.tap(find.text('Ajouter'));
+    expect(find.byType(FloatingActionButton), findsOneWidget);
+    await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.byType(AddExpenseModal), findsOneWidget);
     expect(find.byType(ExpenseNavigation), findsNothing);
@@ -266,6 +267,42 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     expect(find.byType(ExpenseNavigation), findsOneWidget);
+  });
+  for (final entry in <String, Widget>{
+    '/expenses': const ExpensesPage(),
+    '/stats': const StatsPage(),
+  }.entries) {
+    testWidgets('Expressive ${entry.key} owns its header', (tester) async {
+      await mount(tester, AppShell(location: entry.key, child: entry.value));
+      expect(find.byType(AppBar), findsOneWidget);
+      expect(find.text('G-spend'), findsNothing);
+      expect(find.byTooltip('Thème'), findsNothing);
+      expect(
+        find.byType(FloatingActionButton),
+        entry.key == '/expenses' ? findsOneWidget : findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
+  test('Expressive titles and dropdown typography share the theme scale', () {
+    final theme = AppTheme.lightTheme;
+    expect(
+      theme.appBarTheme.titleTextStyle?.fontSize,
+      theme.textTheme.titleLarge?.fontSize,
+    );
+    expect(
+      theme.appBarTheme.titleTextStyle?.fontFamily,
+      theme.textTheme.titleLarge?.fontFamily,
+    );
+    expect(
+      theme.appBarTheme.titleTextStyle?.fontWeight,
+      theme.textTheme.titleLarge?.fontWeight,
+    );
+    expect(
+      theme.dropdownMenuTheme.textStyle?.fontSize,
+      theme.textTheme.bodyMedium?.fontSize,
+    );
+    expect(theme.colorScheme.onPrimary, Colors.white);
   });
   testWidgets('V5 secondary page has no shared header or tabs', (tester) async {
     await mount(
