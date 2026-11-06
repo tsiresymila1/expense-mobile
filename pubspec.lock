@@ -298,7 +298,7 @@ packages:
     source: hosted
     version: "1.1.7+4"
   dio:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: dio
       sha256: ea2bad3c89a27635ce2d85cce4d6b199da49a5a48ec77b03e45b65a3b90922b0
@@ -1331,7 +1331,7 @@ packages:
     source: hosted
     version: "2.5.6"
   sqflite_common_ffi:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: sqflite_common_ffi
       sha256: cd0c7f7de39a08f2d54ef144d9058c46eca8461879aaa648025643455c1e5a20

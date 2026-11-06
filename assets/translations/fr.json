@@ -184,9 +184,18 @@
   "receipt_file": "Fichier",
   "receipt_size": "Fichier vide ou trop volumineux. Maximum : 10 Mo par fichier.",
   "receipt_empty": "Aucun justificatif pour cette dépense.",
-  "receipt_error": "Impossible de traiter le justificatif. Vérifiez votre connexion et réessayez.",
+  "receipt_error": "L’opération a échoué. Réessayez.",
   "receipt_delete": "Supprimer définitivement ce justificatif ?",
   "save_and_attach": "Enregistrer et joindre un justificatif",
   "expense_save_error": "Impossible d’enregistrer la dépense. Réessayez.",
-  "receipt_limit": "Photos ou documents · 10 Mo maximum par fichier"
+  "receipt_limit": "Photos ou documents · 10 Mo maximum par fichier",
+  "receipt_select": "Sélection du justificatif",
+  "receipt_read": "Lecture du fichier",
+  "receipt_upload": "Envoi du fichier",
+  "receipt_link": "Association à la dépense",
+  "receipt_load": "Chargement des justificatifs",
+  "receipt_open": "Ouverture du justificatif",
+  "receipt_remove": "Suppression du justificatif",
+  "receipt_permission_error": "Autorisez l’accès dans les réglages du téléphone.",
+  "receipt_timeout_error": "Le serveur met trop de temps à répondre. Réessayez."
 }

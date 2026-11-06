@@ -2,12 +2,23 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_instantdb/flutter_instantdb.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const maxReceiptBytes = 10 * 1024 * 1024;
 bool validReceiptSize(int size) => size > 0 && size <= maxReceiptBytes;
+
+String receiptFailureKey(Object failure) {
+  if (failure is PlatformException &&
+      (failure.code.contains('access_denied') ||
+          failure.code.contains('permission'))) {
+    return 'receipt_permission_error';
+  }
+  if (failure is TimeoutException) return 'receipt_timeout_error';
+  return 'receipt_error';
+}
 
 class ExpenseAttachments extends StatefulWidget {
   final String expenseId;
@@ -24,6 +35,7 @@ class ExpenseAttachments extends StatefulWidget {
 class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
   bool busy = false;
   String? error;
+  String _operation = 'receipt_select';
   List<Map<String, dynamic>> files = [];
   late InstantDB db;
   void Function()? disposeQuery;
@@ -32,22 +44,23 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
     super.didChangeDependencies();
     if (disposeQuery != null) return;
     db = InstantProvider.of(context);
-    final signal = db.subscribeQuery({
-      'expenses': {
-        'where': {'id': widget.expenseId},
-        'files': {},
+    // Query file metadata directly: the SDK misclassifies entities in nested file queries.
+    final signal = db.query({
+      r'$files': {
+        'where': {
+          'path': {r'$like': '%/${widget.expenseId}/%'},
+        },
       },
     });
     disposeQuery = effect(() {
       final result = signal.value;
-      final expenses = result.data?['expenses'] as List? ?? [];
-      final rows = expenses.isEmpty
-          ? []
-          : expenses.first['files'] as List? ?? [];
+      final rows = result.data?[r'$files'] as List? ?? [];
       if (mounted) {
         setState(() {
           files = rows.map((r) => Map<String, dynamic>.from(r)).toList();
-          if (result.hasError) error = 'receipt_error'.tr();
+          if (result.hasError) {
+            error = '${'receipt_load'.tr()} : ${'receipt_error'.tr()}';
+          }
         });
       }
     });
@@ -67,14 +80,20 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
     });
     try {
       await task();
-    } catch (_) {
-      if (mounted) setState(() => error = 'receipt_error'.tr());
+    } catch (failure) {
+      if (mounted) {
+        setState(
+          () =>
+              error = '${_operation.tr()} : ${receiptFailureKey(failure).tr()}',
+        );
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
   Future<void> pick(String source) => run(() async {
+    _operation = 'receipt_select';
     XFile? file;
     if (source == 'file') {
       final result = await FilePicker.pickFile();
@@ -87,6 +106,7 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
       );
     }
     if (file == null) return;
+    _operation = 'receipt_read';
     if (!validReceiptSize(await file.length())) {
       if (mounted) setState(() => error = 'receipt_size'.tr());
       return;
@@ -107,21 +127,28 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
           'pdf': 'application/pdf',
         }[ext] ??
         'application/octet-stream';
+    _operation = 'receipt_upload';
     final uploaded = await db.storage.uploadFile(
       path,
       bytes,
       contentType: type,
     );
     try {
+      _operation = 'receipt_link';
       final id = uploaded.id.isNotEmpty
           ? uploaded.id
           : await _uploadedFileId(path);
       await db.transact(
-        db.tx['expenses'][widget.expenseId].link({'files': id}),
+        // shortcut: SDK 2.2.2 drops link operations; update the existing ref attribute until the SDK supports them.
+        db.tx['expenses'][widget.expenseId].update({'files': id}),
       );
     } catch (_) {
       // Remove an upload that could not be associated with its expense.
-      await db.storage.delete(path);
+      try {
+        await db.storage.delete(path);
+      } catch (_) {
+        // Keep the original linking failure if cleanup also fails.
+      }
       rethrow;
     }
   });
@@ -150,6 +177,7 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
   }
 
   Future<void> open(Map<String, dynamic> file) => run(() async {
+    _operation = 'receipt_open';
     final url = Uri.parse(
       await db.storage.getDownloadUrl(file['path'] as String),
     );
@@ -179,7 +207,10 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
       ),
     );
     if (yes == true && mounted) {
-      await run(() => db.storage.delete(file['path'] as String));
+      await run(() async {
+        _operation = 'receipt_remove';
+        await db.storage.delete(file['path'] as String);
+      });
     }
   }
 

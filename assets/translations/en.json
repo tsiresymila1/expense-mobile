@@ -183,9 +183,18 @@
   "receipt_file": "File",
   "receipt_size": "Empty or oversized file. Maximum: 10 MB per file.",
   "receipt_empty": "No receipts for this expense.",
-  "receipt_error": "Unable to process the receipt. Check your connection and try again.",
+  "receipt_error": "The operation failed. Try again.",
   "receipt_delete": "Permanently delete this receipt?",
   "save_and_attach": "Save and attach a receipt",
   "expense_save_error": "Unable to save the expense. Try again.",
-  "receipt_limit": "Photos or documents · Maximum 10 MB per file"
+  "receipt_limit": "Photos or documents · Maximum 10 MB per file",
+  "receipt_select": "Selecting receipt",
+  "receipt_read": "Reading file",
+  "receipt_upload": "Uploading file",
+  "receipt_link": "Linking to expense",
+  "receipt_load": "Loading receipts",
+  "receipt_open": "Opening receipt",
+  "receipt_remove": "Deleting receipt",
+  "receipt_permission_error": "Allow access in your phone settings.",
+  "receipt_timeout_error": "The server is taking too long to respond. Try again."
 }

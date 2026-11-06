@@ -7,6 +7,12 @@ uses it as the GitHub Release body and the Play Store "what's new" notes.
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-07
+### Fixed
+- Persist receipt associations despite the InstantDB SDK dropping link operations.
+- Read receipts directly by their expense path to avoid broken nested file queries.
+- Distinguish selection, reading, upload and association failures in receipt messages.
+
 ## [1.3.1] - 2026-11-07
 ### Fixed
 - Restore an opaque themed surface for filter sheets, including keyboard and safe-area handling.
