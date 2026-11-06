@@ -9,7 +9,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -24,10 +23,7 @@ class SettingsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => context.pop(),
         ),
-        title: Text(
-          'settings'.tr(),
-          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
-        ),
+        title: Text('settings'.tr()),
       ),
       body: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) => ListView(
@@ -93,10 +89,7 @@ class SettingsPage extends StatelessWidget {
     context: context,
     builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      title: Text(
-        'select_language'.tr(),
-        style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
-      ),
+      title: Text('select_language'.tr()),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -136,10 +129,7 @@ class SettingsPage extends StatelessWidget {
     context: context,
     builder: (context) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-      title: Text(
-        'select_theme'.tr(),
-        style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
-      ),
+      title: Text('select_theme'.tr()),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -178,10 +168,7 @@ class SettingsPage extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-        title: Text(
-          'currency'.tr(),
-          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
-        ),
+        title: Text('currency'.tr()),
         content: FormBuilder(
           key: key,
           initialValue: {'currency': curr},

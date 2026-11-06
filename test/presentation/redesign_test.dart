@@ -1,3 +1,5 @@
+import 'package:flutter_form_builder/flutter_form_builder.dart';
+import 'package:expense/presentation/widgets/settings_widgets.dart';
 import 'package:expense/presentation/pages/expenses/expenses_page.dart';
 import 'package:expense/presentation/pages/stats/stats_page.dart';
 import 'package:expense/presentation/pages/settings/settings_page.dart';
@@ -351,6 +353,46 @@ void main() {
       greaterThanOrEqualTo(20),
     );
     expect(tester.takeException(), isNull);
+  });
+  for (final dark in [false, true]) {
+    testWidgets('Amount stays readable before and after focus ($dark)', (
+      tester,
+    ) async {
+      await mount(tester, const Scaffold(body: AddExpenseModal()), dark: dark);
+      final amount = find.byWidgetPredicate(
+        (w) => w is FormBuilderTextField && w.name == 'amount',
+      );
+      final field = tester.widget<FormBuilderTextField>(amount);
+      expect(field.style?.fontSize, 14);
+      expect(field.decoration.filled, isTrue);
+      expect(field.decoration.border, isA<OutlineInputBorder>());
+      expect(
+        (field.decoration.contentPadding! as EdgeInsets).left,
+        greaterThanOrEqualTo(16),
+      );
+      expect(field.decoration.suffixText, isNotEmpty);
+      await tester.tap(amount);
+      await tester.enterText(amount, '5000');
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  }
+  testWidgets('Settings rows keep horizontal inset inside cards', (
+    tester,
+  ) async {
+    await mount(tester, const SettingsPage());
+    final row = find.byType(SettingsListTile).first;
+    final label = find.descendant(of: row, matching: find.byType(Text)).first;
+    expect(
+      tester.getTopLeft(label).dx - tester.getTopLeft(row).dx,
+      greaterThanOrEqualTo(20),
+    );
+  });
+  testWidgets('Activity exposes filters only in its app bar', (tester) async {
+    await mount(tester, const ExpensesPage());
+    expect(find.byIcon(Icons.filter_list), findsOneWidget);
+    expect(find.byType(OutlinedButton), findsNothing);
+    expect(find.text('Gérer les catégories'), findsNothing);
   });
   testWidgets('V5 secondary page has no shared header or tabs', (tester) async {
     await mount(

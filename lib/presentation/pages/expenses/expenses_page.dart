@@ -5,7 +5,6 @@ import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/pages/expenses/widgets/expense_card.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
-import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'package:expense/presentation/widgets/expense_filter_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -58,24 +57,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _showFilter(context),
-                    child: Text('filters'.tr()),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => _showCategoryManagement(context),
-                    child: Text('manage_categories'.tr()),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
             if (_searchVisible)
               TextField(
                 onChanged: (v) => setState(() => _query = v),
@@ -135,15 +116,6 @@ class _ExpensesPageState extends State<ExpensesPage> {
 
   void _showAddExpense(BuildContext context) =>
       openFormPage(context, const AddExpenseModal(), title: 'new_expense'.tr());
-  void _showCategoryManagement(BuildContext context) => showModalBottomSheet(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    showDragHandle: true,
-    builder: (context) => const CategoryManagementModal(),
-  );
-
   void _showFilter(BuildContext context) async {
     final settings = context.read<SettingsCubit>().state;
     final res = await showModalBottomSheet<Map<String, dynamic>>(

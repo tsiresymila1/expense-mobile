@@ -214,7 +214,7 @@ class AppTheme {
       ),
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-        titleTextStyle: text.titleMedium,
+        titleTextStyle: text.bodyMedium,
         subtitleTextStyle: text.bodySmall,
         iconColor: muted,
       ),

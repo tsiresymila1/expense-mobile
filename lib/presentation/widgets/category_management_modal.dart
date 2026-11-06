@@ -6,7 +6,6 @@ import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/widgets/add_category_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class CategoryManagementModal extends StatelessWidget {
   const CategoryManagementModal({super.key});
@@ -22,22 +21,18 @@ class CategoryManagementModal extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _handle(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     'manage_categories'.tr(),
-                    style: GoogleFonts.aBeeZee(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: theme.textTheme.titleLarge,
                   ),
                 ),
                 IconButton(
@@ -108,9 +103,7 @@ class CategoryManagementModal extends StatelessWidget {
                           ),
                           title: Text(
                             cat.name,
-                            style: GoogleFonts.aBeeZee(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: theme.textTheme.bodyMedium,
                           ),
                           trailing: cat.isDefault
                               ? null
@@ -150,15 +143,6 @@ class CategoryManagementModal extends StatelessWidget {
     );
   }
 
-  Widget _handle() => Container(
-    width: 40,
-    height: 4,
-    margin: const EdgeInsets.only(bottom: 24),
-    decoration: BoxDecoration(
-      color: Colors.grey.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(2),
-    ),
-  );
   Widget _empty(ThemeData t) => Padding(
     padding: const EdgeInsets.all(40),
     child: Column(
@@ -196,7 +180,6 @@ class CategoryManagementModal extends StatelessWidget {
     showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         title: Text('delete_category_title'.tr(args: [name])),
         content: Text(
           hasE

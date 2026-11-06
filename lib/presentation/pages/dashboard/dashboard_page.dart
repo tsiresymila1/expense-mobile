@@ -82,6 +82,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 useRootNavigator: true,
                 isScrollControlled: true,
                 useSafeArea: true,
+                showDragHandle: true,
                 builder: (_) => const CategoryManagementModal(),
               ),
               child: Text('manage_categories'.tr()),

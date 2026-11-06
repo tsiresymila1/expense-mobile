@@ -215,58 +215,125 @@ class _ExpenseAttachmentsState extends State<ExpenseAttachments> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: !busy,
-    child: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        if (widget.canEdit)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final item in [
-                ('camera', Icons.photo_camera_outlined, 'receipt_camera'),
-                ('gallery', Icons.photo_library_outlined, 'receipt_gallery'),
-                ('file', Icons.attach_file, 'receipt_file'),
-              ])
-                OutlinedButton.icon(
-                  onPressed: busy ? null : () => pick(item.$1),
-                  icon: Icon(item.$2),
-                  label: Text(item.$3.tr()),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return PopScope(
+      canPop: !busy,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        children: [
+          if (widget.canEdit) ...[
+            Card(
+              margin: EdgeInsets.zero,
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                children: [
+                  for (final item in [
+                    ('camera', Icons.photo_camera_outlined, 'receipt_camera'),
+                    (
+                      'gallery',
+                      Icons.photo_library_outlined,
+                      'receipt_gallery',
+                    ),
+                    ('file', Icons.attach_file, 'receipt_file'),
+                  ])
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 6,
+                      ),
+                      leading: Icon(
+                        item.$2,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      title: Text(item.$3.tr()),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      enabled: !busy,
+                      onTap: () => pick(item.$1),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('receipt_limit'.tr(), style: theme.textTheme.bodySmall),
+            const SizedBox(height: 24),
+          ],
+          if (busy) ...[
+            Text(_operation.tr(), style: theme.textTheme.bodyMedium),
+            const SizedBox(height: 12),
+            const LinearProgressIndicator(),
+            const SizedBox(height: 24),
+          ],
+          if (error != null) ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                error!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onErrorContainer,
                 ),
-            ],
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+          if (files.isEmpty && !busy)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: theme.colorScheme.primaryContainer,
+                    child: Icon(
+                      Icons.receipt_long_outlined,
+                      size: 28,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'receipt_empty'.tr(),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ...files.map(
+            (f) => Card(
+              margin: const EdgeInsets.only(bottom: 12),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: const Icon(Icons.insert_drive_file_outlined),
+                title: Text(
+                  (f['path'] as String).split('/').last,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: busy ? null : () => open(f),
+                trailing: widget.canEdit
+                    ? IconButton(
+                        tooltip: 'delete'.tr(),
+                        onPressed: busy ? null : () => remove(f),
+                        icon: Icon(
+                          Icons.delete_outline,
+                          color: theme.colorScheme.error,
+                        ),
+                      )
+                    : const Icon(Icons.open_in_new, size: 20),
+              ),
+            ),
           ),
-        Text(
-          'receipt_limit'.tr(),
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        if (busy) const LinearProgressIndicator(),
-        if (error != null)
-          Text(
-            error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
-        if (files.isEmpty && !busy)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
-            child: Text('receipt_empty'.tr()),
-          ),
-        ...files.map(
-          (f) => ListTile(
-            leading: const Icon(Icons.insert_drive_file_outlined),
-            title: Text((f['path'] as String).split('/').last),
-            onTap: busy ? null : () => open(f),
-            trailing: widget.canEdit
-                ? IconButton(
-                    tooltip: 'delete'.tr(),
-                    onPressed: busy ? null : () => remove(f),
-                    icon: const Icon(Icons.delete_outline),
-                  )
-                : null,
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

@@ -36,6 +36,7 @@ class SettingsCard extends StatelessWidget {
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );
   }
@@ -60,26 +61,21 @@ class SettingsListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyMedium?.copyWith(color: color),
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: EdgeInsets.zero,
-        title: Text(
-          title,
-          style: theme.textTheme.bodyMedium?.copyWith(color: color),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (subtitle != null)
-              Text(subtitle!, style: theme.textTheme.bodySmall),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, size: 16),
-          ],
-        ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (subtitle != null)
+            Text(subtitle!, style: theme.textTheme.bodySmall),
+          const SizedBox(width: 8),
+          const Icon(Icons.chevron_right, size: 16),
+        ],
       ),
     );
   }

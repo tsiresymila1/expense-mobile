@@ -163,19 +163,13 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
   Widget _buildAmountRow(ThemeData theme) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text('amount'.tr(), style: theme.textTheme.bodySmall),
+      _buildLabel('amount'.tr()),
+      const SizedBox(height: 8),
       FormBuilderTextField(
         name: 'amount',
-        style: GoogleFonts.aBeeZee(
-          fontSize: 36,
-          color: theme.colorScheme.onSurface,
-        ),
-        decoration: const InputDecoration(
-          hintText: '0',
-          filled: false,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(vertical: 12),
+        style: theme.textTheme.bodyMedium,
+        decoration: _inputDecoration(theme, null, hint: '0').copyWith(
+          suffixText: context.read<SettingsCubit>().state.currencySymbol,
         ),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: FormBuilderValidators.compose([
@@ -183,10 +177,6 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
           FormBuilderValidators.numeric(),
           FormBuilderValidators.min(.01),
         ]),
-      ),
-      Text(
-        context.read<SettingsCubit>().state.currencySymbol,
-        style: theme.textTheme.bodySmall,
       ),
     ],
   );
