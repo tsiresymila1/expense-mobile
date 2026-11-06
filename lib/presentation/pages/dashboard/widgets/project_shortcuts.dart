@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,7 +12,7 @@ class ProjectShortcuts extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return BlocBuilder<ProjectsBloc, ProjectsState>(
+    return BlocBuilder<ProjectsCubit, ProjectsState>(
       builder: (context, state) {
         final all = [...state.projects, ...state.sharedProjects];
         if (all.isEmpty) return const SizedBox.shrink();
@@ -33,12 +32,7 @@ class ProjectShortcuts extends StatelessWidget {
               final project = all[index];
               final isSelected = project.id == state.currentProject?.id;
 
-              return _buildProjectShortcut(context, theme, project, isSelected)
-                  .animate(delay: (index * 50).ms)
-                  .visibility()
-                  .fadeIn(duration: 600.ms, curve: Curves.easeOutExpo)
-                  .scale(begin: const Offset(0.6, 0.6), end: const Offset(1, 1), curve: Curves.easeOutExpo)
-                  .slideX(begin: 0.2, end: 0, curve: Curves.easeOutExpo);
+              return _buildProjectShortcut(context, theme, project, isSelected);
             },
           ),
         );
@@ -52,24 +46,24 @@ class ProjectShortcuts extends StatelessWidget {
     dynamic project,
     bool isSelected,
   ) {
-    final color = project.color != null 
-        ? _parseColor(project.color!) 
+    final color = project.color != null
+        ? _parseColor(project.color!)
         : theme.colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: InkWell(
         onTap: () {
-          context.read<ProjectsBloc>().add(SwitchProject(project.id));
+          context.read<ProjectsCubit>().switchProject(project.id);
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(5),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           padding: const EdgeInsets.symmetric(horizontal: 12),
           height: 36,
           decoration: BoxDecoration(
             color: isSelected ? color : color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(5),
             border: Border.all(
               color: isSelected ? color : color.withValues(alpha: 0.2),
               width: 1,
@@ -81,8 +75,8 @@ class ProjectShortcuts extends StatelessWidget {
             children: [
               Text(
                 (project.name[0]).toUpperCase(),
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.w700,
+                style: GoogleFonts.geist(
+                  fontWeight: FontWeight.w500,
                   fontSize: 14,
                   color: isSelected ? Colors.white : color,
                 ),
@@ -92,10 +86,12 @@ class ProjectShortcuts extends StatelessWidget {
                 child: Text(
                   project.name.toString().tr(),
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.outfit(
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  style: GoogleFonts.geist(
+                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.w500,
                     fontSize: 12,
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface,
+                    color: isSelected
+                        ? Colors.white
+                        : theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -113,13 +109,13 @@ class ProjectShortcuts extends StatelessWidget {
         onTap: () {
           context.push('/projects');
         },
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(5),
         child: Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(5),
             border: Border.all(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
               width: 1,

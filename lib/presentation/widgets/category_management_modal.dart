@@ -21,7 +21,7 @@ class CategoryManagementModal extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -30,14 +30,17 @@ class CategoryManagementModal extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'category'.tr(),
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    'manage_categories'.tr(),
+                    style: GoogleFonts.geist(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 IconButton(
+                  tooltip: 'add_category'.tr(),
                   onPressed: () {
                     Navigator.pop(context);
                     showModalBottomSheet(
@@ -63,7 +66,7 @@ class CategoryManagementModal extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Flexible(
-              child: BlocBuilder<CategoriesBloc, CategoriesState>(
+              child: BlocBuilder<CategoriesCubit, CategoriesState>(
                 builder: (context, state) {
                   if (state.isLoading && state.categories.isEmpty) {
                     return const Padding(
@@ -83,7 +86,9 @@ class CategoryManagementModal extends StatelessWidget {
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.cardRadius,
+                          ),
                           border: Border.all(
                             color: theme.dividerColor.withValues(alpha: 0.5),
                           ),
@@ -93,7 +98,7 @@ class CategoryManagementModal extends StatelessWidget {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(5),
                             ),
                             child: Icon(
                               _icon(cat.icon),
@@ -103,7 +108,7 @@ class CategoryManagementModal extends StatelessWidget {
                           ),
                           title: Text(
                             cat.name,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.geist(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -113,10 +118,7 @@ class CategoryManagementModal extends StatelessWidget {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(
-                                        Icons.edit_outlined,
-                                        color: Colors.blue,
-                                      ),
+                                      icon: const Icon(Icons.edit_outlined),
                                       onPressed: () {
                                         showModalBottomSheet(
                                           context: context,
@@ -165,7 +167,7 @@ class CategoryManagementModal extends StatelessWidget {
       children: [
         Icon(Icons.category_outlined, size: 48, color: t.disabledColor),
         const SizedBox(height: 16),
-        Text('no_data'.tr(), style: const TextStyle(color: Colors.grey)),
+        Text('no_categories'.tr(), style: const TextStyle(color: Colors.grey)),
       ],
     ),
   );
@@ -190,13 +192,13 @@ class CategoryManagementModal extends StatelessWidget {
   }
 
   void _confirm(BuildContext context, String id, String name) {
-    final hasE = context.read<ExpensesBloc>().state.expenses.any(
+    final hasE = context.read<ExpensesCubit>().state.expenses.any(
       (e) => e.categoryId == id,
     );
     showDialog(
       context: context,
       builder: (c) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         title: Text('delete_category_title'.tr(args: [name])),
         content: Text(
           hasE
@@ -210,7 +212,7 @@ class CategoryManagementModal extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              context.read<CategoriesBloc>().add(DeleteCategory(id));
+              context.read<CategoriesCubit>().deleteCategory(id);
               Navigator.pop(c);
             },
             child: Text(

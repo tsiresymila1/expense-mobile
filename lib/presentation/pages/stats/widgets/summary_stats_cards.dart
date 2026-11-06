@@ -13,7 +13,7 @@ class SummaryStatsCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SettingsBloc, SettingsState>(
+    return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, settings) {
         return Row(
           children: [
@@ -25,7 +25,7 @@ class SummaryStatsCards extends StatelessWidget {
                   state.filteredIncome,
                   settings.currencySymbol,
                 ),
-                Colors.green,
+                AppTheme.link(context),
                 Icons.arrow_upward_rounded,
               ),
             ),
@@ -38,7 +38,7 @@ class SummaryStatsCards extends StatelessWidget {
                   state.filteredExpense,
                   settings.currencySymbol,
                 ),
-                Colors.red,
+                Theme.of(context).colorScheme.onSurface,
                 Icons.arrow_downward_rounded,
               ),
             ),
@@ -56,39 +56,18 @@ class SummaryStatsCards extends StatelessWidget {
     IconData icon,
   ) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 16),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 12,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            amount,
-            style: GoogleFonts.outfit(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+          Text(title, style: theme.textTheme.bodySmall),
+          const SizedBox(height: 10),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              amount,
+              style: GoogleFonts.geistMono(fontSize: 16, color: color),
             ),
           ),
         ],

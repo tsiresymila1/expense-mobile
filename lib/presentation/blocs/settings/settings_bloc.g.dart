@@ -8,9 +8,9 @@ part of 'settings_bloc.dart';
 
 _$SettingsStateImpl _$$SettingsStateImplFromJson(Map<String, dynamic> json) =>
     _$SettingsStateImpl(
-      language: json['language'] as String? ?? 'en',
+      language: json['language'] as String? ?? 'system',
       themeMode: $enumDecodeNullable(_$ThemeModeEnumMap, json['themeMode']) ??
-          ThemeMode.dark,
+          ThemeMode.system,
       currency: json['currency'] as String? ?? 'MGA',
     );
 

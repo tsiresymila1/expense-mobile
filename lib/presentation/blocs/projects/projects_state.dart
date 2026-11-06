@@ -1,9 +1,11 @@
-import 'package:expense/data/local/database.dart';
+import 'package:expense/data/models/models.dart';
+
+const _currentProjectNotProvided = Object();
 
 class ProjectsState {
-  final List<LocalProject> projects;
-  final List<LocalProject> sharedProjects;
-  final LocalProject? currentProject;
+  final List<Project> projects;
+  final List<Project> sharedProjects;
+  final Project? currentProject;
   final List<Map<String, dynamic>> searchResults;
   final List<Map<String, dynamic>> projectMembers;
   final bool isLoading;
@@ -24,9 +26,9 @@ class ProjectsState {
   });
 
   ProjectsState copyWith({
-    List<LocalProject>? projects,
-    List<LocalProject>? sharedProjects,
-    LocalProject? currentProject,
+    List<Project>? projects,
+    List<Project>? sharedProjects,
+    Object? currentProject = _currentProjectNotProvided,
     List<Map<String, dynamic>>? searchResults,
     List<Map<String, dynamic>>? projectMembers,
     bool? isLoading,
@@ -37,7 +39,9 @@ class ProjectsState {
     return ProjectsState(
       projects: projects ?? this.projects,
       sharedProjects: sharedProjects ?? this.sharedProjects,
-      currentProject: currentProject ?? this.currentProject,
+      currentProject: identical(currentProject, _currentProjectNotProvided)
+          ? this.currentProject
+          : currentProject as Project?,
       searchResults: searchResults ?? this.searchResults,
       projectMembers: projectMembers ?? this.projectMembers,
       isLoading: isLoading ?? this.isLoading,

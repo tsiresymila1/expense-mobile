@@ -1,8 +1,10 @@
-import 'package:expense/data/local/database.dart';
+import 'package:expense/data/models/models.dart';
 import 'package:flutter/material.dart';
 
+const _currentProjectIdNotProvided = Object();
+
 class ExpensesState {
-  final List<LocalExpense> expenses;
+  final List<Expense> expenses;
   final double thisMonthTotal;
   final double thisMonthIncome;
   final double thisMonthExpense;
@@ -31,7 +33,7 @@ class ExpensesState {
   });
 
   ExpensesState copyWith({
-    List<LocalExpense>? expenses,
+    List<Expense>? expenses,
     double? thisMonthTotal,
     double? thisMonthIncome,
     double? thisMonthExpense,
@@ -40,9 +42,9 @@ class ExpensesState {
     double? filteredExpense,
     List<double>? dailySpending,
     bool? isLoading,
-    DateTimeRange? dateRange,
-    RangeValues? amountRange,
-    String? currentProjectId,
+    Object? dateRange = _currentProjectIdNotProvided,
+    Object? amountRange = _currentProjectIdNotProvided,
+    Object? currentProjectId = _currentProjectIdNotProvided,
   }) {
     return ExpensesState(
       expenses: expenses ?? this.expenses,
@@ -54,9 +56,16 @@ class ExpensesState {
       filteredExpense: filteredExpense ?? this.filteredExpense,
       dailySpending: dailySpending ?? this.dailySpending,
       isLoading: isLoading ?? this.isLoading,
-      dateRange: dateRange ?? this.dateRange,
-      amountRange: amountRange ?? this.amountRange,
-      currentProjectId: currentProjectId ?? this.currentProjectId,
+      dateRange: identical(dateRange, _currentProjectIdNotProvided)
+          ? this.dateRange
+          : dateRange as DateTimeRange?,
+      amountRange: identical(amountRange, _currentProjectIdNotProvided)
+          ? this.amountRange
+          : amountRange as RangeValues?,
+      currentProjectId:
+          identical(currentProjectId, _currentProjectIdNotProvided)
+          ? this.currentProjectId
+          : currentProjectId as String?,
     );
   }
 }

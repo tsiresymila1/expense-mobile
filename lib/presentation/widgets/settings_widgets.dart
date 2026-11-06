@@ -1,3 +1,4 @@
+import 'package:expense/core/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -12,9 +13,9 @@ class SettingsSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         title,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.geist(
           fontSize: 13,
-          fontWeight: FontWeight.w800,
+          fontWeight: FontWeight.w500,
           color: theme.disabledColor,
           letterSpacing: 1.2,
         ),
@@ -33,7 +34,7 @@ class SettingsCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
       child: Column(children: children),
     );
@@ -59,25 +60,27 @@ class SettingsListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: (color ?? theme.colorScheme.primary).withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: theme.dividerColor)),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          title,
+          style: theme.textTheme.bodyMedium?.copyWith(color: color),
         ),
-        child: Icon(icon, color: color ?? theme.colorScheme.primary, size: 20),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (subtitle != null)
+              Text(subtitle!, style: theme.textTheme.bodySmall),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, size: 16),
+          ],
+        ),
       ),
-      title: Text(
-        title,
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: color),
-      ),
-      subtitle: subtitle != null
-          ? Text(subtitle!, style: GoogleFonts.outfit(fontSize: 13))
-          : null,
-      trailing: const Icon(Icons.chevron_right_rounded, size: 20),
     );
   }
 }

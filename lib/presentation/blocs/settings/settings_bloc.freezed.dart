@@ -120,8 +120,8 @@ class __$$SettingsStateImplCopyWithImpl<$Res>
 @JsonSerializable()
 class _$SettingsStateImpl extends _SettingsState {
   const _$SettingsStateImpl(
-      {this.language = 'en',
-      this.themeMode = ThemeMode.dark,
+      {this.language = 'system',
+      this.themeMode = ThemeMode.system,
       this.currency = 'MGA'})
       : super._();
 

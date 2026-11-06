@@ -1,9 +1,7 @@
-import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
-import 'package:expense/core/sync_engine/engine.dart';
 import 'package:expense/presentation/widgets/settings_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,10 +26,10 @@ class SettingsPage extends StatelessWidget {
         ),
         title: Text(
           'settings'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
         ),
       ),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
+      body: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) => ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -40,7 +38,7 @@ class SettingsPage extends StatelessWidget {
               children: [
                 SettingsListTile(
                   title: 'language'.tr(),
-                  subtitle: state.language == 'en' ? 'English' : 'Français',
+                  subtitle: _languageName(state.language),
                   icon: Icons.language_rounded,
                   onTap: () => _showLang(context),
                 ),
@@ -86,22 +84,36 @@ class SettingsPage extends StatelessWidget {
       ? 'system'
       : (m == ThemeMode.light ? 'light' : 'dark');
 
+  String _languageName(String language) {
+    if (language == 'system') return 'system'.tr();
+    return language == 'en' ? 'English' : 'Français';
+  }
+
   void _showLang(BuildContext context) => showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       title: Text(
         'select_language'.tr(),
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        style: GoogleFonts.geist(fontWeight: FontWeight.w500),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ListTile(
+            leading: const Icon(Icons.language_rounded, size: 30),
+            title: Text('system'.tr()),
+            onTap: () async {
+              context.read<SettingsCubit>().changeLanguage('system');
+              await context.resetLocale();
+              if (context.mounted) Navigator.pop(context);
+            },
+          ),
+          ListTile(
             leading: const Text('🇺🇸', style: TextStyle(fontSize: 32)),
             title: const Text('English'),
             onTap: () {
-              context.read<SettingsBloc>().add(ChangeLanguage('en'));
+              context.read<SettingsCubit>().changeLanguage('en');
               context.setLocale(const Locale('en'));
               Navigator.pop(context);
             },
@@ -110,7 +122,7 @@ class SettingsPage extends StatelessWidget {
             leading: const Text('🇫🇷', style: TextStyle(fontSize: 32)),
             title: const Text('Français'),
             onTap: () {
-              context.read<SettingsBloc>().add(ChangeLanguage('fr'));
+              context.read<SettingsCubit>().changeLanguage('fr');
               context.setLocale(const Locale('fr'));
               Navigator.pop(context);
             },
@@ -123,10 +135,10 @@ class SettingsPage extends StatelessWidget {
   void _showTheme(BuildContext context) => showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       title: Text(
         'select_theme'.tr(),
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+        style: GoogleFonts.geist(fontWeight: FontWeight.w500),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -135,7 +147,7 @@ class SettingsPage extends StatelessWidget {
             leading: const Icon(Icons.brightness_auto_rounded),
             title: Text('system'.tr()),
             onTap: () {
-              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.system));
+              context.read<SettingsCubit>().changeTheme(ThemeMode.system);
               Navigator.pop(context);
             },
           ),
@@ -143,7 +155,7 @@ class SettingsPage extends StatelessWidget {
             leading: const Icon(Icons.light_mode_rounded),
             title: Text('light'.tr()),
             onTap: () {
-              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.light));
+              context.read<SettingsCubit>().changeTheme(ThemeMode.light);
               Navigator.pop(context);
             },
           ),
@@ -151,7 +163,7 @@ class SettingsPage extends StatelessWidget {
             leading: const Icon(Icons.dark_mode_rounded),
             title: Text('dark'.tr()),
             onTap: () {
-              context.read<SettingsBloc>().add(ChangeTheme(ThemeMode.dark));
+              context.read<SettingsCubit>().changeTheme(ThemeMode.dark);
               Navigator.pop(context);
             },
           ),
@@ -165,10 +177,10 @@ class SettingsPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         title: Text(
           'currency'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
         ),
         content: FormBuilder(
           key: key,
@@ -182,7 +194,7 @@ class SettingsPage extends StatelessWidget {
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.03),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(5),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -201,10 +213,8 @@ class SettingsPage extends StatelessWidget {
           TextButton(
             onPressed: () {
               if (key.currentState?.saveAndValidate() ?? false) {
-                context.read<SettingsBloc>().add(
-                  ChangeCurrency(
-                    (key.currentState!.value['currency'] as String).trim(),
-                  ),
+                context.read<SettingsCubit>().changeCurrency(
+                  (key.currentState!.value['currency'] as String).trim(),
                 );
                 Navigator.pop(context);
               }
@@ -219,7 +229,7 @@ class SettingsPage extends StatelessWidget {
   void _showReset(BuildContext context) => showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
       title: Text('reset_confirmation_title'.tr()),
       content: Text('reset_confirmation_message'.tr()),
       actions: [
@@ -229,35 +239,17 @@ class SettingsPage extends StatelessWidget {
         ),
         TextButton(
           onPressed: () async {
-            final db = context.read<AppDatabase>();
-            final syncEngine = context.read<SyncEngine>();
-            
-            await db.transaction(() async {
-              await db.delete(db.localExpenses).go();
-              await db.delete(db.localCategories).go();
-              await db.delete(db.localProjects).go();
-              await db.delete(db.localProjectMembers).go();
-              await db.delete(db.localProfiles).go();
-              await db.delete(db.syncQueue).go();
-            });
+            // InstantDB owns persistence and syncs automatically; there is no
+            // local Drift store to wipe. Re-pull data through the cubits.
+            Navigator.pop(context);
 
-            if (context.mounted) {
-              Navigator.pop(context);
-              
-              // Show loading or indicator?
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('local_data_reset_success'.tr())),
-              );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('local_data_reset_success'.tr())),
+            );
 
-              // Trigger a fresh sync to pull everything back
-              await syncEngine.triggerSync();
-              
-              if (context.mounted) {
-                context.read<ExpensesBloc>().add(LoadExpenses());
-                context.read<CategoriesBloc>().add(LoadCategories());
-                context.read<ProjectsBloc>().add(LoadProjects());
-              }
-            }
+            context.read<ExpensesCubit>().loadExpenses();
+            context.read<CategoriesCubit>().loadCategories();
+            context.read<ProjectsCubit>().loadProjects();
           },
           child: Text('reset'.tr(), style: const TextStyle(color: Colors.red)),
         ),

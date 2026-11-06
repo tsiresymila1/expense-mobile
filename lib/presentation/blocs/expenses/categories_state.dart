@@ -1,7 +1,7 @@
-import 'package:expense/data/local/database.dart';
+import 'package:expense/data/models/models.dart';
 
 class CategoriesState {
-  final List<LocalCategory> categories;
+  final List<Category> categories;
   final bool isLoading;
   final String? error;
 
@@ -12,7 +12,7 @@ class CategoriesState {
   });
 
   CategoriesState copyWith({
-    List<LocalCategory>? categories,
+    List<Category>? categories,
     bool? isLoading,
     String? error,
   }) {

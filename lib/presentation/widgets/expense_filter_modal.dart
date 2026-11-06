@@ -1,147 +1,134 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class ExpenseFilterModal extends StatefulWidget {
   final String currencySymbol;
   const ExpenseFilterModal({super.key, required this.currencySymbol});
-
   @override
   State<ExpenseFilterModal> createState() => _ExpenseFilterModalState();
 }
 
 class _ExpenseFilterModalState extends State<ExpenseFilterModal> {
-  final _formKey = GlobalKey<FormBuilderState>();
-
+  final _key = GlobalKey<FormBuilderState>();
+  String? _error;
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+  Widget build(BuildContext context) => SafeArea(
+    child: SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
       ),
-      child: Container(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          left: 24,
-          right: 24,
-          top: 24,
-        ),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: FormBuilder(
-          key: _formKey,
-          initialValue: const {'amount_range': RangeValues(0, 10000)},
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'filters'.tr(),
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 24),
-              FormBuilderDateRangePicker(
-                name: 'date_range',
-                firstDate: DateTime(2000),
-                lastDate: DateTime.now(),
-                decoration: InputDecoration(
-                  labelText: 'date_range'.tr(),
-                  prefixIcon: const Icon(Icons.calendar_month_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                pickerBuilder: (context, child) {
-                  return Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme:
-                          theme.colorScheme.brightness == Brightness.light
-                          ? ColorScheme.light(
-                              primary: theme.colorScheme.primary,
-                              onPrimary: theme.colorScheme.onPrimary,
-                              surface: theme.colorScheme.surface,
-                              onSurface: theme.colorScheme.onSurface,
-                            )
-                          : ColorScheme.dark(
-                              primary: theme.colorScheme.primary,
-                              onPrimary: theme.colorScheme.onPrimary,
-                              surface: theme.colorScheme.surface,
-                              onSurface: theme.colorScheme.onSurface,
-                            ),
+      child: FormBuilder(
+        key: _key,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('filters'.tr(), style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 24),
+            FormBuilderDateRangePicker(
+              name: 'date_range',
+              firstDate: DateTime(2000),
+              lastDate: DateTime(2100),
+              decoration: InputDecoration(labelText: 'date_range'.tr()),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: FormBuilderTextField(
+                    name: 'min',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
                     ),
-                    child: child!,
-                  );
-                },
-                onChanged: (val) => debugPrint('Date changed: $val'),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'amount_range'.tr(),
-                style: GoogleFonts.outfit(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              FormBuilderRangeSlider(
-                name: 'amount_range',
-                min: 0.0,
-                max: 10000.0,
-                divisions: 100,
-                activeColor: theme.colorScheme.primary,
-                inactiveColor: theme.colorScheme.primary.withValues(alpha: 0.2),
-                decoration: const InputDecoration(border: InputBorder.none),
-                displayValues: DisplayValues.current,
-                numberFormat: NumberFormat.compactCurrency(
-                  symbol: widget.currencySymbol.isNotEmpty
-                      ? '${widget.currencySymbol[0].toUpperCase()}${widget.currencySymbol.substring(1).toLowerCase()} '
-                      : '',
-                ),
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState?.saveAndValidate() ?? false) {
-                    // Pass data back if needed, but usually we'd handle it here
-                    Navigator.pop(context, _formKey.currentState?.value);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    decoration: InputDecoration(
+                      labelText: 'minimum_amount'.tr(),
+                      suffixText: widget.currencySymbol,
+                    ),
                   ),
-                  backgroundColor: theme.colorScheme.primary,
-                  foregroundColor: Colors.white,
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FormBuilderTextField(
+                    name: 'max',
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'maximum_amount'.tr(),
+                      suffixText: widget.currencySymbol,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
                 child: Text(
-                  'apply_filters'.tr(),
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
+                  _error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () {
-                  _formKey.currentState?.reset();
-                },
-                child: Text(
-                  'reset'.tr(),
-                  style: GoogleFonts.outfit(color: theme.colorScheme.primary),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: _apply,
+              child: Text('apply_filters'.tr()),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, {
+                'date_range': null,
+                'amount_range': null,
+              }),
+              child: Text('reset'.tr()),
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
+  void _apply() {
+    if (!(_key.currentState?.saveAndValidate() ?? false)) return;
+    final v = _key.currentState!.value;
+    final minText = (v['min'] as String? ?? '').trim(),
+        maxText = (v['max'] as String? ?? '').trim();
+    final min = minText.isEmpty
+        ? 0.0
+        : double.tryParse(minText.replaceAll(',', '.'));
+    final max = maxText.isEmpty
+        ? double.maxFinite
+        : double.tryParse(maxText.replaceAll(',', '.'));
+    if (min == null ||
+        max == null ||
+        !min.isFinite ||
+        !max.isFinite ||
+        min < 0 ||
+        max < min) {
+      setState(() => _error = 'invalid_amount_range'.tr());
+      return;
+    }
+    final date = v['date_range'] as DateTimeRange?;
+    Navigator.pop(context, {
+      'date_range': date == null
+          ? null
+          : DateTimeRange(
+              start: date.start,
+              end: DateTime(
+                date.end.year,
+                date.end.month,
+                date.end.day,
+                23,
+                59,
+                59,
+                999,
+              ),
+            ),
+      'amount_range': minText.isEmpty && maxText.isEmpty
+          ? null
+          : RangeValues(min, max),
+    });
   }
 }

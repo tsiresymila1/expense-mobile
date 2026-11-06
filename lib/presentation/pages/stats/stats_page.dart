@@ -4,7 +4,6 @@ import 'package:expense/presentation/pages/stats/widgets/summary_stats_cards.dar
 import 'package:expense/presentation/pages/stats/widgets/category_breakdown_chart.dart';
 import 'package:expense/presentation/pages/stats/widgets/monthly_overview_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -53,7 +52,10 @@ class _StatsPageState extends State<StatsPage> {
     }
     setState(() => _range = label);
     if (label != 'custom') {
-      context.read<ExpensesBloc>().add(LoadExpenses(dateRange: range));
+      context.read<ExpensesCubit>().loadExpenses(
+        dateRange: range,
+        amountRange: null,
+      );
     }
   }
 
@@ -62,7 +64,7 @@ class _StatsPageState extends State<StatsPage> {
       context: context,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
-      initialDateRange: context.read<ExpensesBloc>().state.dateRange,
+      initialDateRange: context.read<ExpensesCubit>().state.dateRange,
       builder: (c, ch) => Theme(
         data: Theme.of(c).copyWith(
           colorScheme: Theme.of(
@@ -72,10 +74,24 @@ class _StatsPageState extends State<StatsPage> {
         child: ch!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() => _range = 'custom');
       if (mounted) {
-        context.read<ExpensesBloc>().add(LoadExpenses(dateRange: picked));
+        context.read<ExpensesCubit>().loadExpenses(
+          dateRange: DateTimeRange(
+            start: picked.start,
+            end: DateTime(
+              picked.end.year,
+              picked.end.month,
+              picked.end.day,
+              23,
+              59,
+              59,
+              999,
+            ),
+          ),
+          amountRange: null,
+        );
       }
     }
   }
@@ -88,11 +104,11 @@ class _StatsPageState extends State<StatsPage> {
       appBar: AppBar(
         title: Text(
           'statistics'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+          style: GoogleFonts.geist(fontWeight: FontWeight.w500),
         ),
-        centerTitle: true,
+        centerTitle: false,
       ),
-      body: BlocBuilder<ExpensesBloc, ExpensesState>(
+      body: BlocBuilder<ExpensesCubit, ExpensesState>(
         builder: (context, state) => Column(
           children: [
             Padding(
@@ -105,32 +121,22 @@ class _StatsPageState extends State<StatsPage> {
                   : state.expenses.isEmpty
                   ? _buildEmpty(theme)
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 36,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          SummaryStatsCards(state: state)
-                              .animate()
-                              .fadeIn(duration: 600.ms)
-                              .slideY(begin: 0.1, end: 0),
+                          SummaryStatsCards(state: state),
                           const SizedBox(height: 32),
-                          _header('category_breakdown'.tr())
-                              .animate()
-                              .fadeIn(delay: 200.ms, duration: 600.ms),
+                          _header('category_breakdown'.tr()),
                           const SizedBox(height: 16),
-                          CategoryBreakdownChart(state: state)
-                              .animate()
-                              .fadeIn(delay: 300.ms, duration: 600.ms)
-                              .scale(),
+                          CategoryBreakdownChart(state: state),
                           const SizedBox(height: 32),
-                          _header('monthly_overview'.tr())
-                              .animate()
-                              .fadeIn(delay: 400.ms, duration: 600.ms),
+                          _header('monthly_overview'.tr()),
                           const SizedBox(height: 16),
-                          MonthlyOverviewChart(state: state)
-                              .animate()
-                              .fadeIn(delay: 500.ms, duration: 600.ms)
-                              .slideX(begin: 0.1, end: 0),
+                          MonthlyOverviewChart(state: state),
                           const SizedBox(height: 32),
                         ],
                       ),
@@ -150,7 +156,7 @@ class _StatsPageState extends State<StatsPage> {
         const SizedBox(height: 16),
         Text(
           'no_transactions'.tr(),
-          style: GoogleFonts.outfit(color: Colors.grey),
+          style: GoogleFonts.geist(color: Colors.grey),
         ),
       ],
     ),
@@ -178,13 +184,13 @@ class _StatsPageState extends State<StatsPage> {
                   onSelected: (_) =>
                       r['l'] == 'custom' ? _pickCustom() : _setRange(r['l']!),
                   selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-                  labelStyle: GoogleFonts.outfit(
+                  labelStyle: GoogleFonts.geist(
                     color: _range == r['l']
                         ? AppTheme.primaryColor
                         : Colors.grey,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(5),
                     side: BorderSide(
                       color: _range == r['l']
                           ? AppTheme.primaryColor
@@ -203,6 +209,6 @@ class _StatsPageState extends State<StatsPage> {
 
   Widget _header(String t) => Text(
     t,
-    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold),
+    style: GoogleFonts.geist(fontSize: 18, fontWeight: FontWeight.bold),
   );
 }

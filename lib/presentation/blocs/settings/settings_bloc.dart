@@ -10,8 +10,8 @@ class SettingsState with _$SettingsState {
   const SettingsState._();
 
   const factory SettingsState({
-    @Default('en') String language,
-    @Default(ThemeMode.dark) ThemeMode themeMode,
+    @Default('system') String language,
+    @Default(ThemeMode.system) ThemeMode themeMode,
     @Default('MGA') String currency,
   }) = _SettingsState;
 
@@ -38,35 +38,17 @@ class SettingsState with _$SettingsState {
   }
 }
 
-abstract class SettingsEvent {}
+class SettingsCubit extends HydratedCubit<SettingsState> {
+  SettingsCubit() : super(const SettingsState());
 
-class ChangeLanguage extends SettingsEvent {
-  final String language;
-  ChangeLanguage(this.language);
-}
+  void changeLanguage(String language) =>
+      emit(state.copyWith(language: language));
 
-class ChangeTheme extends SettingsEvent {
-  final ThemeMode themeMode;
-  ChangeTheme(this.themeMode);
-}
+  void changeTheme(ThemeMode themeMode) =>
+      emit(state.copyWith(themeMode: themeMode));
 
-class ChangeCurrency extends SettingsEvent {
-  final String currency;
-  ChangeCurrency(this.currency);
-}
-
-class SettingsBloc extends HydratedBloc<SettingsEvent, SettingsState> {
-  SettingsBloc() : super(const SettingsState()) {
-    on<ChangeLanguage>(
-      (event, emit) => emit(state.copyWith(language: event.language)),
-    );
-    on<ChangeTheme>(
-      (event, emit) => emit(state.copyWith(themeMode: event.themeMode)),
-    );
-    on<ChangeCurrency>(
-      (event, emit) => emit(state.copyWith(currency: event.currency)),
-    );
-  }
+  void changeCurrency(String currency) =>
+      emit(state.copyWith(currency: currency));
 
   @override
   SettingsState? fromJson(Map<String, dynamic> json) =>

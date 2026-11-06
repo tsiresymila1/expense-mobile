@@ -1,5 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:expense/data/local/database.dart';
+import 'package:expense/data/models/models.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
@@ -13,7 +13,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddExpenseModal extends StatefulWidget {
-  final LocalExpense? expense;
+  final Expense? expense;
   const AddExpenseModal({super.key, this.expense});
 
   @override
@@ -26,7 +26,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<SettingsBloc, SettingsState>(
+    return BlocBuilder<SettingsCubit, SettingsState>(
       builder: (context, settings) => ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
@@ -40,7 +40,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
           ),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
           ),
           child: SingleChildScrollView(
             child: FormBuilder(
@@ -52,8 +52,10 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                 'note': widget.expense?.note ?? '',
                 'date': widget.expense?.date ?? DateTime.now(),
                 'category_id': widget.expense?.categoryId,
-                'project_id': widget.expense?.projectId ??
-                    context.read<ProjectsBloc>().state.currentProject?.id,
+                'project_id':
+                    widget.expense?.projectId ??
+                    context.read<ProjectsCubit>().state.currentProject?.id ??
+                    '',
               },
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -65,7 +67,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                     widget.expense == null
                         ? 'new_expense'.tr()
                         : 'edit_transaction'.tr(),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.geist(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),
@@ -91,12 +93,42 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  if (widget.expense == null) ...[
+                    BlocBuilder<ProjectsCubit, ProjectsState>(
+                      builder: (context, state) => FormBuilderDropdown<String>(
+                        name: 'project_id',
+                        decoration: InputDecoration(labelText: 'projects'.tr()),
+                        items: [
+                          DropdownMenuItem(
+                            value: '',
+                            child: Text('personal_workspace'.tr()),
+                          ),
+                          ...{
+                            for (final p in [
+                              ...state.projects,
+                              ...state.sharedProjects,
+                            ])
+                              p.id: p,
+                          }.values.map(
+                            (p) => DropdownMenuItem(
+                              value: p.id,
+                              child: Text(p.name),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                   _buildLabel('date'.tr()),
                   const SizedBox(height: 8),
                   FormBuilderDateTimePicker(
                     name: 'date',
                     inputType: InputType.date,
-                    format: DateFormat('dd MMM yyyy', context.locale.toString()),
+                    format: DateFormat(
+                      'dd MMM yyyy',
+                      context.locale.toString(),
+                    ),
                     decoration: _inputDecoration(
                       theme,
                       Icons.calendar_today_rounded,
@@ -137,7 +169,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
   );
   Widget _buildLabel(String text) => Text(
     text,
-    style: GoogleFonts.outfit(
+    style: GoogleFonts.geist(
       fontSize: 13,
       fontWeight: FontWeight.w600,
       color: Colors.grey,
@@ -152,7 +184,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
           name: 'currency',
           textAlign: TextAlign.center,
           readOnly: true,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.geist(
             fontSize: 20,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
@@ -165,7 +197,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
         child: FormBuilderTextField(
           name: 'amount',
           autofocus: widget.expense == null,
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.geist(
             fontSize: 24,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.primary,
@@ -191,10 +223,10 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     prefixIcon: icon != null ? Icon(icon) : null,
     hintText: hint,
     filled: true,
-    fillColor: theme.colorScheme.primary.withValues(alpha: 0.05),
+    fillColor: theme.inputDecorationTheme.fillColor,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide.none,
+      borderRadius: BorderRadius.circular(5),
+      borderSide: BorderSide(color: theme.dividerColor),
     ),
     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: padding),
   );
@@ -204,12 +236,12 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     style: ElevatedButton.styleFrom(
       minimumSize: const Size.fromHeight(56),
       backgroundColor: theme.colorScheme.primary,
-      foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      foregroundColor: const Color(0xFF10291D),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
     ),
     child: Text(
       'save'.tr(),
-      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w600),
+      style: GoogleFonts.geist(fontSize: 16, fontWeight: FontWeight.w600),
     ),
   );
 
@@ -217,24 +249,28 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final v = _formKey.currentState!.value;
       final amount = double.tryParse(v['amount'].toString()) ?? 0.0;
+      if (!amount.isFinite || amount <= 0) return;
       final note = (v['note'] as String?)?.trim();
-      final addE = AddExpense(
-        amount: amount,
-        date: v['date'],
-        note: note?.isEmpty ?? true ? null : note,
-        categoryId: v['category_id'],
-        projectId: v['project_id'],
-        type: v['type'],
-      );
-      final updE = UpdateExpense(
-        id: widget.expense?.id ?? '',
-        amount: amount,
-        date: v['date'],
-        note: note?.isEmpty ?? true ? null : note,
-        categoryId: v['category_id'],
-        type: v['type'],
-      );
-      context.read<ExpensesBloc>().add(widget.expense == null ? addE : updE);
+      final cubit = context.read<ExpensesCubit>();
+      if (widget.expense == null) {
+        cubit.addExpense(
+          amount: amount,
+          date: v['date'],
+          note: note?.isEmpty ?? true ? null : note,
+          categoryId: v['category_id'],
+          projectId: v['project_id'] == '' ? null : v['project_id'],
+          type: v['type'],
+        );
+      } else {
+        cubit.updateExpense(
+          id: widget.expense!.id,
+          amount: amount,
+          date: v['date'],
+          note: note?.isEmpty ?? true ? null : note,
+          categoryId: v['category_id'],
+          type: v['type'],
+        );
+      }
       context.pop();
     }
   }

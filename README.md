@@ -1,11 +1,11 @@
 # 💰 G-spend - Smart Expense Tracker
 
-A beautiful, offline-first expense tracking app built with Flutter and Supabase.
+A local-first expense tracking app built with Flutter and InstantDB.
 
 [![GitHub release](https://img.shields.io/github/v/release/tsiresymila1/expense-mobile)](https://github.com/tsiresymila1/expense-mobile/releases/tag/v1.0.0)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
-[![Supabase](https://img.shields.io/badge/Supabase-Backend-3ECF8E?logo=supabase)](https://supabase.com)
+[![InstantDB](https://img.shields.io/badge/InstantDB-Self--hosted-6C47FF)](https://www.instantdb.com)
 
 ## 📱 Screenshots
 [Add your app screenshots here]
@@ -18,7 +18,7 @@ A beautiful, offline-first expense tracking app built with Flutter and Supabase.
 - 🎨 **Modern UI** - Material Design 3 with dark mode
 - 🌍 **Multi-Language** - English & French support
 - 💱 **Multi-Currency** - Support for any currency
-- 🔐 **Secure** - Supabase authentication and encryption
+- 🔐 **Secure** - InstantDB magic-code and Google OAuth authentication
 
 ## 🚀 Download
 
@@ -30,7 +30,7 @@ A beautiful, offline-first expense tracking app built with Flutter and Supabase.
 ## 🛠️ Tech Stack
 
 - **Framework**: Flutter 3.x
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
+- **Backend**: Self-hosted InstantDB (local cache, authentication, realtime sync)
 - **State Management**: BLoC + Hydrated BLoC
 - **Local Database**: Drift (SQLite)
 - **Architecture**: Clean Architecture
@@ -54,5 +54,30 @@ flutter pub get
 # Run build_runner
 dart run build_runner build --delete-conflicting-outputs
 
+# Configure the self-hosted backend (same values for dev and prod)
+cp .env.dev.example .env.dev
+cp .env.prod.example .env.prod
+
 # Run the app
-flutter run --flavor prod
+flutter run --flavor dev -t lib/main_dev.dart
+```
+
+## Google OAuth setup
+
+Google sign-in uses InstantDB's OAuth PKCE flow. No Google client secret is
+stored in the Flutter application.
+
+1. Create a Google Web OAuth client and configure its consent screen.
+2. In the InstantDB dashboard, open **Auth**, add the Google client using the
+   name `google`, and enter the Google client ID and secret.
+3. Add InstantDB's Google callback URL to the Google client's authorized
+   redirect URIs.
+4. Add these non-secret values to `.env.dev` and `.env.prod`:
+
+```dotenv
+GOOGLE_OAUTH_CLIENT_NAME=google
+GOOGLE_OAUTH_REDIRECT_URI=ts.mila.expense://login-callback
+```
+
+The Google button remains hidden when these values are absent, so an
+unconfigured build cannot expose a broken login method.

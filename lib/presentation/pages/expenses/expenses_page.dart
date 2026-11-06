@@ -1,176 +1,124 @@
+import 'package:expense/presentation/widgets/expense_details.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:expense/data/local/database.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
-import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/pages/expenses/widgets/expense_card.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'package:expense/presentation/widgets/expense_filter_modal.dart';
-import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ExpensesPage extends StatelessWidget {
+class ExpensesPage extends StatefulWidget {
   const ExpensesPage({super.key});
+  @override
+  State<ExpensesPage> createState() => _ExpensesPageState();
+}
 
+class _ExpensesPageState extends State<ExpensesPage> {
+  String _query = '';
+  String _type = 'all';
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final projectsState = context.watch<ProjectsBloc>().state;
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-
+    final state = context.watch<ExpensesCubit>().state;
+    final settings = context.watch<SettingsCubit>().state;
+    final expenses = state.expenses
+        .where(
+          (e) =>
+              (_type == 'all' || e.type == _type) &&
+              (e.note ?? '').toLowerCase().contains(_query.toLowerCase()),
+        )
+        .toList();
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.go('/'),
-        ),
-        title: Text(
-          'transactions'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-        ),
+        automaticallyImplyLeading: false,
+        title: Text('transactions'.tr()),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.category_rounded),
-            onPressed: () => _showCategoryManagement(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 22),
+            child: ElevatedButton.icon(
+              onPressed: () => _showAddExpense(context),
+              icon: const Icon(Icons.add, size: 16),
+              label: Text('add'.tr()),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.filter_list_rounded),
-            onPressed: () => _showFilter(context),
-          ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: BlocBuilder<SettingsBloc, SettingsState>(
-        builder: (context, settings) =>
-            BlocBuilder<ExpensesBloc, ExpensesState>(
-              builder: (context, state) {
-                if (state.isLoading && state.expenses.isEmpty) {
-                  return _buildShimmer(theme);
-                }
-                if (state.expenses.isEmpty) return _buildEmptyState(theme);
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<ExpensesBloc>().add(LoadExpenses());
-                    await context.read<SyncEngine>().triggerSync();
-                    if (context.mounted) {
-                      context.read<ExpensesBloc>().add(LoadExpenses());
-                    }
-                  },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                    itemCount: state.expenses.length,
-                    itemBuilder: (context, index) {
-                      final expense = state.expenses[index];
-                      final showHeader =
-                          index == 0 ||
-                          !_isSameDay(
-                            expense.date,
-                            state.expenses[index - 1].date,
-                          );
-
-                      // Find creator name
-                      String? creatorName;
-                      final effectiveCreatorId = expense.createdBy ?? expense.userId;
-                      
-                       if (expense.projectId != null) {
-                            if (effectiveCreatorId == currentUserId) {
-                               final user = Supabase.instance.client.auth.currentUser;
-                               creatorName = user?.userMetadata?['name'] ?? 'Me';
-                            } else {
-                               final member = projectsState.projectMembers.where(
-                                 (m) => m['user_id'] == effectiveCreatorId,
-                               ).firstOrNull;
-                               if (member != null) {
-                                 creatorName = member['name'];
-                               } else {
-                                 creatorName = 'unknown_user'.tr();
-                               }
-                            }
-                       }
-
-                      return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (showHeader)
-                                _buildDateHeader(context, expense.date, theme),
-                              ExpenseCard(
-                                expense: expense,
-                                settings: settings,
-                                creatorName: creatorName,
-                                onTap: () =>
-                                    _showExpenseOptions(context, expense),
-                              ),
-                            ],
-                          )
-                          .animate(delay: (100 * (index % 10)).ms)
-                          .fadeIn(duration: 500.ms, curve: Curves.easeOut)
-                          .slideY(
-                            begin: 0.1,
-                            end: 0,
-                            duration: 500.ms,
-                            curve: Curves.easeOut,
-                          );
-                    },
+      body: RefreshIndicator(
+        onRefresh: () async => context.read<ExpensesCubit>().loadExpenses(),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(22, 16, 22, 24),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showFilter(context),
+                    child: Text('filters'.tr()),
                   ),
-                );
-              },
-            ),
-      ),
-      // ... existing floatingActionButton
-      floatingActionButton:
-          FloatingActionButton.extended(
-                onPressed: () => _showAddExpense(context),
-                label: Text(
-                  'new_expense'.tr(),
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
                 ),
-                icon: const Icon(Icons.add_rounded),
-              )
-              .animate()
-              .scale(delay: 600.ms, duration: 400.ms, curve: Curves.easeOutBack)
-              .shimmer(delay: 1000.ms, duration: 1200.ms),
-    );
-  }
-
-  bool _isSameDay(DateTime d1, DateTime d2) =>
-      d1.year == d2.year && d1.month == d2.month && d1.day == d2.day;
-
-  Widget _buildDateHeader(
-    BuildContext context,
-    DateTime date,
-    ThemeData theme,
-  ) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final dateOnly = DateTime(date.year, date.month, date.day);
-
-    String label = dateOnly == today
-        ? 'today'.tr()
-        : (dateOnly == yesterday
-              ? 'yesterday'.tr()
-              : DateFormat(
-                  'dd MMM yyyy',
-                  context.locale.toString(),
-                ).format(date).toUpperCase());
-    return Padding(
-      padding: const EdgeInsets.only(top: 24, bottom: 12, left: 4),
-      child: Text(
-        label,
-        style: GoogleFonts.outfit(
-          fontSize: 13,
-          fontWeight: FontWeight.bold,
-          color: theme.disabledColor,
-          letterSpacing: 1.2,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => _showCategoryManagement(context),
+                    child: Text('manage_categories'.tr()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            TextField(
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: 'search_transactions'.tr(),
+                prefixIcon: const Icon(Icons.search, size: 18),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children:
+                  [
+                        ('all', 'all_transactions'),
+                        ('expense', 'expense'),
+                        ('income', 'income'),
+                      ]
+                      .map(
+                        (t) => Padding(
+                          padding: const EdgeInsets.only(right: 14),
+                          child: TextButton(
+                            onPressed: () => setState(() => _type = t.$1),
+                            style: TextButton.styleFrom(
+                              foregroundColor: _type == t.$1
+                                  ? theme.colorScheme.secondary
+                                  : theme.colorScheme.onSurfaceVariant,
+                              shape: const RoundedRectangleBorder(),
+                            ),
+                            child: Text(t.$2.tr()),
+                          ),
+                        ),
+                      )
+                      .toList(),
+            ),
+            if (state.isLoading) const LinearProgressIndicator(),
+            if (expenses.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 48),
+                child: Center(
+                  child: Text(
+                    'no_transactions'.tr(),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            ...expenses.map(
+              (expense) => ExpenseCard(
+                expense: expense,
+                settings: settings,
+                onTap: () => showExpenseDetails(context, expense),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -190,7 +138,7 @@ class ExpensesPage extends StatelessWidget {
   );
 
   void _showFilter(BuildContext context) async {
-    final settings = context.read<SettingsBloc>().state;
+    final settings = context.read<SettingsCubit>().state;
     final res = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -199,158 +147,12 @@ class ExpensesPage extends StatelessWidget {
           ExpenseFilterModal(currencySymbol: settings.currencySymbol),
     );
     if (res != null && context.mounted) {
-      context.read<ExpensesBloc>().add(
-        LoadExpenses(
-          dateRange: res['date_range'] as DateTimeRange?,
-          amountRange: res['amount_range'] as RangeValues?,
-        ),
+      context.read<ExpensesCubit>().loadExpenses(
+        dateRange: res['date_range'] as DateTimeRange?,
+        amountRange: res['amount_range'] as RangeValues?,
       );
     }
   }
 
   // ... existing helpers
-
-  void _showExpenseOptions(BuildContext context, LocalExpense expense) {
-    final currentUserId = Supabase.instance.client.auth.currentUser?.id;
-    final projectsState = context.read<ProjectsBloc>().state;
-    final isProjectOwner =
-        projectsState.currentProject?.ownerId == currentUserId;
-    final isCreator =
-        expense.createdBy == currentUserId || expense.createdBy == null;
-
-    final canEdit = isProjectOwner || isCreator;
-
-    if (!canEdit) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('viewer_cannot_edit'.tr())));
-      return;
-    }
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        ),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit_rounded),
-                title: Text(
-                  'edit_transaction'.tr(),
-                  style: GoogleFonts.outfit(fontWeight: FontWeight.w600),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) => AddExpenseModal(expense: expense),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.delete_rounded, color: Colors.red),
-                title: Text(
-                  'delete_transaction'.tr(),
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  _confirmDelete(context, expense);
-                },
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, LocalExpense expense) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text(
-          'delete_confirmation_title'.tr(),
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-        ),
-        content: Text(
-          'delete_confirmation_message'.tr(),
-          style: GoogleFonts.outfit(),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'cancel'.tr(),
-              style: GoogleFonts.outfit(color: Colors.grey),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<ExpensesBloc>().add(DeleteExpense(expense.id));
-              Navigator.pop(context);
-            },
-            child: Text(
-              'delete_transaction'.tr(),
-              style: GoogleFonts.outfit(
-                color: Colors.red,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShimmer(ThemeData theme) => ListView.builder(
-    padding: const EdgeInsets.all(20),
-    itemCount: 6,
-    itemBuilder: (context, index) => Shimmer.fromColors(
-      baseColor: theme.cardColor,
-      highlightColor: theme.dividerColor,
-      child: Container(
-        height: 80,
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-        ),
-      ),
-    ),
-  );
-  Widget _buildEmptyState(ThemeData theme) => Center(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          Icons.receipt_long_rounded,
-          size: 80,
-          color: theme.disabledColor.withValues(alpha: 0.2),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'no_transactions'.tr(),
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            color: theme.disabledColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    ).animate().fadeIn(duration: 600.ms).scale(begin: const Offset(0.8, 0.8)),
-  );
 }

@@ -9,7 +9,7 @@ android.apply {
         create("dev") {
             dimension = "flavor-type"
             applicationId = "ts.mila.expense.dev"
-            resValue(type = "string", name = "app_name", value = "G-spend")
+            resValue(type = "string", name = "app_name", value = "G-spend Dev")
         }
         create("prod") {
             dimension = "flavor-type"

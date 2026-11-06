@@ -1,0 +1,36 @@
+EXPENSE — MOBILE V3 — Couverture de la proposition
+
+Périmètre : maquette HTML, aucun changement Flutter ou service distant.
+Direction : structure V2, Geist / Geist Mono, vert #3ECF8E, clair #FAFAFA / sombre #171717, largeur maximale 430 px.
+
+Fonctions actuelles examinées et écrans proposés :
+- dashboard_page.dart : solde, revenus/dépenses, utilisation des revenus, opérations récentes, projets, accès catégories et statistiques, dépenses journalières.
+- expenses_page.dart + add_expense_modal.dart : liste, recherche proposée, type revenu/dépense, montant décimal, catégorie, projet, date, note, détail, édition, suppression confirmée, créateur, lecture seule selon les droits.
+- expense_filter_modal.dart : période, montant minimum/maximum, application et réinitialisation.
+- category_management_modal.dart + add_category_modal.dart : création, édition, choix icône/couleur, suppression avec conservation des opérations sans catégorie.
+- stats_page.dart : mois courant/précédent, année, toutes dates, période personnalisée, totaux, répartition catégories et graphique mensuel.
+- projects_page.dart + projects_bloc.dart : sélection, création, édition, suppression confirmée, conversion espace personnel, liste membres/propriétaire, recherche profils, invitation, état en attente, retrait de membre. Le parcours quitter projet illustre la suppression de sa propre adhésion.
+- account_page.dart : nom et e-mail, modification du nom, accès réglages/projets, confirmation de déconnexion.
+- settings_page.dart : clair/sombre/système, français/anglais/système, devise personnalisée, réinitialisation confirmée.
+- login_page.dart : e-mail, code à 6 chiffres, changement e-mail, Google conditionnel, erreurs de connexion. Renvoi du code proposé comme amélioration.
+- verification_code_validator.dart : code à 6 chiffres.
+
+Authentification réelle actuelle : InstantDB. Supabase est une référence de palette et de thèmes, pas une migration de backend.
+
+Limites explicites de cette maquette :
+- Auth, invitations, données et droits sont simulés côté navigateur. Aucun e-mail envoyé, aucun compte externe consulté. Code de démonstration : 123456.
+- La préférence langue peut être choisie, mais cette étude affiche les écrans en français. La version Flutter possède déjà ses traductions FR/EN.
+- Changer la devise change le symbole, sans conversion de montants.
+- Suppression de projet dans la démo : opérations déplacées vers Personnel. Comportement final à aligner sur la politique métier avant implémentation.
+- Réinitialisation : efface les données de démo de la session. Recharger le fichier rétablit les exemples.
+- Les polices Google nécessitent le réseau ; police système de secours disponible.
+- Aucun branchement réseau ou synchronisation réelle ; état « Démo locale » explicite.
+- Anciennes traductions liées aux mots de passe non reprises : ces parcours ne sont plus présents dans le routeur actuel.
+
+Vérification :
+- check-v3.cjs : 22 vues, thèmes, recherche, OTP incorrect/correct, ajout et échappement HTML, suppression catégorie sans perte des opérations, doublons invitations, validation bornes de dates.
+- Aperçus réels : accueil clair 320/390 px, vérification de code sombre 390 px ; aucune erreur console sur les aperçus réussis.
+- perf.mjs : 0 FAIL, 3 WARN (charge CPU hôte, timing mobile), pas de requête cassée.
+- Les règles de hero et de sections marketing du skill ne sont pas une validation de cette interface applicative ; aucun résultat de conformité générale revendiqué.
+
+Choix validé : variante C de l’en-tête, monogramme e vert #3ECF8E + expense en 19 px, appliquée au prototype et à la galerie complète.

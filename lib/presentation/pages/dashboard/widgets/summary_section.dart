@@ -3,181 +3,141 @@ import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SummarySection extends StatelessWidget {
   final ExpensesState state;
   final SettingsState settings;
-
   const SummarySection({
     super.key,
     required this.state,
     required this.settings,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(28),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primary,
-                theme.colorScheme.primary.withRed(100),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                blurRadius: 2,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'balance_this_month'.tr(),
-                    style: GoogleFonts.outfit(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: Colors.white.withValues(alpha: 0.5),
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                AppTheme.formatMoney(
-                  state.thisMonthTotal,
-                  settings.currencySymbol,
-                  locale: context.locale.toString(),
-                ),
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1,
-                ),
-              ).animate().scale(delay: 200.ms, duration: 600.ms, curve: Curves.easeOutBack),
-              const SizedBox(height: 20),
-              _buildTrendIndicator(state, settings, context),
-            ],
-          ),
-        ).animate().fadeIn(duration: 800.ms, curve: Curves.easeOutExpo).moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildMetricCard(
-              context,
-              'total_income'.tr(),
-              state.thisMonthIncome,
-              Icons.arrow_upward_rounded,
-              const Color(0xFF4CAF50),
-            ),
-            const SizedBox(width: 12),
-            _buildMetricCard(
-              context,
-              'total_expense'.tr(),
-              state.thisMonthExpense,
-              Icons.arrow_downward_rounded,
-              const Color(0xFFEF5350),
-            ),
-          ],
-        ).animate(delay: 400.ms).fadeIn(duration: 800.ms, curve: Curves.easeOutExpo).moveY(begin: 30, end: 0, curve: Curves.easeOutExpo),
-      ],
+    String money(double n) => AppTheme.formatMoney(
+      n,
+      settings.currencySymbol,
+      locale: context.locale.toString(),
     );
-  }
-
-  Widget _buildTrendIndicator(ExpensesState state, SettingsState settings, BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+    final ratio = state.thisMonthIncome > 0
+        ? state.thisMonthExpense / state.thisMonthIncome
+        : 0.0;
+    Widget metric(String label, double amount, bool income) => Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.history_rounded, color: Colors.white70, size: 14),
-          const SizedBox(width: 8),
           Text(
-            '${'last_month'.tr()}: ${AppTheme.formatMoney(state.lastMonthTotal, settings.currencySymbol, locale: context.locale.toString())}',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            '${income ? '↙' : '↗'} ${label.tr()}',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 10),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              '${income ? '+' : '−'}${money(amount)}',
+              style: GoogleFonts.geistMono(
+                fontSize: 13,
+                color: income
+                    ? AppTheme.link(context)
+                    : theme.colorScheme.onSurface,
+              ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildMetricCard(BuildContext context, String label, double amount, IconData icon, Color color) {
-    final t = Theme.of(context);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: t.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: t.dividerColor.withValues(alpha: 0.08)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(),
+        const SizedBox(height: 24),
+        Text(
+          'balance_this_month'.tr().toUpperCase(),
+          style: GoogleFonts.geistMono(
+            fontSize: 10,
+            letterSpacing: 1,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        const SizedBox(height: 18),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: NumberFormat.decimalPattern(
+                    context.locale.toString(),
+                  ).format(state.thisMonthTotal),
+                ),
+                TextSpan(
+                  text: ' ${settings.currencySymbol}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 18,
+                    letterSpacing: 0,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            style: GoogleFonts.geist(
+              fontSize: 46,
+              fontWeight: FontWeight.w400,
+              letterSpacing: -2.3,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text('balance_explanation'.tr(), style: theme.textTheme.bodySmall),
+        const SizedBox(height: 28),
+        Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+            metric('income', state.thisMonthIncome, true),
+            const SizedBox(width: 18),
+            metric('expense', state.thisMonthExpense, false),
+          ],
+        ),
+        const SizedBox(height: 26),
+        const Divider(),
+        const SizedBox(height: 18),
+        Row(
+          children: [
+            Expanded(
+              child: Semantics(
+                label: '${(ratio * 100).round()}%',
+                child: Row(
+                  children: List.generate(
+                    20,
+                    (i) => Expanded(
+                      child: Container(
+                        height: 24,
+                        margin: const EdgeInsets.only(right: 3),
+                        color: i < (ratio * 20).ceil()
+                            ? AppTheme.primaryColor
+                            : theme.dividerColor,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              child: Icon(icon, color: color, size: 14),
             ),
-            const SizedBox(height: 12),
-            Text(
-              label,
-              style: GoogleFonts.outfit(
-                color: Colors.grey,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              AppTheme.formatMoney(
-                amount,
-                settings.currencySymbol,
-                locale: context.locale.toString(),
-              ),
-              style: GoogleFonts.outfit(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                state.thisMonthIncome > 0
+                    ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
+                    : 'no_income_yet'.tr(),
+                style: theme.textTheme.bodySmall,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 18),
+        const Divider(),
+      ],
     );
   }
 }

@@ -40,12 +40,11 @@ class MonthlyOverviewChart extends StatelessWidget {
     }).toList();
 
     return Container(
-      height: 250,
+      height: 180,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(AppTheme.cardRadius),
       ),
       child: BarChart(
         BarChartData(
@@ -63,10 +62,14 @@ class MonthlyOverviewChart extends StatelessWidget {
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
               getTooltipItem: (group, gi, rod, ri) {
-                final cur = context.read<SettingsBloc>().state.currencySymbol;
+                final cur = context.read<SettingsCubit>().state.currencySymbol;
                 return BarTooltipItem(
-                  AppTheme.formatMoney(rod.toY, cur, locale: context.locale.toString()),
-                  GoogleFonts.outfit(
+                  AppTheme.formatMoney(
+                    rod.toY,
+                    cur,
+                    locale: context.locale.toString(),
+                  ),
+                  GoogleFonts.geist(
                     color: rod.color ?? (ri == 0 ? Colors.green : Colors.red),
                     fontWeight: FontWeight.bold,
                   ),
@@ -109,13 +112,13 @@ class MonthlyOverviewChart extends StatelessWidget {
                   barRods: [
                     BarChartRodData(
                       toY: e.value['income'] as double,
-                      color: Colors.green,
+                      color: AppTheme.primaryColor,
                       width: 8,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     BarChartRodData(
                       toY: e.value['expense'] as double,
-                      color: Colors.red,
+                      color: theme.colorScheme.onSurfaceVariant,
                       width: 8,
                       borderRadius: BorderRadius.circular(4),
                     ),

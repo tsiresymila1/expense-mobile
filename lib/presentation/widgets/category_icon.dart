@@ -17,7 +17,7 @@ class CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CategoriesBloc, CategoriesState>(
+    return BlocBuilder<CategoriesCubit, CategoriesState>(
       builder: (context, state) {
         final cat = state.categories
             .where((c) => c.id == categoryId)
@@ -29,7 +29,7 @@ class CategoryIcon extends StatelessWidget {
           padding: EdgeInsets.all(padding),
           decoration: BoxDecoration(
             color: catColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(5),
           ),
           child: Icon(_getIconData(cat?.icon), color: catColor, size: size),
         );

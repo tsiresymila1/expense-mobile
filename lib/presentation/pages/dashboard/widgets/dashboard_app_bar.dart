@@ -1,25 +1,24 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:expense/presentation/blocs/auth/auth_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/pages/dashboard/widgets/sync_indicator.dart';
-import 'package:expense/core/sync_engine/engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_instantdb/flutter_instantdb.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class DashboardAppBar extends StatelessWidget {
-  final SyncEngine syncEngine;
-
-  const DashboardAppBar({super.key, required this.syncEngine});
+  const DashboardAppBar({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = Supabase.instance.client.auth.currentUser;
-    final userName = user?.userMetadata?['name'] ?? 'user_profile_fallback'.tr();
+    final userName =
+        context.watch<AuthCubit>().state.displayName ??
+        'user_profile_fallback'.tr();
 
-    return BlocBuilder<ProjectsBloc, ProjectsState>(
+    return BlocBuilder<ProjectsCubit, ProjectsState>(
       builder: (context, state) {
         final currentProject = state.currentProject;
 
@@ -33,17 +32,24 @@ class DashboardAppBar extends StatelessWidget {
             builder: (context, constraints) {
               final top = constraints.biggest.height;
               const expandedHeight = 140.0;
-              final toolbarHeight = MediaQuery.of(context).padding.top + kToolbarHeight;
-              
+              final toolbarHeight =
+                  MediaQuery.of(context).padding.top + kToolbarHeight;
+
               // Collapse progress (1.0 = fully expanded, 0.0 = collapsed)
-              final progress = ((top - toolbarHeight) / (expandedHeight - toolbarHeight)).clamp(0.0, 1.0);
-              
+              final progress =
+                  ((top - toolbarHeight) / (expandedHeight - toolbarHeight))
+                      .clamp(0.0, 1.0);
+
               // Opacity fades out faster than the collapse
               final opacity = (progress * 2 - 1).clamp(0.0, 1.0);
 
               return FlexibleSpaceBar(
                 title: Padding(
-                  padding: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    bottom: 16,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -57,7 +63,7 @@ class DashboardAppBar extends StatelessWidget {
                               opacity: opacity,
                               child: Text(
                                 '${'welcome_back'.tr()} ${userName.toString().padRight(10, '.').substring(0, 10)}',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.geist(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey,
@@ -73,10 +79,11 @@ class DashboardAppBar extends StatelessWidget {
                                 Row(
                                   children: [
                                     Text(
-                                      currentProject?.name.tr() ?? 'G-spend'.tr(),
-                                      style: GoogleFonts.outfit(
+                                      currentProject?.name.tr() ??
+                                          'personal_workspace'.tr(),
+                                      style: GoogleFonts.geist(
                                         fontSize: 20,
-                                        fontWeight: FontWeight.w800,
+                                        fontWeight: FontWeight.w500,
                                         color: theme.colorScheme.onSurface,
                                         letterSpacing: -0.5,
                                       ),
@@ -89,13 +96,15 @@ class DashboardAppBar extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                if (state.projectMembers.isNotEmpty && opacity > 0.1)
+                                if (state.projectMembers.isNotEmpty &&
+                                    opacity > 0.1)
                                   Opacity(
                                     opacity: opacity,
                                     child: Padding(
                                       padding: const EdgeInsets.only(top: 4),
                                       child: InkWell(
-                                        onTap: () => _showMembersList(context, state),
+                                        onTap: () =>
+                                            _showMembersList(context, state),
                                         borderRadius: BorderRadius.circular(10),
                                         child: SizedBox(
                                           height: 20,
@@ -103,29 +112,55 @@ class DashboardAppBar extends StatelessWidget {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               SizedBox(
-                                                width: (state.projectMembers.length > 5 ? 5 : state.projectMembers.length) * 15.0 + 10,
+                                                width:
+                                                    (state.projectMembers.length >
+                                                                5
+                                                            ? 5
+                                                            : state
+                                                                  .projectMembers
+                                                                  .length) *
+                                                        15.0 +
+                                                    10,
                                                 child: Stack(
                                                   children: List.generate(
-                                                    state.projectMembers.length > 5 ? 5 : state.projectMembers.length,
+                                                    state
+                                                                .projectMembers
+                                                                .length >
+                                                            5
+                                                        ? 5
+                                                        : state
+                                                              .projectMembers
+                                                              .length,
                                                     (i) => Positioned(
                                                       left: i * 15.0,
                                                       child: Container(
                                                         decoration: BoxDecoration(
-                                                          shape: BoxShape.circle,
+                                                          shape:
+                                                              BoxShape.circle,
                                                           border: Border.all(
-                                                            color: theme.scaffoldBackgroundColor,
+                                                            color: theme
+                                                                .scaffoldBackgroundColor,
                                                             width: 2,
                                                           ),
                                                         ),
                                                         child: CircleAvatar(
                                                           radius: 8,
-                                                          backgroundColor: theme.colorScheme.primaryContainer,
+                                                          backgroundColor: theme
+                                                              .colorScheme
+                                                              .primaryContainer,
                                                           child: Text(
-                                                            (state.projectMembers[i]['name'] as String?)?[0].toUpperCase() ?? 'U',
+                                                            (state.projectMembers[i]['name']
+                                                                        as String?)?[0]
+                                                                    .toUpperCase() ??
+                                                                'U',
                                                             style: TextStyle(
                                                               fontSize: 8,
-                                                              color: theme.colorScheme.onPrimaryContainer,
-                                                              fontWeight: FontWeight.bold,
+                                                              color: theme
+                                                                  .colorScheme
+                                                                  .onPrimaryContainer,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
                                                             ),
                                                           ),
                                                         ),
@@ -134,10 +169,11 @@ class DashboardAppBar extends StatelessWidget {
                                                   ),
                                                 ),
                                               ),
-                                              if (state.projectMembers.length > 5)
+                                              if (state.projectMembers.length >
+                                                  5)
                                                 Text(
                                                   '+${state.projectMembers.length - 5}',
-                                                  style: GoogleFonts.outfit(
+                                                  style: GoogleFonts.geist(
                                                     fontSize: 10,
                                                     color: Colors.grey,
                                                     fontWeight: FontWeight.w600,
@@ -163,15 +199,7 @@ class DashboardAppBar extends StatelessWidget {
             },
           ),
           actions: [
-            StreamBuilder<SyncState>(
-              stream: syncEngine.syncState,
-              builder: (context, snapshot) {
-                final status = snapshot.data?.status ?? SyncStatus.idle;
-                return SyncIndicator(status: status);
-              },
-            ),
-            const SizedBox(width: 12),
-            _buildActionIcon(theme, Icons.sync, () => syncEngine.triggerSync()),
+            const SyncIndicator(),
             const SizedBox(width: 12),
             _buildActionIcon(
               theme,
@@ -191,9 +219,9 @@ class DashboardAppBar extends StatelessWidget {
       context: context,
       backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
       ),
-      builder: (context) => BlocBuilder<ProjectsBloc, ProjectsState>(
+      builder: (context) => BlocBuilder<ProjectsCubit, ProjectsState>(
         builder: (context, state) {
           return SafeArea(
             child: Padding(
@@ -204,9 +232,9 @@ class DashboardAppBar extends StatelessWidget {
                 children: [
                   Text(
                     'current_members'.tr(),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.geist(
                       fontSize: 20,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -216,7 +244,7 @@ class DashboardAppBar extends StatelessWidget {
                       child: Center(
                         child: Text(
                           'no_members'.tr(),
-                          style: GoogleFonts.outfit(color: Colors.grey),
+                          style: GoogleFonts.geist(color: Colors.grey),
                         ),
                       ),
                     )
@@ -227,8 +255,9 @@ class DashboardAppBar extends StatelessWidget {
                         itemCount: state.projectMembers.length,
                         itemBuilder: (context, index) {
                           final member = state.projectMembers[index];
-                          final currentUserId =
-                              Supabase.instance.client.auth.currentUser?.id;
+                          final currentUserId = InstantProvider.of(
+                            context,
+                          ).auth.currentUser.value?.id;
                           final isOwner =
                               state.currentProject?.ownerId == currentUserId;
                           final isMemberThemselves =
@@ -237,9 +266,11 @@ class DashboardAppBar extends StatelessWidget {
                               member['invited_by'] == currentUserId;
 
                           final isTargetOwner =
-                              member['user_id'] == state.currentProject?.ownerId;
+                              member['user_id'] ==
+                              state.currentProject?.ownerId;
 
-                          final canRemove = !isTargetOwner &&
+                          final canRemove =
+                              !isTargetOwner &&
                               (isOwner ||
                                   isMemberThemselves ||
                                   invitedByCurrentUser);
@@ -260,7 +291,7 @@ class DashboardAppBar extends StatelessWidget {
                             ),
                             title: Text(
                               member['name'] ?? '',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.geist(
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -269,7 +300,7 @@ class DashboardAppBar extends StatelessWidget {
                               children: [
                                 Text(
                                   member['email'] ?? '',
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.geist(
                                     fontSize: 12,
                                     color: Colors.grey,
                                   ),
@@ -277,7 +308,7 @@ class DashboardAppBar extends StatelessWidget {
                                 if (member['accepted_at'] != null)
                                   Text(
                                     '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(member['accepted_at']))}',
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.geist(
                                       fontSize: 10,
                                       color: theme.colorScheme.primary,
                                     ),
@@ -285,7 +316,7 @@ class DashboardAppBar extends StatelessWidget {
                                 else
                                   Text(
                                     'pending'.tr(),
-                                    style: GoogleFonts.outfit(
+                                    style: GoogleFonts.geist(
                                       fontSize: 10,
                                       color: Colors.orange,
                                     ),
@@ -336,11 +367,11 @@ class DashboardAppBar extends StatelessWidget {
                                       size: 20,
                                     ),
                                     onPressed: () {
-                                      context.read<ProjectsBloc>().add(
-                                        RemoveProjectMember(
-                                          member['member_id'],
-                                        ),
-                                      );
+                                      context
+                                          .read<ProjectsCubit>()
+                                          .removeProjectMember(
+                                            member['member_id'],
+                                          );
                                       if (isMemberThemselves) {
                                         Navigator.pop(
                                           context,
@@ -381,13 +412,16 @@ class DashboardAppBar extends StatelessWidget {
   void _showProjectPicker(BuildContext context, ProjectsState state) {
     final theme = Theme.of(context);
     final allProjects = [...state.projects, ...state.sharedProjects];
-    final bloc = context.read<ProjectsBloc>();
+    final cubit = context.read<ProjectsCubit>();
+    final currentUserId = InstantProvider.of(
+      context,
+    ).auth.currentUser.value?.id;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
       ),
       builder: (bottomSheetContext) {
         return SafeArea(
@@ -398,16 +432,16 @@ class DashboardAppBar extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
                   'select_project'.tr(),
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.geist(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
               const Divider(height: 1),
               Expanded(
                 child: ListView.builder(
-                  itemCount: allProjects.length + 2,
+                  itemCount: allProjects.length + 3,
                   itemBuilder: (context, index) {
                     if (index == 0) {
                       final isSelected = state.currentProject == null;
@@ -418,47 +452,44 @@ class DashboardAppBar extends StatelessWidget {
                         ),
                         title: Text(
                           'personal_workspace'.tr(),
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.geist(
                             fontWeight: isSelected
-                                ? FontWeight.w700
+                                ? FontWeight.w500
                                 : FontWeight.w500,
-                            color: isSelected ? theme.colorScheme.primary : null,
+                            color: isSelected
+                                ? theme.colorScheme.primary
+                                : null,
                           ),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.drive_file_rename_outline_rounded,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                Navigator.pop(bottomSheetContext);
-                                _showRenamePersonalDialog(context, bloc);
-                              },
-                              tooltip: 'rename_personal'.tr(),
-                            ),
-                            if (isSelected)
-                              Icon(
+                        trailing: isSelected
+                            ? Icon(
                                 Icons.check_rounded,
                                 color: theme.colorScheme.primary,
-                              ),
-                          ],
-                        ),
+                              )
+                            : null,
                         onTap: () {
-                          bloc.add(SwitchProject(''));
+                          cubit.switchProject('');
                           Navigator.pop(bottomSheetContext);
                         },
                       );
                     }
                     if (index == allProjects.length + 1) {
                       return ListTile(
+                        leading: const Icon(Icons.drive_file_move_outline),
+                        title: Text('convert_personal_workspace'.tr()),
+                        onTap: () {
+                          Navigator.pop(bottomSheetContext);
+                          _showConvertPersonalDialog(context, cubit);
+                        },
+                      );
+                    }
+                    if (index == allProjects.length + 2) {
+                      return ListTile(
                         leading: const Icon(Icons.add_rounded),
                         title: Text('create_new_project'.tr()),
                         onTap: () {
                           Navigator.pop(bottomSheetContext);
-                          _showCreateProjectDialog(context, bloc);
+                          _showCreateProjectDialog(context, cubit);
                         },
                       );
                     }
@@ -466,17 +497,17 @@ class DashboardAppBar extends StatelessWidget {
                     final isSelected = project.id == state.currentProject?.id;
                     return ListTile(
                       leading: Icon(
-                        project.ownerId ==
-                                Supabase.instance.client.auth.currentUser?.id
+                        project.ownerId == currentUserId
                             ? Icons.folder_rounded
                             : Icons.folder_shared_rounded,
                         color: isSelected ? theme.colorScheme.primary : null,
                       ),
                       title: Text(
                         project.name.tr(),
-                        style: GoogleFonts.outfit(
-                          fontWeight:
-                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                        style: GoogleFonts.geist(
+                          fontWeight: isSelected
+                              ? FontWeight.w500
+                              : FontWeight.w500,
                           color: isSelected ? theme.colorScheme.primary : null,
                         ),
                       ),
@@ -487,7 +518,7 @@ class DashboardAppBar extends StatelessWidget {
                             )
                           : null,
                       onTap: () {
-                        bloc.add(SwitchProject(project.id));
+                        cubit.switchProject(project.id);
                         Navigator.pop(bottomSheetContext);
                       },
                     );
@@ -501,52 +532,78 @@ class DashboardAppBar extends StatelessWidget {
     );
   }
 
-  void _showRenamePersonalDialog(BuildContext context, ProjectsBloc bloc) {
-    final nameController = TextEditingController()
-      ..text = 'G-spend'.tr(); // Default name
+  void _showConvertPersonalDialog(BuildContext context, ProjectsCubit cubit) {
+    var projectName = 'G-spend'.tr();
+    var isSubmitting = false;
 
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (c) => AlertDialog(
-        title: Text('convert_personal_title'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'convert_personal_message'.tr(),
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: 'name'.tr(),
-                hintText: 'Work, Vacation, etc.',
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (_, setDialogState) => AlertDialog(
+          title: Text('convert_personal_title'.tr()),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'convert_personal_message'.tr(),
+                style: const TextStyle(fontSize: 13, color: Colors.grey),
               ),
+              const SizedBox(height: 16),
+              TextFormField(
+                initialValue: projectName,
+                onChanged: (value) => projectName = value,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'name'.tr(),
+                  hintText: 'Work, Vacation, etc.',
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.pop(dialogContext),
+              child: Text('cancel'.tr()),
+            ),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      final name = projectName.trim();
+                      if (name.isEmpty) return;
+                      setDialogState(() => isSubmitting = true);
+                      final converted = await cubit.convertPersonalToProject(
+                        name,
+                      );
+                      if (!dialogContext.mounted) return;
+                      Navigator.pop(dialogContext);
+                      if (!converted && context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              cubit.state.error ??
+                                  'no_personal_expenses_to_convert'.tr(),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+              child: isSubmitting
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Text('save'.tr()),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('cancel'.tr()),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty) {
-                bloc.add(ConvertPersonalToProject(nameController.text));
-                Navigator.pop(c);
-              }
-            },
-            child: Text('save'.tr()),
-          ),
-        ],
       ),
     );
   }
 
-  void _showCreateProjectDialog(BuildContext context, ProjectsBloc bloc) {
+  void _showCreateProjectDialog(BuildContext context, ProjectsCubit cubit) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
 
@@ -576,11 +633,9 @@ class DashboardAppBar extends StatelessWidget {
           TextButton(
             onPressed: () {
               if (nameController.text.isNotEmpty) {
-                bloc.add(
-                  AddProject(
-                    name: nameController.text,
-                    description: descController.text,
-                  ),
+                cubit.addProject(
+                  name: nameController.text,
+                  description: descController.text,
                 );
                 Navigator.pop(c);
               }

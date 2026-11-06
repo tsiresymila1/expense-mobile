@@ -10,7 +10,7 @@
         "--flavor",
         "dev",
         "--target",
-        "lib/main.dart"
+        "lib/main_dev.dart"
       ]
     }
   ]

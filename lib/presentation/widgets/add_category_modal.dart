@@ -1,4 +1,4 @@
-import 'package:expense/data/local/database.dart';
+import 'package:expense/data/models/models.dart';
 import 'package:expense/presentation/blocs/expenses/categories_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddCategoryModal extends StatefulWidget {
-  final LocalCategory? category;
+  final Category? category;
   const AddCategoryModal({super.key, this.category});
   @override
   State<AddCategoryModal> createState() => _AddCategoryModalState();
@@ -52,7 +52,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
         ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
         ),
         child: SingleChildScrollView(
           child: FormBuilder(
@@ -62,7 +62,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
               'icon': widget.category?.icon ?? 'Shopping',
               'color': widget.category?.color != null
                   ? int.tryParse(widget.category!.color!, radix: 16) ??
-                      Colors.blue.toARGB32()
+                        Colors.blue.toARGB32()
                   : Colors.blue.toARGB32(),
             },
             child: Column(
@@ -81,8 +81,10 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  widget.category == null ? 'new_category'.tr() : 'edit_category'.tr(),
-                  style: GoogleFonts.outfit(
+                  widget.category == null
+                      ? 'new_category'.tr()
+                      : 'edit_category'.tr(),
+                  style: GoogleFonts.geist(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -97,7 +99,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                       alpha: 0.03,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(5),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -132,7 +134,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                                   : theme.colorScheme.onSurface.withValues(
                                       alpha: 0.03,
                                     ),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(5),
                               border: Border.all(
                                 color: isS
                                     ? theme.colorScheme.primary
@@ -154,7 +156,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                                 const SizedBox(height: 4),
                                 Text(
                                   it['n'] as String,
-                                  style: GoogleFonts.outfit(
+                                  style: GoogleFonts.geist(
                                     fontSize: 10,
                                     color: isS
                                         ? theme.colorScheme.primary
@@ -215,14 +217,14 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF10291D),
                   ),
                   child: Text(
                     'save_category'.tr(),
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.geist(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
@@ -238,7 +240,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
 
   Widget _label(String t, ThemeData theme) => Text(
     t,
-    style: GoogleFonts.outfit(
+    style: GoogleFonts.geist(
       fontWeight: FontWeight.bold,
       color: theme.colorScheme.onSurface,
     ),
@@ -247,22 +249,19 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
   void _submit() {
     if (_key.currentState?.saveAndValidate() ?? false) {
       final v = _key.currentState!.value;
+      final cubit = context.read<CategoriesCubit>();
       if (widget.category == null) {
-        context.read<CategoriesBloc>().add(
-          AddCategory(
-            name: (v['name'] as String).trim(),
-            icon: v['icon'] as String,
-            color: (v['color'] as int).toRadixString(16).toUpperCase(),
-          ),
+        cubit.addCategory(
+          name: (v['name'] as String).trim(),
+          icon: v['icon'] as String,
+          color: (v['color'] as int).toRadixString(16).toUpperCase(),
         );
       } else {
-        context.read<CategoriesBloc>().add(
-          UpdateCategory(
-            id: widget.category!.id,
-            name: (v['name'] as String).trim(),
-            icon: v['icon'] as String,
-            color: (v['color'] as int).toRadixString(16).toUpperCase(),
-          ),
+        cubit.updateCategory(
+          id: widget.category!.id,
+          name: (v['name'] as String).trim(),
+          icon: v['icon'] as String,
+          color: (v['color'] as int).toRadixString(16).toUpperCase(),
         );
       }
       Navigator.pop(context);

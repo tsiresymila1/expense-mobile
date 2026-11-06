@@ -18,7 +18,7 @@ class CategoryPickerField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return BlocBuilder<CategoriesBloc, CategoriesState>(
+    return BlocBuilder<CategoriesCubit, CategoriesState>(
       builder: (context, state) {
         if (state.isLoading && state.categories.isEmpty) {
           return const Center(
@@ -57,7 +57,7 @@ class CategoryPickerField extends StatelessWidget {
                     color: isSelected
                         ? catColor
                         : catColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(5),
                     border: isSelected
                         ? Border.all(
                             color: theme.colorScheme.onSurface.withValues(
@@ -88,7 +88,7 @@ class CategoryPickerField extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Text(
                           cat.name,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.geist(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: isSelected
