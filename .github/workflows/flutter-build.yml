@@ -1,4 +1,4 @@
-name: Build Flutter APK
+name: Build & Deploy
 
 on:
   push:
@@ -8,6 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: prod
+    env:
+      INSTANTDB_APP_ID: ${{ vars.INSTANTDB_APP_ID }}
+      INSTANTDB_API_URI: ${{ vars.INSTANTDB_API_URI }}
+      GOOGLE_OAUTH_CLIENT_NAME: ${{ vars.GOOGLE_OAUTH_CLIENT_NAME }}
+      GOOGLE_OAUTH_REDIRECT_URI: ${{ vars.GOOGLE_OAUTH_REDIRECT_URI }}
     permissions:
       contents: write
 
@@ -19,29 +25,46 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: '17'
-          distribution: 'temurin' # Updated to Temurin (standard for GitHub Actions)
+          distribution: 'temurin'
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true # Enable caching for faster subsequent builds
+          cache: true
 
-      - name: Create .env.prod file
+      - name: Create .env files
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env.prod
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.prod
-
-      - name: Create .env.dev file
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env.dev
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.dev
+          python3 - <<'PYENV'
+          import os
+          from pathlib import Path
+          keys = ('INSTANTDB_APP_ID', 'INSTANTDB_API_URI',
+                  'GOOGLE_OAUTH_CLIENT_NAME', 'GOOGLE_OAUTH_REDIRECT_URI')
+          values = {key: os.environ.get(key, '').strip() for key in keys}
+          for key in keys[:2]:
+              if not values[key]:
+                  raise SystemExit(f'Missing GitHub environment variable: {key}')
+          if bool(values[keys[2]]) != bool(values[keys[3]]):
+              raise SystemExit('Google OAuth variables must be configured together')
+          if any('\n' in value or '\r' in value for value in values.values()):
+              raise SystemExit('Environment variables must be single-line values')
+          content = ''.join(f'{key}={value}\n' for key, value in values.items())
+          Path('.env.prod').write_text(content)
+          # Both assets are declared in pubspec; dev is unused by the prod entrypoint.
+          Path('.env.dev').write_text(content)
+          PYENV
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Run build_runner
         run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
 
       - name: Decode and save the release keystore
         run: |
@@ -56,19 +79,55 @@ jobs:
           echo "keyAlias=${{ secrets.KEYSTORE_ALIAS }}" >> android/key.properties
           echo "storeFile=$HOME/release-keystore.jks" >> android/key.properties
 
-      - name: Build Project
+      - name: Build App Bundle (AAB)
         run: |
           flutter doctor -v
-          flutter build apk --release --flavor prod
-          mv build/app/outputs/flutter-apk/app-prod-release.apk build/app/outputs/flutter-apk/G-spend.apk
+          VERSION="${GITHUB_REF_NAME#v}"
+          flutter build appbundle --release --flavor prod -t lib/main_prod.dart \
+            --build-name="$VERSION" --build-number="${{ github.run_number }}"
+          cp build/app/outputs/bundle/prodRelease/app-prod-release.aab build/G-spend.aab
 
-      - name: Upload release artifacts to GitHub Release
+      - name: Build APK (for GitHub Release)
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          flutter build apk --release --flavor prod -t lib/main_prod.dart \
+            --build-name="$VERSION" --build-number="${{ github.run_number }}"
+          cp build/app/outputs/flutter-apk/app-prod-release.apk build/G-spend.apk
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 ~ "^## \\[" ver "\\]" {flag=1; next}
+            /^## \[/ && flag {exit}
+            flag {print}
+          ' CHANGELOG.md > release_notes.md
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${GITHUB_REF_NAME}" > release_notes.md
+          fi
+          # Play "what's new" (max 500 chars, per-locale file).
+          mkdir -p distribution/whatsnew
+          head -c 500 release_notes.md > distribution/whatsnew/whatsnew-en-US
+          echo "----- release_notes.md -----"; cat release_notes.md
+
+      - name: Upload artifacts to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: |
-            build/app/outputs/flutter-apk/G-spend.apk
+            build/G-spend.apk
+            build/G-spend.aab
           tag: ${{ github.ref_name }}
           name: "G-spend ${{ github.ref_name }}"
           token: ${{ secrets.GITHUB_TOKEN }}
           allowUpdates: true
-          generateReleaseNotes: true
+          bodyFile: release_notes.md
+
+      - name: Deploy to Google Play (internal track)
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          packageName: ts.mila.expense
+          releaseFiles: build/app/outputs/bundle/prodRelease/app-prod-release.aab
+          track: internal
+          status: completed
+          whatsNewDirectory: distribution/whatsnew
