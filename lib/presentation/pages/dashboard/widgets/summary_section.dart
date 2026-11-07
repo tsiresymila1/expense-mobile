@@ -63,7 +63,7 @@ class SummarySection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primaryContainer,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(28),
       ),
       child: Column(

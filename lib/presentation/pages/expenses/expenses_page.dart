@@ -55,7 +55,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
       body: RefreshIndicator(
         onRefresh: () async => context.read<ExpensesCubit>().loadExpenses(),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 96),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
           children: [
             if (_searchVisible)
               TextField(
@@ -65,7 +65,7 @@ class _ExpensesPageState extends State<ExpensesPage> {
                   prefixIcon: const Icon(Icons.search, size: 18),
                 ),
               ),
-            const SizedBox(height: 14),
+            if (_searchVisible) const SizedBox(height: 14),
             Row(
               children:
                   [

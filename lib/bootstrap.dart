@@ -20,6 +20,31 @@ Future<void> bootstrap(AppFlavor flavor) async {
   }
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  runApp(
+    MaterialApp(
+      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF3F6EC)),
+      darkTheme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF151D13),
+      ),
+      home: Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset('assets/icon/icon.png', width: 96, height: 96),
+              const SizedBox(height: 24),
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  FlutterNativeSplash.remove();
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: AppConfig.environmentFileFor(flavor));
   final config = AppConfig.fromEnvironment(
@@ -43,11 +68,18 @@ Future<void> bootstrap(AppFlavor flavor) async {
       baseUrl: config.instantApiUri.toString(),
     ),
   );
-  await AuthSessionRestorer(sessionStore).restore(
-    verify: (token) async {
-      await db.auth.verifyRefreshToken(refreshToken: token);
-    },
-  );
+  try {
+    await AuthSessionRestorer(sessionStore).restore(
+      verify: (token) async {
+        final user = await db.auth.verifyRefreshToken(refreshToken: token);
+        await sessionStore.saveUser(user);
+      },
+    );
+  } catch (_) {
+    final token = await sessionStore.readRefreshToken();
+    final user = await sessionStore.readUser();
+    if (token != null && user != null) db.auth.restoreSession(user, token);
+  }
 
   FlutterNativeSplash.remove();
   runApp(

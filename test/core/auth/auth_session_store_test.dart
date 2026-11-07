@@ -1,7 +1,15 @@
+import 'package:flutter_instantdb/flutter_instantdb.dart';
+import 'package:dio/dio.dart';
 import 'package:expense/core/auth/auth_session_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('SDK restores the cached identity and token without a request', () {
+    final auth = AuthManager(appId: 'test', baseUrl: 'https://invalid.example');
+    auth.restoreSession(const AuthUser(id: 'cached-user'), 'stored-token');
+    expect(auth.currentUser.value?.id, 'cached-user');
+    expect(auth.refreshToken, 'stored-token');
+  });
   group('AuthSessionRestorer', () {
     test('does not verify when there is no stored token', () async {
       final store = _MemoryAuthSessionStore();
@@ -30,12 +38,33 @@ void main() {
       expect(store.clearCount, 0);
     });
 
+    test('retains the token on a network failure', () async {
+      final store = _MemoryAuthSessionStore('offline-token');
+      await expectLater(
+        AuthSessionRestorer(store).restore(
+          verify: (_) async => throw DioException(
+            requestOptions: RequestOptions(path: '/auth'),
+            type: DioExceptionType.connectionError,
+          ),
+        ),
+        throwsA(isA<DioException>()),
+      );
+      expect(store.token, 'offline-token');
+      expect(store.clearCount, 0);
+    });
+
     test('deletes a revoked token', () async {
       final store = _MemoryAuthSessionStore('revoked-token');
 
-      final restored = await AuthSessionRestorer(
-        store,
-      ).restore(verify: (_) async => throw Exception('revoked'));
+      final restored = await AuthSessionRestorer(store).restore(
+        verify: (_) async => throw DioException(
+          requestOptions: RequestOptions(path: '/auth'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/auth'),
+            statusCode: 401,
+          ),
+        ),
+      );
 
       expect(restored, isFalse);
       expect(store.token, isNull);

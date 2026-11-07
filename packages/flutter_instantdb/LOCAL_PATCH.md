@@ -1,0 +1,1 @@
+Based on flutter_instantdb 2.2.2. Local patch: restoreSession restores a previously verified user from secure storage; auth HTTP requests have bounded timeouts. Server authentication remains authoritative on reconnect. Remove this override when upstream exposes session restoration.

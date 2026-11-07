@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:flutter_instantdb/flutter_instantdb.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 abstract interface class AuthSessionStore {
@@ -40,7 +43,18 @@ final class SecureAuthSessionStore implements AuthSessionStore {
   }
 
   @override
-  Future<void> clear() => _storage.delete(key: _refreshTokenKey);
+  Future<void> clear() async {
+    await _storage.delete(key: _refreshTokenKey);
+    await _storage.delete(key: 'instantdb_user');
+  }
+
+  Future<void> saveUser(AuthUser user) =>
+      _storage.write(key: 'instantdb_user', value: jsonEncode(user.toJson()));
+
+  Future<AuthUser?> readUser() async {
+    final value = await _storage.read(key: 'instantdb_user');
+    return value == null ? null : AuthUser.fromJson(jsonDecode(value));
+  }
 }
 
 final class AuthSessionRestorer {
@@ -57,7 +71,12 @@ final class AuthSessionRestorer {
     try {
       await verify(token);
       return true;
-    } catch (_) {
+    } catch (error) {
+      final cause = error is InstantException ? error.originalError : error;
+      if (cause is! DioException ||
+          ![400, 401, 403].contains(cause.response?.statusCode)) {
+        rethrow;
+      }
       await _store.clear();
       return false;
     }

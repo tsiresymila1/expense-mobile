@@ -100,19 +100,15 @@ class _StatsPageState extends State<StatsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text('nav_analysis'.tr()),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: _buildRangeSelector(),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text('nav_analysis'.tr())),
       backgroundColor: theme.colorScheme.surface,
       body: BlocBuilder<ExpensesCubit, ExpensesState>(
         builder: (context, state) => Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: _buildRangeSelector(),
+            ),
             Expanded(
               child: state.isLoading && state.expenses.isEmpty
                   ? const Center(child: CircularProgressIndicator())
@@ -168,18 +164,22 @@ class _StatsPageState extends State<StatsPage> {
       {'l': 'all_time', 't': 'all_time'.tr()},
       {'l': 'custom', 't': 'custom'.tr()},
     ];
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<String>(
-        value: _range,
-        style: Theme.of(context).textTheme.bodyMedium,
-        borderRadius: BorderRadius.circular(20),
-        items: list
-            .map((r) => DropdownMenuItem(value: r['l'], child: Text(r['t']!)))
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: list
+            .map(
+              (r) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(r['t']!),
+                  selected: _range == r['l'],
+                  onSelected: (_) =>
+                      r['l'] == 'custom' ? _pickCustom() : _setRange(r['l']!),
+                ),
+              ),
+            )
             .toList(),
-        onChanged: (value) {
-          if (value == null) return;
-          value == 'custom' ? _pickCustom() : _setRange(value);
-        },
       ),
     );
   }

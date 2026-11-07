@@ -1,0 +1,33 @@
+// Core exports
+export 'src/core/instant_db.dart';
+export 'src/core/types.dart';
+export 'src/core/transaction_builder.dart';
+export 'src/core/logging_config.dart';
+
+// Storage exports
+export 'src/storage/instant_storage.dart';
+
+// Schema exports
+export 'src/schema/schema.dart';
+
+// Reactive widget exports
+export 'src/reactive/instant_builder.dart';
+export 'src/reactive/presence.dart';
+export 'src/reactive/presence_widgets.dart';
+export 'src/reactive/auth_widgets.dart';
+export 'src/reactive/devtool.dart';
+export 'src/auth/auth_manager.dart' show AuthManager, OAuthFlow;
+
+// Query engine exports
+export 'src/query/query_engine.dart';
+export 'src/query/infinite_query.dart';
+
+// Typed query DSL exports
+export 'src/typed/typed_query.dart';
+export 'src/typed/typed_tx.dart';
+export 'src/typed/annotations.dart';
+export 'src/typed/model_table.dart';
+
+// Re-exports from signals_flutter for convenience
+export 'package:signals_flutter/signals_flutter.dart'
+    show Signal, ReadonlySignal, signal, computed, effect, Watch;

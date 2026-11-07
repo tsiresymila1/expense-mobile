@@ -96,6 +96,9 @@ class AuthCubit extends Cubit<AppAuthState> {
     }
     try {
       await sessionStore.writeRefreshToken(refreshToken);
+      if (sessionStore is SecureAuthSessionStore) {
+        await (sessionStore as SecureAuthSessionStore).saveUser(user);
+      }
     } catch (_) {
       await db.auth.signOut();
       rethrow;

@@ -42,7 +42,7 @@ class AppShell extends StatelessWidget {
             ? null
             : AppBar(
                 automaticallyImplyLeading: false,
-                toolbarHeight: location == '/' ? 88 : 64,
+                toolbarHeight: 76,
                 title: location == '/'
                     ? const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,6 +150,8 @@ class ProjectContext extends StatelessWidget {
       child: TextButton.icon(
         style: TextButton.styleFrom(
           padding: EdgeInsets.zero,
+          minimumSize: const Size(48, 36),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
         label: Text(
