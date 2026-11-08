@@ -202,7 +202,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     onPressed: _saving ? null : () => _submit(),
     style: ElevatedButton.styleFrom(
       minimumSize: const Size.fromHeight(56),
-      backgroundColor: const Color(0xFF35652A),
+      backgroundColor: theme.colorScheme.primary,
       foregroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),

@@ -5,16 +5,16 @@ import 'package:easy_localization/easy_localization.dart';
 class AppTheme {
   static const cardRadius = 16.0;
   static const prominentCardRadius = 24.0;
-  static const primaryColor = Color(0xFF35652A);
-  static const secondaryColor = Color(0xFF35652A);
+  static const primaryColor = Color(0xFF287344);
+  static const secondaryColor = Color(0xFF287344);
   static const accentColor = primaryColor;
   static const backgroundColor = Color(0xFFF7F8FA);
   static const darkBackgroundColor = Color(0xFF141715);
   static const surfaceColor = Colors.white;
-  static const darkSurfaceColor = Color(0xFF222723);
+  static const darkSurfaceColor = Color(0xFF202B24);
   static Color link(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? const Color(0xFFAED58F)
+      ? const Color(0xFFA3D8AE)
       : secondaryColor;
 
   static String formatMoney(double amount, String symbol, {String? locale}) {
@@ -39,10 +39,10 @@ class AppTheme {
   static ThemeData _build(Brightness brightness) {
     final dark = brightness == Brightness.dark;
     final background = dark ? darkBackgroundColor : backgroundColor;
-    final ink = dark ? const Color(0xFFEDEDED) : const Color(0xFF222723);
+    final ink = dark ? const Color(0xFFEDEDED) : const Color(0xFF202B24);
     final muted = dark ? const Color(0xFFA1A1A1) : const Color(0xFF666666);
-    final border = dark ? const Color(0xFF303030) : const Color(0xFFE2E2E2);
-    final link = dark ? const Color(0xFFAED58F) : secondaryColor;
+    final border = dark ? const Color(0xFF303030) : const Color(0xFFDCE5DE);
+    final link = dark ? const Color(0xFFA3D8AE) : secondaryColor;
     final scheme =
         ColorScheme.fromSeed(
           seedColor: primaryColor,
@@ -52,18 +52,18 @@ class AppTheme {
           onPrimary: const Color(0xFFFFFFFF),
           secondary: link,
           primaryContainer: dark
-              ? const Color(0xFF364D29)
-              : const Color(0xFFE2EEDC),
+              ? const Color(0xFF284B35)
+              : const Color(0xFFD5EBD9),
           surfaceContainerLow: dark
               ? darkSurfaceColor
-              : const Color(0xFFFFFFFF),
+              : const Color(0xFFF1F7F2),
           surface: background,
           onSurface: ink,
           onSurfaceVariant: muted,
           outline: border,
           surfaceContainerHighest: dark
               ? darkSurfaceColor
-              : const Color(0xFFFFFFFF),
+              : const Color(0xFFE5F0E8),
           error: dark ? const Color(0xFFFF8B95) : const Color(0xFFB42332),
         );
     final text =
@@ -232,7 +232,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: dark
             ? const Color(0xFF303030)
-            : const Color(0xFF222723),
+            : const Color(0xFF202B24),
         contentTextStyle: GoogleFonts.aBeeZee(
           color: Colors.white,
           fontSize: 15,

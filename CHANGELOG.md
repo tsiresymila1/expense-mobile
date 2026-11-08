@@ -1,3 +1,7 @@
+## [1.4.1]
+
+- More green in cards, selected navigation and filters, with consistent primary buttons.
+
 ## [1.4.0]
 
 - Refined mobile design inspired by invoice_pro: neutral surfaces, compact balance and transaction cards.
