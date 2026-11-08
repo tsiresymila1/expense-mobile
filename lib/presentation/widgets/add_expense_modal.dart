@@ -192,7 +192,7 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
     filled: true,
     fillColor: theme.inputDecorationTheme.fillColor,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide(color: theme.dividerColor),
     ),
     contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: padding),
@@ -204,11 +204,11 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
       minimumSize: const Size.fromHeight(56),
       backgroundColor: const Color(0xFF35652A),
       foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
     child: Text(
       'save'.tr(),
-      style: GoogleFonts.aBeeZee(fontSize: 16, fontWeight: FontWeight.w600),
+      style: GoogleFonts.aBeeZee(fontSize: 14, fontWeight: FontWeight.w500),
     ),
   );
 

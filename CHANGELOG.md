@@ -1,3 +1,9 @@
+## [1.4.0]
+
+- Refined mobile design inspired by invoice_pro: neutral surfaces, compact balance and transaction cards.
+- Unified inputs, buttons and filter chips while retaining ABeeZee and floating expense creation.
+- Updated light/dark splash backgrounds.
+
 # Changelog
 
 All notable changes to G-spend are documented here.

@@ -73,7 +73,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                       alpha: 0.03,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -108,7 +108,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                                   : theme.colorScheme.onSurface.withValues(
                                       alpha: 0.03,
                                     ),
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isS
                                     ? theme.colorScheme.primary
@@ -191,7 +191,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     backgroundColor: const Color(0xFF18794E),
                     foregroundColor: Colors.white,
@@ -199,7 +199,7 @@ class _AddCategoryModalState extends State<AddCategoryModal> {
                   child: Text(
                     'save_category'.tr(),
                     style: GoogleFonts.aBeeZee(
-                      fontSize: 18,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

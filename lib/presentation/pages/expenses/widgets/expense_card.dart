@@ -30,15 +30,17 @@ class ExpenseCard extends StatelessWidget {
         .where((c) => c.id == expense.categoryId)
         .firstOrNull;
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
           child: Row(
             children: [
               CategoryIcon(
@@ -60,7 +62,7 @@ class ExpenseCard extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       '${cat?.name ?? 'uncategorized'.tr()} · ${DateFormat('dd/MM').format(expense.date)}',
                       style: theme.textTheme.bodySmall,

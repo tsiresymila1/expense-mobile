@@ -3,15 +3,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class AppTheme {
-  static const cardRadius = 20.0;
-  static const prominentCardRadius = 28.0;
+  static const cardRadius = 16.0;
+  static const prominentCardRadius = 24.0;
   static const primaryColor = Color(0xFF35652A);
   static const secondaryColor = Color(0xFF35652A);
   static const accentColor = primaryColor;
-  static const backgroundColor = Color(0xFFF3F6EC);
-  static const darkBackgroundColor = Color(0xFF151D13);
+  static const backgroundColor = Color(0xFFF7F8FA);
+  static const darkBackgroundColor = Color(0xFF141715);
   static const surfaceColor = Colors.white;
-  static const darkSurfaceColor = Color(0xFF263022);
+  static const darkSurfaceColor = Color(0xFF222723);
   static Color link(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
       ? const Color(0xFFAED58F)
@@ -39,7 +39,7 @@ class AppTheme {
   static ThemeData _build(Brightness brightness) {
     final dark = brightness == Brightness.dark;
     final background = dark ? darkBackgroundColor : backgroundColor;
-    final ink = dark ? const Color(0xFFEDEDED) : const Color(0xFF263022);
+    final ink = dark ? const Color(0xFFEDEDED) : const Color(0xFF222723);
     final muted = dark ? const Color(0xFFA1A1A1) : const Color(0xFF666666);
     final border = dark ? const Color(0xFF303030) : const Color(0xFFE2E2E2);
     final link = dark ? const Color(0xFFAED58F) : secondaryColor;
@@ -53,17 +53,17 @@ class AppTheme {
           secondary: link,
           primaryContainer: dark
               ? const Color(0xFF364D29)
-              : const Color(0xFFD7EDBE),
+              : const Color(0xFFE2EEDC),
           surfaceContainerLow: dark
               ? darkSurfaceColor
-              : const Color(0xFFE8EEDF),
+              : const Color(0xFFFFFFFF),
           surface: background,
           onSurface: ink,
           onSurfaceVariant: muted,
           outline: border,
           surfaceContainerHighest: dark
               ? darkSurfaceColor
-              : const Color(0xFFE8EEDF),
+              : const Color(0xFFFFFFFF),
           error: dark ? const Color(0xFFFF8B95) : const Color(0xFFB42332),
         );
     final text =
@@ -95,7 +95,7 @@ class AppTheme {
               bodySmall: GoogleFonts.aBeeZee(fontSize: 12, color: muted),
             );
     final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(16),
     );
     return ThemeData(
       useMaterial3: true,
@@ -106,9 +106,19 @@ class AppTheme {
       cardColor: scheme.surfaceContainerLow,
       dropdownMenuTheme: DropdownMenuThemeData(textStyle: text.bodyMedium),
       navigationBarTheme: NavigationBarThemeData(
+        height: 76,
+        elevation: 0,
         backgroundColor: scheme.surfaceContainerLow,
         indicatorColor: scheme.primaryContainer,
         labelTextStyle: WidgetStatePropertyAll(text.bodySmall),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: scheme.surfaceContainerLow,
+        selectedColor: scheme.primaryContainer,
+        side: BorderSide(color: border),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        labelStyle: text.bodyMedium,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       ),
       dividerColor: border,
       disabledColor: muted,
@@ -136,15 +146,15 @@ class AppTheme {
         labelStyle: text.bodyMedium,
         hintStyle: text.bodySmall,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: link, width: 1.5),
         ),
       ),
@@ -222,7 +232,7 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
         backgroundColor: dark
             ? const Color(0xFF303030)
-            : const Color(0xFF263022),
+            : const Color(0xFF222723),
         contentTextStyle: GoogleFonts.aBeeZee(
           color: Colors.white,
           fontSize: 15,

@@ -22,9 +22,9 @@ Future<void> bootstrap(AppFlavor flavor) async {
 
   runApp(
     MaterialApp(
-      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF3F6EC)),
+      theme: ThemeData(scaffoldBackgroundColor: const Color(0xFFF7F8FA)),
       darkTheme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF151D13),
+        scaffoldBackgroundColor: const Color(0xFF141715),
       ),
       home: Scaffold(
         body: Center(

@@ -19,7 +19,7 @@ class ExpenseTypeSelector extends StatelessWidget {
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
@@ -42,7 +42,7 @@ class ExpenseTypeSelector extends StatelessWidget {
             color: isSelected
                 ? color.withValues(alpha: 0.1)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(12),
             border: isSelected
                 ? Border.all(color: color.withValues(alpha: 0.5))
                 : null,

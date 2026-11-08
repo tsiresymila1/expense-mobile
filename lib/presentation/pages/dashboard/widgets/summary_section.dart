@@ -64,7 +64,8 @@ class SummarySection extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: theme.dividerColor),
+        borderRadius: BorderRadius.circular(AppTheme.prominentCardRadius),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +84,7 @@ class SummarySection extends StatelessWidget {
                   useRootNavigator: true,
                   useSafeArea: true,
                   builder: (sheet) => SafeArea(
-                    minimum: const EdgeInsets.symmetric(vertical: 16),
+                    minimum: const EdgeInsets.symmetric(vertical: 12),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: List.generate(3, (offset) {
@@ -138,12 +139,12 @@ class SummarySection extends StatelessWidget {
                   ),
                 ],
               ),
-              style: GoogleFonts.aBeeZee(fontSize: 34, letterSpacing: -1),
+              style: GoogleFonts.aBeeZee(fontSize: 30, letterSpacing: -1),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(12),
@@ -161,7 +162,7 @@ class SummarySection extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Text(
             incomeTotal > 0
                 ? 'income_used'.tr(args: ['${(ratio * 100).round()}'])
@@ -176,7 +177,6 @@ class SummarySection extends StatelessWidget {
             backgroundColor: theme.dividerColor,
             borderRadius: BorderRadius.circular(4),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
