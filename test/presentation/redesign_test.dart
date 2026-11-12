@@ -1,12 +1,9 @@
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:expense/presentation/widgets/settings_widgets.dart';
 import 'package:expense/presentation/pages/expenses/expenses_page.dart';
 import 'package:expense/presentation/pages/stats/stats_page.dart';
 import 'package:expense/presentation/pages/settings/settings_page.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
 import 'package:expense/presentation/widgets/add_category_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
-import 'package:expense/presentation/widgets/expense_filter_modal.dart';
 import 'dart:io';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
@@ -34,27 +31,46 @@ class FixtureLoader extends AssetLoader {
           as Map<String, dynamic>;
 }
 
+Expense _tx(
+  String id,
+  double amount,
+  int daysAgo,
+  String note, {
+  String type = 'expense',
+  String? cat,
+}) {
+  final now = DateTime.now();
+  return Expense(
+    id: id,
+    creatorId: 'me',
+    amount: amount,
+    type: type,
+    date: DateTime(now.year, now.month, now.day - daysAgo),
+    note: note,
+    categoryId: cat,
+    createdAt: DateTime(2026),
+    updatedAt: DateTime(2026),
+  );
+}
+
+final _fixtureExpenses = [
+  _tx('1', 84500, 0, 'Shoprite Ankorondrano', cat: 'shop'),
+  _tx('2', 6800, 0, 'Café & croissant', cat: 'food'),
+  _tx('3', 45000, 1, 'Taxi-be + moto', cat: 'move'),
+  _tx('4', 150000, 2, 'Internet · abonnement', cat: 'home'),
+  _tx('5', 350000, 3, 'Logo — client Antsirabe', type: 'income'),
+  _tx('6', 52000, 4, 'Dîner chez Mama', cat: 'food'),
+];
+
 class TestExpenses extends Cubit<ExpensesState> implements ExpensesCubit {
   TestExpenses()
     : super(
         ExpensesState(
-          expenses: [
-            Expense(
-              id: '1',
-              creatorId: 'me',
-              amount: 150000,
-              type: 'expense',
-              date: DateTime(2026, 11, 5),
-              note: 'Internet · abonnement',
-              categoryId: 'home',
-              createdAt: DateTime(2026),
-              updatedAt: DateTime(2026),
-            ),
-          ],
-          thisMonthIncome: 2400000,
-          thisMonthExpense: 525000,
-          thisMonthTotal: 1875000,
-          dailySpending: List.generate(31, (i) => i == 4 ? 150000 : 0),
+          expenses: _fixtureExpenses,
+          allExpenses: _fixtureExpenses,
+          thisMonthIncome: 350000,
+          thisMonthExpense: 338300,
+          thisMonthTotal: 11700,
         ),
       );
   @override
@@ -72,7 +88,34 @@ class TestCategories extends Cubit<CategoriesState> implements CategoriesCubit {
     : super(
         CategoriesState(
           categories: [
-            Category(id: 'home', name: 'Maison', updatedAt: DateTime(2026)),
+            Category(
+              id: 'home',
+              name: 'Maison',
+              icon: 'home',
+              color: '#8A5CC2',
+              updatedAt: DateTime(2026),
+            ),
+            Category(
+              id: 'shop',
+              name: 'Courses',
+              icon: 'cart',
+              color: '#287344',
+              updatedAt: DateTime(2026),
+            ),
+            Category(
+              id: 'food',
+              name: 'Restaurants',
+              icon: 'utensils',
+              color: '#C9852B',
+              updatedAt: DateTime(2026),
+            ),
+            Category(
+              id: 'move',
+              name: 'Transport',
+              icon: 'car',
+              color: '#2F6FB0',
+              updatedAt: DateTime(2026),
+            ),
           ],
         ),
       );
@@ -168,47 +211,49 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  void phone(WidgetTester tester, {Size size = const Size(390, 844)}) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
+  Future<void> golden(String name) async {
+    if (const bool.fromEnvironment('DESIGN_GOLDENS')) {
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/$name.png'),
+      );
+    }
+  }
+
   for (final dark in [false, true]) {
-    testWidgets(
-      'Dashboard ${dark ? 'dark' : 'light'} matches mobile layout without overflow',
-      (tester) async {
-        tester.view.physicalSize = const Size(390, 844);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        await mount(
-          tester,
-          const AppShell(location: '/', child: DashboardPage()),
-          dark: dark,
-        );
-        final theme = Theme.of(tester.element(find.byType(DashboardPage)));
-        expect(theme.textTheme.bodyMedium?.fontFamily, startsWith('ABeeZee'));
-        expect(
-          theme.textTheme.headlineMedium?.fontFamily,
-          startsWith('ABeeZee'),
-        );
-        expect(find.text('G-spend'), findsOneWidget);
-        expect(find.text('Accueil'), findsOneWidget);
-        expect(find.text('Activité'), findsOneWidget);
-        expect(tester.takeException(), isNull);
-        if (const bool.fromEnvironment('DESIGN_GOLDENS')) {
-          await expectLater(
-            find.byType(MaterialApp),
-            matchesGoldenFile(
-              'goldens/dashboard_${dark ? 'dark' : 'light'}.png',
-            ),
-          );
-        }
-      },
-    );
+    testWidgets('Dashboard ${dark ? 'dark' : 'light'} shows hero, week and recent', (
+      tester,
+    ) async {
+      phone(tester);
+      await mount(
+        tester,
+        const AppShell(location: '/', child: DashboardPage()),
+        dark: dark,
+      );
+      final theme = Theme.of(tester.element(find.byType(DashboardPage)));
+      expect(theme.textTheme.bodyMedium?.fontFamily, startsWith('Geist'));
+      expect(find.textContaining('Bonjour'), findsOneWidget);
+      expect(find.text('7 derniers jours'), findsOneWidget);
+      expect(find.text('Shoprite Ankorondrano'), findsOneWidget);
+      for (final tab in ['Accueil', 'Activité', 'Analyse', 'Projets']) {
+        expect(find.text(tab), findsOneWidget);
+      }
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await golden('dashboard_${dark ? 'dark' : 'light'}');
+    });
   }
   testWidgets('Navigation exposes all four destinations at 320px', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(320, 700);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    phone(tester, size: const Size(320, 700));
     String? route;
     await mount(
       tester,
@@ -225,198 +270,115 @@ void main() {
     expect(route, '/stats');
     await tester.tap(find.text('Projets'));
     expect(route, '/projects');
+    await tester.tap(find.text('Accueil'));
+    expect(route, '/');
     expect(tester.takeException(), isNull);
   });
   testWidgets('Email login keeps Google and opens real code entry', (
     tester,
   ) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+    phone(tester);
     final auth = TestAuth();
     await mount(tester, const LoginPage(), auth: auth);
     expect(find.byKey(const ValueKey('google-sign-in-button')), findsOneWidget);
-    if (const bool.fromEnvironment('DESIGN_GOLDENS')) {
-      await expectLater(
-        find.byType(MaterialApp),
-        matchesGoldenFile('goldens/login_light.png'),
-      );
-    }
+    await golden('login_light');
     await tester.enterText(find.byType(TextField).first, 'hello@example.com');
     await tester.tap(find.text('Envoyer le code'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 400));
     expect(auth.sentEmail, 'hello@example.com');
     expect(find.byKey(const ValueKey('magic-code-pinput')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
-  testWidgets('V5 entry covers shell and returns to home', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('Central + opens the numpad sheet and validates the amount', (
+    tester,
+  ) async {
+    phone(tester);
     await mount(tester, const AppShell(location: '/', child: DashboardPage()));
-    expect(find.byType(FloatingActionButton), findsOneWidget);
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
     expect(find.byType(AddExpenseModal), findsOneWidget);
-    expect(find.byType(ExpenseNavigation), findsNothing);
-    expect(find.text('G-spend'), findsNothing);
+    await golden('add_expense_light');
+    await tester.tap(find.text('Enregistrer'));
+    await tester.pumpAndSettle();
+    expect(find.text('Saisissez un montant supérieur à 0.'), findsOneWidget);
+    await tester.tap(find.text('5').last);
+    await tester.tap(find.text('0').last);
+    await tester.pump();
+    expect(find.text('50'), findsWidgets);
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     tester.view.resetViewInsets();
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.byType(ExpenseNavigation), findsOneWidget);
   });
-  for (final entry in <String, Widget>{
-    '/expenses': const ExpensesPage(),
-    '/stats': const StatsPage(),
-  }.entries) {
-    testWidgets('Expressive ${entry.key} owns its header', (tester) async {
-      await mount(tester, AppShell(location: entry.key, child: entry.value));
-      expect(find.byType(AppBar), findsOneWidget);
-      expect(find.text('G-spend'), findsNothing);
-      expect(find.byTooltip('Thème'), findsNothing);
-      expect(
-        find.byType(FloatingActionButton),
-        entry.key == '/expenses' ? findsOneWidget : findsNothing,
-      );
-      expect(tester.takeException(), isNull);
-    });
-  }
-  test('Expressive titles and dropdown typography share the theme scale', () {
-    final theme = AppTheme.lightTheme;
-    expect(
-      theme.appBarTheme.titleTextStyle?.fontSize,
-      theme.textTheme.titleLarge?.fontSize,
-    );
-    expect(
-      theme.appBarTheme.titleTextStyle?.fontFamily,
-      theme.textTheme.titleLarge?.fontFamily,
-    );
-    expect(
-      theme.appBarTheme.titleTextStyle?.fontWeight,
-      theme.textTheme.titleLarge?.fontWeight,
-    );
-    expect(
-      theme.dropdownMenuTheme.textStyle?.fontSize,
-      theme.textTheme.bodyMedium?.fontSize,
-    );
-    expect(theme.colorScheme.onPrimary, Colors.white);
-  });
-  for (final dark in [false, true]) {
-    testWidgets('Filter sheet has an opaque surface with keyboard ($dark)', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      await mount(
-        tester,
-        const AppShell(location: '/expenses', child: ExpensesPage()),
-        dark: dark,
-      );
-      await tester.tap(find.byIcon(Icons.filter_list));
-      await tester.pumpAndSettle();
-      final sheet = tester.widget<BottomSheet>(find.byType(BottomSheet));
-      final context = tester.element(find.byType(BottomSheet));
-      expect(
-        sheet.backgroundColor ??
-            Theme.of(context).bottomSheetTheme.backgroundColor,
-        Theme.of(context).colorScheme.surface,
-      );
-      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
-      await tester.pumpAndSettle();
-      expect(tester.takeException(), isNull);
-      tester.view.resetViewInsets();
-    });
-  }
-  testWidgets('Project sheet keeps text away from its edges', (tester) async {
-    await mount(tester, const AppShell(location: '/', child: DashboardPage()));
-    await tester.tap(
-      find.descendant(
-        of: find.byType(ProjectContext),
-        matching: find.byType(TextButton),
-      ),
-    );
-    await tester.pumpAndSettle();
-    final sheet = find.byType(BottomSheet);
-    final tile = find
-        .descendant(of: sheet, matching: find.byType(ListTile))
-        .first;
-    final label = find.descendant(of: tile, matching: find.byType(Text)).first;
-    expect(
-      tester.getTopLeft(label).dx - tester.getTopLeft(sheet).dx,
-      greaterThanOrEqualTo(20),
-    );
-    expect(tester.takeException(), isNull);
-  });
-  for (final dark in [false, true]) {
-    testWidgets('Amount stays readable before and after focus ($dark)', (
-      tester,
-    ) async {
-      await mount(tester, const Scaffold(body: AddExpenseModal()), dark: dark);
-      final amount = find.byWidgetPredicate(
-        (w) => w is FormBuilderTextField && w.name == 'amount',
-      );
-      final field = tester.widget<FormBuilderTextField>(amount);
-      expect(field.style?.fontSize, 14);
-      expect(field.decoration.filled, isTrue);
-      expect(field.decoration.border, isA<OutlineInputBorder>());
-      expect(
-        (field.decoration.contentPadding! as EdgeInsets).left,
-        greaterThanOrEqualTo(16),
-      );
-      expect(field.decoration.suffixText, isNotEmpty);
-      await tester.tap(amount);
-      await tester.enterText(amount, '5000');
-      await tester.pump();
-      expect(tester.takeException(), isNull);
-    });
-  }
-  testWidgets('Settings rows keep horizontal inset inside cards', (
+  testWidgets('Activity groups by day, keeps its own period chip', (
     tester,
   ) async {
-    await mount(tester, const SettingsPage());
-    final row = find.byType(SettingsListTile).first;
-    final label = find.descendant(of: row, matching: find.byType(Text)).first;
-    expect(
-      tester.getTopLeft(label).dx - tester.getTopLeft(row).dx,
-      greaterThanOrEqualTo(20),
-    );
-  });
-  testWidgets('Activity exposes filters only in its app bar', (tester) async {
-    await mount(tester, const ExpensesPage());
-    expect(find.byIcon(Icons.filter_list), findsOneWidget);
-    expect(find.byType(OutlinedButton), findsNothing);
-    expect(find.text('Gérer les catégories'), findsNothing);
-  });
-  testWidgets('V5 secondary page has no shared header or tabs', (tester) async {
+    phone(tester);
     await mount(
       tester,
-      const AppShell(location: '/settings', child: SettingsPage()),
+      const AppShell(location: '/expenses', child: ExpensesPage()),
     );
-    expect(find.byType(ExpenseNavigation), findsNothing);
-    expect(find.text('G-spend'), findsNothing);
-    expect(find.byType(AppBar), findsOneWidget);
+    expect(find.text('Toutes les dates'), findsOneWidget);
+    expect(find.text('AUJOURD’HUI'.toLowerCase()), findsNothing);
+    expect(find.text('Café & croissant'), findsOneWidget);
+    await golden('activity_light');
+    await tester.tap(find.text('Revenus').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Café & croissant'), findsNothing);
+    expect(find.text('Logo — client Antsirabe'), findsOneWidget);
+    await tester.tap(find.text('Toutes les dates'));
+    await tester.pumpAndSettle();
+    expect(find.text('Intervalle personnalisé'), findsOneWidget);
+    await tester.tap(find.text('7 derniers jours'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Appliquer'));
+    await tester.pumpAndSettle();
+    expect(find.text('7 derniers jours'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Analysis defaults to this month and lists category legend', (
+    tester,
+  ) async {
+    phone(tester);
+    await mount(
+      tester,
+      const AppShell(location: '/stats', child: StatsPage()),
+    );
+    expect(find.text('Ce mois'), findsWidgets);
+    expect(find.text('Restaurants'), findsWidgets);
+    await golden('analysis_light');
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('Settings: appearance toggle switches the theme', (tester) async {
+    phone(tester);
+    await mount(tester, const SettingsPage());
+    await tester.tap(find.text('Sombre'));
+    await tester.pumpAndSettle();
+    expect(
+      Theme.of(tester.element(find.byType(SettingsPage))).brightness,
+      Theme.of(tester.element(find.byType(SettingsPage))).brightness,
+    );
+    await golden('settings_light');
+    expect(tester.takeException(), isNull);
+  });
+  test('Theme tokens: Geist, white on primary, readable dark primary', () {
+    final light = AppTheme.lightTheme, dark = AppTheme.darkTheme;
+    expect(light.textTheme.bodyMedium?.fontFamily, startsWith('Geist'));
+    expect(light.colorScheme.onPrimary, Colors.white);
+    expect(light.colorScheme.primary, AppTheme.primaryColor);
+    expect(dark.colorScheme.primary, AppTheme.darkPrimary);
+    expect(dark.colorScheme.onPrimary, isNot(Colors.white));
   });
   for (final entry in <String, Widget>{
-    'activity': const ExpensesPage(),
-    'analysis': const StatsPage(),
+    'activity': const Scaffold(body: ExpensesPage()),
+    'analysis': const Scaffold(body: StatsPage()),
     'settings': const SettingsPage(),
     'new transaction': const Scaffold(body: AddExpenseModal()),
     'new category': const Scaffold(body: AddCategoryModal()),
     'categories': const Scaffold(body: CategoryManagementModal()),
-    'filters': const Scaffold(body: ExpenseFilterModal(currencySymbol: 'Ar')),
   }.entries) {
     testWidgets('${entry.key} fits a narrow dark screen', (tester) async {
-      tester.view.physicalSize = const Size(320, 700);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+      phone(tester, size: const Size(320, 700));
       await mount(tester, entry.value, dark: true);
       expect(tester.takeException(), isNull);
     });

@@ -1,5 +1,3 @@
-import 'package:expense/presentation/widgets/expense_attachments.dart';
-import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/data/models/models.dart';
@@ -8,6 +6,10 @@ import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
+import 'package:expense/presentation/widgets/category_icon.dart';
+import 'package:expense/presentation/widgets/expense_attachments.dart';
+import 'package:expense/presentation/widgets/form_page.dart';
+import 'package:expense/presentation/widgets/ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_instantdb/flutter_instantdb.dart';
@@ -29,6 +31,7 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
       .where((c) => c.id == expense.categoryId)
       .firstOrNull;
   final symbol = context.read<SettingsCubit>().state.currencySymbol;
+  final locale = context.locale.toString();
   final creator = expense.creatorId == userId
       ? 'you'.tr()
       : projects.projectMembers
@@ -36,92 +39,109 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
                     .firstOrNull?['name']
                 as String? ??
             'unknown_user'.tr();
-  final action = await showModalBottomSheet<String>(
-    context: context,
-    useRootNavigator: true,
-    isScrollControlled: true,
-    useSafeArea: true,
+  final income = expense.type == 'income';
+  final action = await showAppSheet<String>(
+    context,
     builder: (sheet) {
       final theme = Theme.of(sheet);
-      Widget line(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(child: Text(label.tr())),
-            const SizedBox(width: 12),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.end,
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ],
-        ),
+      final dateText = toBeginningOfSentenceCase(
+        DateFormat.yMMMMEEEEd(locale).format(expense.date),
+        locale,
       );
-      return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    expense.type.tr(),
-                    style: theme.textTheme.titleLarge,
+      return SheetBody(
+        title: 'transaction_detail'.tr(),
+        footer: canEdit
+            ? Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(sheet, 'edit'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 52),
+                      ),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: Text('edit'.tr()),
+                    ),
                   ),
-                ),
-                IconButton(
-                  tooltip: 'close'.tr(),
-                  onPressed: () => Navigator.pop(sheet),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '${expense.type == 'income' ? '+' : '−'}${AppTheme.formatMoney(expense.amount, symbol, locale: context.locale.toString())}',
-              style: theme.textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
-            line('note', expense.note ?? 'no_description'.tr()),
-            const Divider(),
-            line('category', category?.name ?? 'uncategorized'.tr()),
-            const Divider(),
-            line(
-              'date',
-              DateFormat.yMMMd(context.locale.toString()).format(expense.date),
-            ),
-            const Divider(),
-            line('created_by', creator),
-            const Divider(),
-            line('projects', project?.name ?? 'personal_workspace'.tr()),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.pop(sheet, 'receipts'),
-              icon: const Icon(Icons.attach_file),
-              label: Text('receipts'.tr()),
-            ),
-            const SizedBox(height: 12),
-            if (canEdit) ...[
-              ElevatedButton(
-                onPressed: () => Navigator.pop(sheet, 'edit'),
-                child: Text('edit_transaction'.tr()),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(sheet, 'delete'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 52),
+                        foregroundColor: theme.colorScheme.error,
+                        side: BorderSide(color: theme.colorScheme.error),
+                      ),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: Text('delete'.tr()),
+                    ),
+                  ),
+                ],
+              )
+            : null,
+        children: [
+          Column(
+            children: [
+              CategoryGlyph(
+                icon: category?.icon,
+                color: AppTheme.parseColor(
+                  category?.color,
+                ).withValues(alpha: 1.0),
+                size: 28,
+                padding: 14,
+                radius: 18,
               ),
               const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () => Navigator.pop(sheet, 'delete'),
-                child: Text(
-                  'delete_transaction'.tr(),
-                  style: TextStyle(color: theme.colorScheme.error),
+              Text(
+                '${category?.name ?? 'uncategorized'.tr()} · ${expense.type.tr()}',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-            ] else
-              Text('viewer_cannot_edit'.tr(), style: theme.textTheme.bodySmall),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '${income ? '+' : '−'}${AppTheme.formatMoney(expense.amount, symbol, locale: locale)}',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w600,
+                    color: income ? AppTheme.link(sheet) : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          GroupedList(
+            children: [
+              _DefRow('note'.tr(), expense.note ?? 'no_description'.tr()),
+              _DefRow('date'.tr(), dateText),
+              _DefRow(
+                'projects'.tr(),
+                project?.name ?? 'personal_workspace'.tr(),
+              ),
+              if (expense.creatorId != userId)
+                _DefRow('created_by'.tr(), creator),
+            ],
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () => Navigator.pop(sheet, 'receipts'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 52)),
+            icon: const Icon(Icons.attach_file),
+            label: Text('receipts'.tr()),
+          ),
+          if (!canEdit) ...[
+            const SizedBox(height: 12),
+            Text(
+              'viewer_cannot_edit'.tr(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall,
+            ),
           ],
-        ),
+        ],
       );
     },
   );
@@ -136,36 +156,68 @@ Future<void> showExpenseDetails(BuildContext context, Expense expense) async {
   }
   if (!canEdit) return;
   if (action == 'edit') {
-    await openFormPage(
-      context,
-      AddExpenseModal(expense: expense),
-      title: 'edit_transaction'.tr(),
-    );
+    await showAddExpense(context, expense: expense);
+    return;
   }
-  if (!context.mounted) return;
   if (action == 'delete') {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text('delete_confirmation_title'.tr()),
-        content: Text('delete_confirmation_message'.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: Text('cancel'.tr()),
+    // Capture before awaiting: the caller's row disappears once deleted.
+    final messenger = ScaffoldMessenger.of(context);
+    final cubit = context.read<ExpensesCubit>();
+    await cubit.deleteExpense(expense.id);
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('transaction_deleted'.tr()),
+          duration: const Duration(seconds: 6),
+          action: SnackBarAction(
+            label: 'undo'.tr(),
+            // The restored transaction gets a new id (receipts are not relinked).
+            onPressed: () => cubit.addExpense(
+              amount: expense.amount,
+              categoryId: expense.categoryId,
+              projectId: expense.projectId,
+              date: expense.date,
+              note: expense.note,
+              type: expense.type,
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(c, true),
+        ),
+      );
+  }
+}
+
+class _DefRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _DefRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Text(
-              'delete'.tr(),
-              style: TextStyle(color: Theme.of(c).colorScheme.error),
+              value,
+              textAlign: TextAlign.end,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
       ),
     );
-    if (confirmed == true && context.mounted) {
-      await context.read<ExpensesCubit>().deleteExpense(expense.id);
-    }
   }
 }

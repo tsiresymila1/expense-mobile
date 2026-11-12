@@ -3,8 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:expense/core/theme.dart';
 import 'package:expense/presentation/blocs/auth/auth_bloc.dart';
 import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
@@ -19,22 +17,32 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormBuilderState>();
+  final _emailController = TextEditingController();
   final _codeController = TextEditingController();
   bool _isLoading = false;
   bool _codeSent = false;
   String _email = '';
+  String? _error; // inline, announced as an alert
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
   @override
   void dispose() {
+    _emailController.dispose();
     _codeController.dispose();
     super.dispose();
   }
 
   Future<void> _sendCode() async {
-    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
-    setState(() => _isLoading = true);
-    final email = (_formKey.currentState!.value['email'] as String).trim();
+    if (_isLoading) return;
+    final email = _emailController.text.trim();
+    if (!_emailPattern.hasMatch(email)) {
+      setState(() => _error = 'email_invalid'.tr());
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       await context.read<AuthCubit>().sendMagicCode(email);
       if (mounted) {
@@ -44,7 +52,7 @@ class _LoginPageState extends State<LoginPage> {
         });
       }
     } catch (e) {
-      _showError('unexpected_error'.tr());
+      if (mounted) setState(() => _error = 'unexpected_error'.tr());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -52,18 +60,20 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _verifyCode() async {
     if (_isLoading) return;
-    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
     final code = _codeController.text.trim();
     if (!isValidVerificationCode(code)) {
-      _showError('verification_code_length'.tr());
+      setState(() => _error = 'verification_code_length'.tr());
       return;
     }
-    setState(() => _isLoading = true);
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       await context.read<AuthCubit>().verifyMagicCode(_email, code);
       // Router redirect reacts to auth state change; nothing else to do.
     } catch (e) {
-      _showError('unexpected_error'.tr());
+      if (mounted) setState(() => _error = 'unexpected_error'.tr());
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -101,181 +111,278 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const ExpenseBrand(),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'theme'.tr(),
-            icon: Icon(
-              theme.brightness == Brightness.dark
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-              size: 19,
-            ),
-            onPressed: () => context.read<SettingsCubit>().changeTheme(
-              theme.brightness == Brightness.dark
-                  ? ThemeMode.light
-                  : ThemeMode.dark,
-            ),
-          ),
-          TextButton(
-            onPressed: _toggleLanguage,
-            child: Text(context.locale.languageCode.toUpperCase()),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: FormBuilder(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (_codeSent)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => setState(() {
-                              _codeSent = false;
-                              _codeController.clear();
-                            }),
-                      child: Text('change_email'.tr()),
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      _codeSent
-                          ? Icons.mail_outline
-                          : Icons.account_balance_wallet_outlined,
-                      color: AppTheme.link(context),
-                      size: 25,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  (_codeSent ? 'auth_code_heading' : 'auth_heading').tr(),
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontSize: 34,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _codeSent
-                      ? '${'enter_code_subtitle'.tr()}\n$_email'
-                      : 'auth_intro'.tr(),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.7,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                if (!_codeSent)
-                  FormBuilderTextField(
-                    name: 'email',
-                    decoration: InputDecoration(labelText: 'email'.tr()),
-                    keyboardType: TextInputType.emailAddress,
-                    autofillHints: const [AutofillHints.email],
-                    validator: FormBuilderValidators.compose([
-                      FormBuilderValidators.required(),
-                      FormBuilderValidators.email(),
-                    ]),
-                  ),
-                if (_codeSent) ...[
-                  Text(
-                    'verification_code'.tr(),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Pinput(
-                    key: const ValueKey('magic-code-pinput'),
-                    controller: _codeController,
-                    length: verificationCodeLength,
-                    enabled: !_isLoading,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    defaultPinTheme: PinTheme(
-                      width: 44,
-                      height: 58,
-                      textStyle: theme.textTheme.titleLarge,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(5),
+    final scheme = theme.colorScheme;
+    final muted = theme.textTheme.bodyMedium?.copyWith(
+      color: scheme.onSurfaceVariant,
+    );
+    final labelStyle = theme.textTheme.bodySmall?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
+    Widget errorText() => Semantics(
+      liveRegion: true,
+      container: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 20),
+          child: _error == null
+              ? const SizedBox.shrink()
+              : Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Icon(
+                        Icons.error_outline_rounded,
+                        size: 16,
+                        color: scheme.error,
                       ),
                     ),
-                    validator: (v) => verificationCodeValidationKey(v)?.tr(),
-                    onCompleted: (_) => _verifyCode(),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : (_codeSent ? _verifyCode : _sendCode),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text((_codeSent ? 'verify' : 'send_code').tr()),
-                ),
-                if (_codeSent)
-                  TextButton(
-                    onPressed: _isLoading ? null : _resendCode,
-                    child: Text('resend_code'.tr()),
-                  ),
-                if (!_codeSent &&
-                    context.read<AuthCubit>().isGoogleSignInAvailable) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 22),
-                    child: Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'or'.tr(),
-                            style: theme.textTheme.bodySmall,
-                          ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.error,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const Expanded(child: Divider()),
-                      ],
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+
+    Widget primaryButton(String label, VoidCallback onPressed, {bool arrow = false}) =>
+        FilledButton(
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+          onPressed: _isLoading ? null : onPressed,
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: scheme.onPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    if (arrow) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
+                  ],
+                ),
+        );
+
+    final emailStep = <Widget>[
+      Text('email_address'.tr(), style: labelStyle),
+      const SizedBox(height: 6),
+      TextField(
+        controller: _emailController,
+        keyboardType: TextInputType.emailAddress,
+        autofillHints: const [AutofillHints.email],
+        textInputAction: TextInputAction.done,
+        autocorrect: false,
+        enableSuggestions: false,
+        onSubmitted: (_) => _sendCode(),
+        onChanged: (_) {
+          if (_error != null) setState(() => _error = null);
+        },
+        decoration: InputDecoration(
+          hintText: 'email_placeholder'.tr(),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 16,
+          ),
+          enabledBorder: _error == null
+              ? null
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: scheme.error, width: 1.5),
+                ),
+        ),
+      ),
+      errorText(),
+      const SizedBox(height: 14),
+      primaryButton('send_code'.tr(), _sendCode, arrow: true),
+      if (context.read<AuthCubit>().isGoogleSignInAvailable) ...[
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Row(
+            children: [
+              const Expanded(child: Divider()),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('or'.tr(), style: theme.textTheme.bodySmall),
+              ),
+              const Expanded(child: Divider()),
+            ],
+          ),
+        ),
+        OutlinedButton.icon(
+          key: const ValueKey('google-sign-in-button'),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+          ),
+          onPressed: _isLoading ? null : _signInWithGoogle,
+          icon: Image.asset(
+            'assets/images/google_g.png',
+            width: 18,
+            height: 18,
+            excludeFromSemantics: true,
+          ),
+          label: Text('continue_with_google'.tr()),
+        ),
+      ],
+    ];
+
+    final codeStep = <Widget>[
+      Text('verification_code'.tr(), style: labelStyle),
+      const SizedBox(height: 8),
+      LayoutBuilder(
+        builder: (context, box) {
+          const gap = 8.0;
+          final width = ((box.maxWidth - gap * (verificationCodeLength - 1)) /
+                  verificationCodeLength)
+              .clamp(36.0, 52.0);
+          PinTheme pin(Color border, {double borderWidth = 1.5}) => PinTheme(
+            width: width,
+            height: 56,
+            textStyle: theme.textTheme.titleLarge?.copyWith(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLow,
+              border: Border.all(color: border, width: borderWidth),
+              borderRadius: BorderRadius.circular(14),
+            ),
+          );
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Pinput(
+              key: const ValueKey('magic-code-pinput'),
+              controller: _codeController,
+              length: verificationCodeLength,
+              enabled: !_isLoading,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              separatorBuilder: (_) => const SizedBox(width: gap),
+              forceErrorState: _error != null,
+              defaultPinTheme: pin(theme.dividerColor),
+              focusedPinTheme: pin(AppTheme.link(context), borderWidth: 2),
+              errorPinTheme: pin(scheme.error),
+              onChanged: (_) {
+                if (_error != null) setState(() => _error = null);
+              },
+              onCompleted: (_) => _verifyCode(),
+            ),
+          );
+        },
+      ),
+      const SizedBox(height: 8),
+      Text('code_sent_to'.tr(args: [_email]), style: theme.textTheme.bodySmall),
+      errorText(),
+      const SizedBox(height: 14),
+      primaryButton('verify'.tr(), _verifyCode),
+      const SizedBox(height: 8),
+      TextButton(
+        style: TextButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+        onPressed: _isLoading ? null : _resendCode,
+        child: Text('resend_code'.tr()),
+      ),
+      TextButton(
+        style: TextButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+        onPressed: _isLoading
+            ? null
+            : () => setState(() {
+                _codeSent = false;
+                _error = null;
+                _codeController.clear();
+              }),
+        child: Text('change_email'.tr()),
+      ),
+    ];
+
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ExpenseBrand(),
                     ),
                   ),
-                  OutlinedButton.icon(
-                    key: const ValueKey('google-sign-in-button'),
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    icon: Image.asset(
-                      'assets/images/google_g.png',
-                      width: 18,
-                      height: 18,
-                      excludeFromSemantics: true,
+                  IconButton(
+                    tooltip: 'theme'.tr(),
+                    constraints: const BoxConstraints.tightFor(
+                      width: 44,
+                      height: 44,
                     ),
-                    label: Text('continue_with_google'.tr()),
+                    icon: Icon(
+                      theme.brightness == Brightness.dark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 20,
+                    ),
+                    onPressed: () => context.read<SettingsCubit>().changeTheme(
+                      theme.brightness == Brightness.dark
+                          ? ThemeMode.light
+                          : ThemeMode.dark,
+                    ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+                    onPressed: _toggleLanguage,
+                    child: Text(context.locale.languageCode.toUpperCase()),
                   ),
                 ],
-              ],
-            ),
+              ),
+              const SizedBox(height: 40),
+              Semantics(
+                header: true,
+                child: Text(
+                  (_codeSent ? 'auth_check_mail' : 'auth_welcome').tr(),
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontSize: 34,
+                    height: 1.08,
+                    letterSpacing: -1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                (_codeSent ? 'code_step_subtitle' : 'login_subtitle_nopass')
+                    .tr(),
+                style: muted,
+              ),
+              const SizedBox(height: 28),
+              ..._codeSent ? codeStep : emailStep,
+            ],
           ),
         ),
       ),

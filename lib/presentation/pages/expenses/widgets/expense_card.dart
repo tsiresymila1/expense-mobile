@@ -29,63 +29,59 @@ class ExpenseCard extends StatelessWidget {
         .categories
         .where((c) => c.id == expense.categoryId)
         .firstOrNull;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLow,
-        border: Border.all(color: theme.dividerColor),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
+    final income = expense.type == 'income';
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 68),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           child: Row(
             children: [
               CategoryIcon(
                 categoryId: expense.categoryId,
-                size: 16,
-                padding: 8,
+                size: 20,
+                padding: 12,
               ),
               const SizedBox(width: 12),
               Expanded(
-                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      expense.note ?? 'no_description'.tr(),
+                      expense.note ?? cat?.name ?? 'no_description'.tr(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontSize: 14,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
-                      '${cat?.name ?? 'uncategorized'.tr()} · ${DateFormat('dd/MM').format(expense.date)}',
+                      [
+                        cat?.name ?? 'uncategorized'.tr(),
+                        DateFormat('dd/MM').format(expense.date),
+                        if (creatorName != null)
+                          '${'created_by'.tr()} $creatorName',
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall,
                     ),
-                    if (creatorName != null)
-                      Text(
-                        '${'created_by'.tr()} $creatorName',
-                        style: theme.textTheme.bodySmall,
-                      ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  '${expense.type == 'income' ? '+' : '−'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol, locale: context.locale.toString())}',
-                  textAlign: TextAlign.end,
-                  style: GoogleFonts.aBeeZee(
-                    fontSize: 13,
-                    color: expense.type == 'income'
-                        ? AppTheme.link(context)
-                        : theme.colorScheme.onSurface,
-                  ),
+              const SizedBox(width: 12),
+              Text(
+                '${income ? '+' : '−'}${AppTheme.formatMoney(expense.amount, settings.currencySymbol, locale: context.locale.toString())}',
+                textAlign: TextAlign.end,
+                style: GoogleFonts.geist(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                  color: income
+                      ? AppTheme.link(context)
+                      : theme.colorScheme.onSurface,
                 ),
               ),
             ],

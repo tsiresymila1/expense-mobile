@@ -1,3 +1,12 @@
+## [1.5.0]
+
+- New v6 design: Geist typography, calmer green palette, central "+" button in a 4-tab bottom bar.
+- Home: balance hero for the month, tappable 7-day chart, latest transactions.
+- Activity and Analysis: independent period filter (presets or custom range), category filter, price filter, removable filter chips.
+- Add transaction: numpad sheet, optional category, create a category without leaving the sheet, undo after delete.
+- Categories: searchable list with an always-visible "New" button, editor with live preview, icon and colour pickers, undoable delete.
+- Projects, Account, Settings and Login restyled; appearance and currency choices moved to Settings.
+
 ## [1.4.1]
 
 - More green in cards, selected navigation and filters, with consistent primary buttons.

@@ -33,7 +33,7 @@ class ExpensesCubit extends Cubit<ExpensesState> {
     final uid = _uid;
     if (uid == null) {
       _allExpenses = [];
-      emit(state.copyWith(expenses: [], isLoading: false));
+      emit(state.copyWith(expenses: [], allExpenses: [], isLoading: false));
       return;
     }
     emit(state.copyWith(isLoading: true));
@@ -150,6 +150,7 @@ class ExpensesCubit extends Cubit<ExpensesState> {
 
     return state.copyWith(
       expenses: filtered,
+      allExpenses: all,
       thisMonthTotal: thisIn - thisEx,
       thisMonthIncome: thisIn,
       thisMonthExpense: thisEx,

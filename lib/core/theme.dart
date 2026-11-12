@@ -3,19 +3,27 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class AppTheme {
-  static const cardRadius = 16.0;
-  static const prominentCardRadius = 24.0;
+  static const cardRadius = 20.0;
+  static const prominentCardRadius = 28.0;
   static const primaryColor = Color(0xFF287344);
   static const secondaryColor = Color(0xFF287344);
   static const accentColor = primaryColor;
-  static const backgroundColor = Color(0xFFF7F8FA);
-  static const darkBackgroundColor = Color(0xFF141715);
+  static const backgroundColor = Color(0xFFF3F7F4);
+  static const darkBackgroundColor = Color(0xFF0F1511);
   static const surfaceColor = Colors.white;
-  static const darkSurfaceColor = Color(0xFF202B24);
+  static const darkSurfaceColor = Color(0xFF18201B);
+  // v6 tokens: income is the only value tinted green, expenses stay neutral.
+  static const darkPrimary = Color(0xFF5BBE7B);
+  static const heroLight = [Color(0xFF2E8050), Color(0xFF1B5733)];
+  static const heroDark = [Color(0xFF245C3B), Color(0xFF153A26)];
   static Color link(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? const Color(0xFFA3D8AE)
-      : secondaryColor;
+      ? const Color(0xFF7ED69A)
+      : const Color(0xFF1B6A38);
+  static Color expenseAccent(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? const Color(0xFFF2A073)
+      : const Color(0xFF9A4A1F);
 
   static String formatMoney(double amount, String symbol, {String? locale}) {
     final number = NumberFormat.decimalPatternDigits(
@@ -39,63 +47,69 @@ class AppTheme {
   static ThemeData _build(Brightness brightness) {
     final dark = brightness == Brightness.dark;
     final background = dark ? darkBackgroundColor : backgroundColor;
-    final ink = dark ? const Color(0xFFEDEDED) : const Color(0xFF202B24);
-    final muted = dark ? const Color(0xFFA1A1A1) : const Color(0xFF666666);
-    final border = dark ? const Color(0xFF303030) : const Color(0xFFDCE5DE);
-    final link = dark ? const Color(0xFFA3D8AE) : secondaryColor;
+    final primary = dark ? darkPrimary : primaryColor;
+    final onPrimary = dark ? const Color(0xFF07140C) : Colors.white;
+    final ink = dark ? const Color(0xFFEAF1EC) : const Color(0xFF13201A);
+    final muted = dark ? const Color(0xFF9DB0A3) : const Color(0xFF55665B);
+    final border = dark ? const Color(0xFF2B3730) : const Color(0xFFD9E3DC);
+    final link = dark ? const Color(0xFF7ED69A) : const Color(0xFF1B6A38);
     final scheme =
         ColorScheme.fromSeed(
           seedColor: primaryColor,
           brightness: brightness,
         ).copyWith(
-          primary: primaryColor,
-          onPrimary: const Color(0xFFFFFFFF),
+          primary: primary,
+          onPrimary: onPrimary,
           secondary: link,
           primaryContainer: dark
-              ? const Color(0xFF284B35)
-              : const Color(0xFFD5EBD9),
+              ? const Color(0xFF1F3427)
+              : const Color(0xFFE0EFE4),
           surfaceContainerLow: dark
               ? darkSurfaceColor
-              : const Color(0xFFF1F7F2),
+              : const Color(0xFFFFFFFF),
           surface: background,
           onSurface: ink,
           onSurfaceVariant: muted,
           outline: border,
           surfaceContainerHighest: dark
               ? darkSurfaceColor
-              : const Color(0xFFE5F0E8),
+              : const Color(0xFFEAF1EC),
           error: dark ? const Color(0xFFFF8B95) : const Color(0xFFB42332),
         );
     final text =
-        GoogleFonts.aBeeZeeTextTheme(
+        GoogleFonts.geistTextTheme(
               ThemeData(brightness: brightness).textTheme,
             )
             .apply(bodyColor: ink, displayColor: ink)
             .copyWith(
-              headlineMedium: GoogleFonts.aBeeZee(
+              headlineMedium: GoogleFonts.geist(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -.8,
                 color: ink,
               ),
-              titleLarge: GoogleFonts.aBeeZee(
+              titleLarge: GoogleFonts.geist(
                 fontSize: 21,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -.8,
                 color: ink,
               ),
-              titleMedium: GoogleFonts.aBeeZee(
+              titleMedium: GoogleFonts.geist(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
                 letterSpacing: -.3,
                 color: ink,
               ),
-              bodyLarge: GoogleFonts.aBeeZee(fontSize: 14, color: ink),
-              bodyMedium: GoogleFonts.aBeeZee(fontSize: 14, color: ink),
-              bodySmall: GoogleFonts.aBeeZee(fontSize: 12, color: muted),
+              bodyLarge: GoogleFonts.geist(fontSize: 14, color: ink),
+              bodyMedium: GoogleFonts.geist(fontSize: 14, color: ink),
+              bodySmall: GoogleFonts.geist(fontSize: 12, color: muted),
             );
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
+    );
+    final cardShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(cardRadius),
+      side: BorderSide(color: border),
     );
     return ThemeData(
       useMaterial3: true,
@@ -106,7 +120,7 @@ class AppTheme {
       cardColor: scheme.surfaceContainerLow,
       dropdownMenuTheme: DropdownMenuThemeData(textStyle: text.bodyMedium),
       navigationBarTheme: NavigationBarThemeData(
-        height: 76,
+        height: 72,
         elevation: 0,
         backgroundColor: scheme.surfaceContainerLow,
         indicatorColor: scheme.primaryContainer,
@@ -116,8 +130,9 @@ class AppTheme {
         backgroundColor: scheme.surfaceContainerLow,
         selectedColor: scheme.primaryContainer,
         side: BorderSide(color: border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: const StadiumBorder(),
         labelStyle: text.bodyMedium,
+        showCheckmark: false,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       ),
       dividerColor: border,
@@ -137,11 +152,11 @@ class AppTheme {
         color: scheme.surfaceContainerLow,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: shape,
+        shape: cardShape,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: dark ? darkSurfaceColor : Colors.white,
+        fillColor: scheme.surfaceContainerLow,
         contentPadding: const EdgeInsets.all(13),
         labelStyle: text.bodyMedium,
         hintStyle: text.bodySmall,
@@ -160,12 +175,12 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: secondaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           elevation: 0,
           minimumSize: const Size(48, 48),
           shape: shape,
-          textStyle: GoogleFonts.aBeeZee(
+          textStyle: GoogleFonts.geist(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -173,19 +188,19 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          textStyle: GoogleFonts.aBeeZee(
+          textStyle: GoogleFonts.geist(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
-          backgroundColor: secondaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
           minimumSize: const Size(48, 48),
           shape: shape,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          textStyle: GoogleFonts.aBeeZee(
+          textStyle: GoogleFonts.geist(
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -198,18 +213,19 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: link,
-          textStyle: GoogleFonts.aBeeZee(fontSize: 14),
+          textStyle: GoogleFonts.geist(fontSize: 14),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: secondaryColor,
-        foregroundColor: Colors.white,
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
         elevation: 0,
-        shape: shape,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: BottomSheetThemeData(
         clipBehavior: Clip.antiAlias,
-        backgroundColor: background,
+        backgroundColor: scheme.surfaceContainerLow,
+        showDragHandle: true,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -233,7 +249,7 @@ class AppTheme {
         backgroundColor: dark
             ? const Color(0xFF303030)
             : const Color(0xFF202B24),
-        contentTextStyle: GoogleFonts.aBeeZee(
+        contentTextStyle: GoogleFonts.geist(
           color: Colors.white,
           fontSize: 15,
         ),

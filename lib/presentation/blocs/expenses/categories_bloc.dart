@@ -40,30 +40,51 @@ class CategoriesCubit extends Cubit<CategoriesState> {
     });
   }
 
-  Future<void> addCategory({
+  /// Creates a category and returns its id (null when it could not be saved).
+  Future<String?> addCategory({
     required String name,
     String? icon,
     required String color,
+  }) => _create(name: name, icon: icon, color: color);
+
+  /// Re-creates a deleted category under its original id so transactions that
+  /// still reference it (scalar `categoryId`) point to it again.
+  Future<void> restoreCategory(Category c) => _create(
+    id: c.id,
+    name: c.name,
+    icon: c.icon,
+    color: c.color ?? '',
+    isDefault: c.isDefault,
+  );
+
+  Future<String?> _create({
+    String? id,
+    required String name,
+    String? icon,
+    required String color,
+    bool isDefault = false,
   }) async {
     final uid = _uid;
-    if (uid == null) return;
-    final id = db.id();
+    if (uid == null) return null;
+    final newId = id ?? db.id();
     try {
       final ops = <Operation>[
         ...db.tx['categories'].create({
-          'id': id,
+          'id': newId,
           'ownerId': uid,
           'name': name,
           'icon': icon,
           'color': color,
-          'isDefault': false,
+          'isDefault': isDefault,
           'updatedAt': DateTime.now().millisecondsSinceEpoch,
         }).operations,
-        ...db.tx['categories'][id].link({'owner': uid}).operations,
+        ...db.tx['categories'][newId].link({'owner': uid}).operations,
       ];
       await db.transact(ops);
+      return newId;
     } catch (e) {
       debugPrint('Error adding category: $e');
+      return null;
     }
   }
 

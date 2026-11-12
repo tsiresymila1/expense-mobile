@@ -5,6 +5,9 @@ const _currentProjectIdNotProvided = Object();
 
 class ExpensesState {
   final List<Expense> expenses;
+  /// Whole current-project list, ignoring [dateRange]/[amountRange]. v6 screens
+  /// (Activity, Analysis) filter this locally so their filters stay independent.
+  final List<Expense> allExpenses;
   final double thisMonthTotal;
   final double thisMonthIncome;
   final double thisMonthExpense;
@@ -19,6 +22,7 @@ class ExpensesState {
 
   ExpensesState({
     required this.expenses,
+    this.allExpenses = const [],
     this.thisMonthTotal = 0,
     this.thisMonthIncome = 0,
     this.thisMonthExpense = 0,
@@ -34,6 +38,7 @@ class ExpensesState {
 
   ExpensesState copyWith({
     List<Expense>? expenses,
+    List<Expense>? allExpenses,
     double? thisMonthTotal,
     double? thisMonthIncome,
     double? thisMonthExpense,
@@ -48,6 +53,7 @@ class ExpensesState {
   }) {
     return ExpensesState(
       expenses: expenses ?? this.expenses,
+      allExpenses: allExpenses ?? this.allExpenses,
       thisMonthTotal: thisMonthTotal ?? this.thisMonthTotal,
       thisMonthIncome: thisMonthIncome ?? this.thisMonthIncome,
       thisMonthExpense: thisMonthExpense ?? this.thisMonthExpense,

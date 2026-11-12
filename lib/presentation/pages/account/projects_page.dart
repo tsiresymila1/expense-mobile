@@ -1,10 +1,57 @@
-import 'package:expense/presentation/widgets/form_page.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:expense/core/theme.dart';
+import 'package:expense/data/models/models.dart';
+import 'package:expense/presentation/blocs/expenses/expenses_bloc.dart';
 import 'package:expense/presentation/blocs/projects/projects_bloc.dart';
+import 'package:expense/presentation/blocs/settings/settings_bloc.dart';
+import 'package:expense/presentation/widgets/settings_widgets.dart';
+import 'package:expense/presentation/widgets/ui_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_instantdb/flutter_instantdb.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+/// Colour of a project: its stored colour, else the theme primary.
+Color projectColor(Project? project, ThemeData theme) =>
+    project?.color == null
+    ? theme.colorScheme.primary
+    : AppTheme.parseColor(project!.color);
+
+/// Pill with a check: marks the currently selected project.
+class ProjectActiveBadge extends StatelessWidget {
+  const ProjectActiveBadge({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_rounded, size: 14, color: theme.colorScheme.primary),
+          const SizedBox(width: 4),
+          Text(
+            'active'.tr(),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Stats {
+  final int count;
+  final double income;
+  final double expense;
+  const _Stats(this.count, this.income, this.expense);
+}
 
 class ProjectsPage extends StatelessWidget {
   const ProjectsPage({super.key});
@@ -14,71 +61,159 @@ class ProjectsPage extends StatelessWidget {
     final theme = Theme.of(context);
     final userId = InstantProvider.of(context).auth.currentUser.value?.id;
     final state = context.watch<ProjectsCubit>().state;
+    final expenses = context.watch<ExpensesCubit>().state;
+    final settings = context.watch<SettingsCubit>().state;
+    final locale = context.locale.toString();
     final all = {
       for (final p in [...state.projects, ...state.sharedProjects]) p.id: p,
     }.values.toList();
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('projects'.tr()),
-        actions: [
-          IconButton(
-            tooltip: 'add'.tr(),
-            onPressed: () => _showAddProject(context),
-            icon: const Icon(Icons.add),
-          ),
-        ],
+
+    // Only the active project's transactions are loaded, so meters are
+    // computed for that one card; the others keep their descriptive subtitle.
+    _Stats? statsFor(String? projectId) {
+      if (expenses.currentProjectId != projectId) return null;
+      final list = expenses.allExpenses;
+      double income = 0, expense = 0;
+      for (final e in list) {
+        if (e.type == 'income') {
+          income += e.amount;
+        } else {
+          expense += e.amount;
+        }
+      }
+      return _Stats(list.length, income, expense);
+    }
+
+    String money(double v) => AppTheme.formatMoney(
+      v.abs(),
+      settings.currencySymbol,
+      locale: locale,
+    );
+
+    Widget card({
+      required String name,
+      required String subtitle,
+      required Color color,
+      required bool active,
+      required _Stats? stats,
+      required VoidCallback onTap,
+      required VoidCallback onMore,
+    }) => Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: _ProjectCard(
+        name: name,
+        subtitle: stats == null
+            ? subtitle
+            : (stats.count == 1
+                  ? 'one_transaction'.tr()
+                  : 'n_transactions'.tr(args: ['${stats.count}'])),
+        color: color,
+        active: active,
+        stats: stats,
+        money: money,
+        onTap: onTap,
+        onMore: onMore,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(22),
-        children: [
-          if (state.isLoading) const LinearProgressIndicator(),
-          ListTile(
-            tileColor: theme.colorScheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
-            ),
-            leading: const Icon(Icons.folder_outlined),
-            title: Text('personal_workspace'.tr()),
-            subtitle: Text('personal_project_desc'.tr()),
-            onTap: () => context.read<ProjectsCubit>().switchProject(''),
-            trailing: PopupMenuButton<String>(
-              onSelected: (_) => _convertPersonal(context),
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'convert',
-                  child: Text('rename_personal'.tr()),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          ...all.expand(
-            (p) => [
-              ListTile(
-                tileColor: theme.colorScheme.surfaceContainerLow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                leading: const Icon(Icons.folder_outlined),
-                title: Text(p.name),
-                subtitle: Text(
-                  p.description ??
-                      (p.ownerId == userId ? 'owner' : 'member').tr(),
-                ),
-                onTap: () => _showProjectDetails(context, p),
-                trailing: state.currentProject?.id == p.id
-                    ? Icon(Icons.check, color: theme.colorScheme.secondary)
-                    : const Icon(Icons.chevron_right, size: 18),
+    );
+
+    return Scaffold(
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 128),
+          children: [
+            if (state.isLoading) const LinearProgressIndicator(),
+            Padding(
+              padding: const EdgeInsets.only(top: 10, bottom: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'projects'.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontSize: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(44, 44),
+                      textStyle: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    onPressed: () => showProjectEditor(context),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text('new_short'.tr()),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(
+                'projects_intro'.tr(),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            card(
+              name: 'personal_workspace'.tr(),
+              subtitle: 'personal_project_desc'.tr(),
+              color: theme.colorScheme.primary,
+              active: state.currentProject == null,
+              stats: statsFor(null),
+              onTap: () => context.read<ProjectsCubit>().switchProject(''),
+              onMore: () => _showPersonalActions(context),
+            ),
+            for (final p in all)
+              card(
+                name: p.name,
+                subtitle:
+                    p.description ??
+                    (p.ownerId == userId ? 'owner' : 'member').tr(),
+                color: projectColor(p, theme),
+                active: state.currentProject?.id == p.id,
+                stats: statsFor(p.id),
+                onTap: () => context.read<ProjectsCubit>().switchProject(p.id),
+                onMore: () => _showProjectDetails(context, p),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPersonalActions(BuildContext context) {
+    final cubit = context.read<ProjectsCubit>();
+    showAppSheet<void>(
+      context,
+      builder: (sheet) => SheetBody(
+        title: 'personal_workspace'.tr(),
+        footer: FilledButton(
+          onPressed: () {
+            Navigator.pop(sheet);
+            cubit.switchProject('');
+          },
+          child: Text('select_project'.tr()),
+        ),
+        children: [
+          SettingsCard(
+            children: [
+              SettingsListTile(
+                title: 'rename_personal'.tr(),
+                icon: Icons.drive_file_move_outline,
+                onTap: () {
+                  Navigator.pop(sheet);
+                  _convertPersonal(context);
+                },
+              ),
             ],
           ),
         ],
@@ -86,67 +221,69 @@ class ProjectsPage extends StatelessWidget {
     );
   }
 
-  void _showProjectDetails(BuildContext context, dynamic project) {
+  void _showProjectDetails(BuildContext context, Project project) {
+    final cubit = context.read<ProjectsCubit>();
     final owner =
         project.ownerId ==
         InstantProvider.of(context).auth.currentUser.value?.id;
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      useSafeArea: true,
-      isScrollControlled: true,
-      builder: (sheet) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(project.name, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Text(
-              project.description ?? '',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
+    showAppSheet<void>(
+      context,
+      builder: (sheet) {
+        final theme = Theme.of(sheet);
+        final actions = <Widget>[
+          if (!project.isDefault)
+            SettingsListTile(
+              title: 'current_members'.tr(),
+              icon: Icons.group_outlined,
+              onTap: () {
                 Navigator.pop(sheet);
-                context.read<ProjectsCubit>().switchProject(project.id);
+                _showShareProject(context, project);
               },
-              child: Text('select_project'.tr()),
             ),
-            const SizedBox(height: 16),
-            if (!project.isDefault)
-              ListTile(
-                title: Text('current_members'.tr()),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  Navigator.pop(sheet);
-                  _showShareProject(context, project);
-                },
-              ),
-            if (owner)
-              ListTile(
-                title: Text('edit_project'.tr()),
-                onTap: () {
-                  Navigator.pop(sheet);
-                  _showEditProject(context, project);
-                },
-              ),
-            if (owner && !project.isDefault)
-              ListTile(
-                title: Text(
-                  'delete_project'.tr(),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+          if (owner)
+            SettingsListTile(
+              title: 'edit_project'.tr(),
+              icon: Icons.edit_outlined,
+              onTap: () {
+                Navigator.pop(sheet);
+                showProjectEditor(context, project: project);
+              },
+            ),
+          if (owner && !project.isDefault)
+            SettingsListTile(
+              title: 'delete_project'.tr(),
+              icon: Icons.delete_outline_rounded,
+              color: theme.colorScheme.error,
+              onTap: () {
+                Navigator.pop(sheet);
+                _confirmDelete(context, project);
+              },
+            ),
+        ];
+        return SheetBody(
+          title: project.name,
+          footer: FilledButton(
+            onPressed: () {
+              Navigator.pop(sheet);
+              cubit.switchProject(project.id);
+            },
+            child: Text('select_project'.tr()),
+          ),
+          children: [
+            if ((project.description ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Text(
+                  project.description!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                onTap: () {
-                  Navigator.pop(sheet);
-                  _confirmDelete(context, project);
-                },
               ),
+            if (actions.isNotEmpty) SettingsCard(children: actions),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -196,116 +333,379 @@ class ProjectsPage extends StatelessWidget {
     }
   }
 
-  void _showAddProject(BuildContext context) {
-    _showProjectModal(context);
-  }
-
-  void _showEditProject(BuildContext context, dynamic project) {
-    _showProjectModal(context, project: project);
-  }
-
-  void _showProjectModal(BuildContext context, {dynamic project}) {
-    final nameController = TextEditingController(text: project?.name);
-    final descController = TextEditingController(text: project?.description);
+  Future<void> _confirmDelete(BuildContext context, Project project) async {
     final cubit = context.read<ProjectsCubit>();
-
-    openFormPage(
+    final ok = await showConfirmSheet(
       context,
-      Builder(
-        builder: (page) => SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(labelText: 'name'.tr()),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: descController,
-                maxLines: 3,
-                decoration: InputDecoration(labelText: 'description'.tr()),
-              ),
-              const SizedBox(height: 28),
-              ElevatedButton(
-                onPressed: () {
-                  if (nameController.text.trim().isEmpty) return;
-                  if (project == null) {
-                    cubit.addProject(
-                      name: nameController.text.trim(),
-                      description: descController.text.trim(),
-                    );
-                  } else {
-                    cubit.updateProject(
-                      id: project.id,
-                      name: nameController.text.trim(),
-                      description: descController.text.trim(),
-                    );
-                  }
-                  Navigator.pop(page);
-                },
-                child: Text('save'.tr()),
-              ),
-            ],
-          ),
-        ),
-      ),
-      title: project == null ? 'new_project'.tr() : 'edit_project'.tr(),
+      title: 'delete_project'.tr(),
+      message: 'delete_project_confirmation'.tr(args: [project.name]),
+      confirmLabel: 'delete'.tr(),
+      destructive: true,
+    );
+    if (ok) cubit.deleteProject(project.id);
+  }
+
+  void _showShareProject(BuildContext context, Project project) {
+    final cubit = context.read<ProjectsCubit>();
+    showAppSheet<void>(
+      context,
+      builder: (_) => _ShareProjectSheet(project: project, projectsCubit: cubit),
     );
   }
+}
 
-  void _confirmDelete(BuildContext context, dynamic project) {
-    showDialog(
-      context: context,
-      builder: (c) => AlertDialog(
-        title: Text('delete_project'.tr()),
-        content: Text('delete_project_confirmation'.tr(args: [project.name])),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c),
-            child: Text('cancel'.tr()),
-          ),
-          TextButton(
-            onPressed: () {
-              context.read<ProjectsCubit>().deleteProject(project.id);
-              Navigator.pop(c);
-            },
-            child: Text(
-              'delete'.tr(),
-              style: const TextStyle(color: Colors.red),
+class _ProjectCard extends StatelessWidget {
+  final String name;
+  final String subtitle;
+  final Color color;
+  final bool active;
+  final _Stats? stats;
+  final String Function(double) money;
+  final VoidCallback onTap;
+  final VoidCallback onMore;
+  const _ProjectCard({
+    required this.name,
+    required this.subtitle,
+    required this.color,
+    required this.active,
+    required this.stats,
+    required this.money,
+    required this.onTap,
+    required this.onMore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppTheme.cardRadius),
+      side: BorderSide(
+        color: active ? scheme.primary : theme.dividerColor,
+        width: 1.5,
+      ),
+    );
+    final s = stats;
+    final pct = s != null && s.income > 0
+        ? (s.expense / s.income * 100).round().clamp(0, 100)
+        : null;
+    final balance = s == null ? null : s.income - s.expense;
+    return Semantics(
+      button: true,
+      selected: active,
+      child: Material(
+        color: scheme.surfaceContainerLow,
+        shape: shape,
+        child: InkWell(
+          customBorder: shape,
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: .18),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        Icons.folder_outlined,
+                        color: Color.lerp(color, scheme.onSurface, .28),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (active) ...[
+                      const SizedBox(width: 8),
+                      const ProjectActiveBadge(),
+                    ],
+                    IconButton(
+                      tooltip: 'manage_projects'.tr(),
+                      constraints: const BoxConstraints.tightFor(
+                        width: 44,
+                        height: 44,
+                      ),
+                      icon: const Icon(Icons.more_horiz_rounded),
+                      onPressed: onMore,
+                    ),
+                  ],
+                ),
+                if (s != null && balance != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (pct != null) ...[
+                          const SizedBox(height: 12),
+                          Semantics(
+                            label: 'spent_pct_income'.tr(args: ['$pct']),
+                            excludeSemantics: true,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(99),
+                              child: Container(
+                                height: 8,
+                                color: scheme.primaryContainer,
+                                alignment: Alignment.centerLeft,
+                                child: FractionallySizedBox(
+                                  widthFactor: pct / 100,
+                                  child: ColoredBox(color: scheme.primary),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          spacing: 12,
+                          runSpacing: 4,
+                          children: [
+                            if (pct != null)
+                              Text(
+                                'spent_pct_income'.tr(args: ['$pct']),
+                                style: theme.textTheme.bodySmall,
+                              ),
+                            Text.rich(
+                              TextSpan(
+                                text: '${'balance_short'.tr()} ',
+                                children: [
+                                  TextSpan(
+                                    text:
+                                        '${balance < 0 ? '−' : ''}${money(balance)}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: scheme.onSurface,
+                                      fontWeight: FontWeight.w600,
+                                      fontFeatures: const [
+                                        FontFeature.tabularFigures(),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  void _showShareProject(BuildContext context, dynamic project) {
-    showDialog(
-      context: context,
-      builder: (c) => _ShareProjectDialog(
-        project: project,
-        projectsCubit: context.read<ProjectsCubit>(),
+        ),
       ),
     );
   }
 }
 
-class _ShareProjectDialog extends StatefulWidget {
-  final dynamic project;
+/// Palette offered when creating/editing a project. User data colours (stored
+/// on the project), not theme tokens.
+const _projectPalette = <Color>[
+  Color(0xFF287344),
+  Color(0xFF2F6FB0),
+  Color(0xFFC9852B),
+  Color(0xFF8A5CC2),
+  Color(0xFFCF4E6C),
+  Color(0xFF1F9C9C),
+];
+
+String _hex(Color c) =>
+    '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
+/// Create (project == null) or edit a project in a bottom sheet.
+Future<void> showProjectEditor(BuildContext context, {Project? project}) {
+  final cubit = context.read<ProjectsCubit>();
+  return showAppSheet<void>(
+    context,
+    builder: (_) => _ProjectEditorSheet(project: project, cubit: cubit),
+  );
+}
+
+class _ProjectEditorSheet extends StatefulWidget {
+  final Project? project;
+  final ProjectsCubit cubit;
+  const _ProjectEditorSheet({required this.project, required this.cubit});
+  @override
+  State<_ProjectEditorSheet> createState() => _ProjectEditorSheetState();
+}
+
+class _ProjectEditorSheetState extends State<_ProjectEditorSheet> {
+  late final _name = TextEditingController(text: widget.project?.name);
+  late final _desc = TextEditingController(text: widget.project?.description);
+  late Color? _color = widget.project?.color == null
+      ? _projectPalette.first
+      : AppTheme.parseColor(widget.project!.color);
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _desc.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _name.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'name_required'.tr());
+      return;
+    }
+    final desc = _desc.text.trim();
+    final p = widget.project;
+    final colour = _color == null ? p?.color : _hex(_color!);
+    if (p == null) {
+      widget.cubit.addProject(name: name, description: desc, color: colour);
+    } else {
+      widget.cubit.updateProject(
+        id: p.id,
+        name: name,
+        description: desc,
+        color: colour,
+        icon: p.icon,
+      );
+    }
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final editing = widget.project != null;
+    return SheetBody(
+      title: (editing ? 'edit_project' : 'new_project').tr(),
+      footer: FilledButton(
+        onPressed: _save,
+        child: Text((editing ? 'save' : 'create_project_cta').tr()),
+      ),
+      children: [
+        Text(
+          'project_name'.tr(),
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _name,
+          maxLength: 30,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: InputDecoration(
+            hintText: 'project_name_hint'.tr(),
+            counterText: '',
+            errorText: _error,
+          ),
+          onChanged: (_) {
+            if (_error != null) setState(() => _error = null);
+          },
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'description'.tr(),
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: _desc,
+          maxLines: 3,
+          minLines: 2,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'color'.tr(),
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (var i = 0; i < _projectPalette.length; i++)
+              Semantics(
+                button: true,
+                selected: _color == _projectPalette[i],
+                label: '${'color'.tr()} ${i + 1}',
+                excludeSemantics: true,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => setState(() => _color = _projectPalette[i]),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: _projectPalette[i],
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: _color == _projectPalette[i]
+                            ? scheme.onSurface
+                            : Colors.transparent,
+                        width: 2.5,
+                      ),
+                    ),
+                    child: _color == _projectPalette[i]
+                        ? const Icon(
+                            Icons.check_rounded,
+                            size: 20,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ShareProjectSheet extends StatefulWidget {
+  final Project project;
   final ProjectsCubit projectsCubit;
 
-  const _ShareProjectDialog({
+  const _ShareProjectSheet({
     required this.project,
     required this.projectsCubit,
   });
 
   @override
-  State<_ShareProjectDialog> createState() => _ShareProjectDialogState();
+  State<_ShareProjectSheet> createState() => _ShareProjectSheetState();
 }
 
-class _ShareProjectDialogState extends State<_ShareProjectDialog> {
+class _ShareProjectSheetState extends State<_ShareProjectSheet> {
   final _searchController = TextEditingController();
   final Set<String> _selectedEmails = {};
 
@@ -328,271 +728,207 @@ class _ShareProjectDialogState extends State<_ShareProjectDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final currentUserId = InstantProvider.of(
+      context,
+    ).auth.currentUser.value?.id;
 
     return BlocBuilder<ProjectsCubit, ProjectsState>(
       bloc: widget.projectsCubit,
       builder: (context, state) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-          title: Text('share_project'.tr()),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (state.projectMembers.isNotEmpty) ...[
-                    Text(
-                      'current_members'.tr(),
-                      style: GoogleFonts.aBeeZee(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 150),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: state.projectMembers.length,
-                        itemBuilder: (context, index) {
-                          final member = state.projectMembers[index];
-                          final currentUserId = InstantProvider.of(
-                            context,
-                          ).auth.currentUser.value?.id;
-                          final isOwner =
-                              widget.project.ownerId == currentUserId;
-                          final isMemberThemselves =
-                              member['user_id'] == currentUserId;
-                          final invitedByCurrentUser =
-                              member['invited_by'] == currentUserId;
-                          final canRemove =
-                              isOwner ||
-                              isMemberThemselves ||
-                              invitedByCurrentUser;
-
-                          return ListTile(
-                            leading: CircleAvatar(
-                              radius: 14,
-                              child: Text(
-                                (member['name'] as String?)?[0].toUpperCase() ??
-                                    'U',
-                                style: const TextStyle(fontSize: 10),
-                              ),
-                            ),
-                            title: Text(
-                              member['name'] ?? '',
-                              style: GoogleFonts.aBeeZee(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  member['email'] ?? '',
-                                  style: GoogleFonts.aBeeZee(fontSize: 11),
-                                ),
-                                if (member['accepted_at'] != null)
-                                  Text(
-                                    '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(member['accepted_at']))}',
-                                    style: GoogleFonts.aBeeZee(
-                                      fontSize: 10,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  )
-                                else
-                                  Text(
-                                    'pending'.tr(),
-                                    style: GoogleFonts.aBeeZee(
-                                      fontSize: 10,
-                                      color: Colors.orange,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            trailing: canRemove
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Colors.red,
-                                      size: 18,
-                                    ),
-                                    onPressed: () {
-                                      widget.projectsCubit.removeProjectMember(
-                                        member['member_id'],
-                                      );
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  )
-                                : null,
-                            dense: true,
-                            contentPadding: EdgeInsets.zero,
-                          );
-                        },
-                      ),
-                    ),
-                    const Divider(height: 32),
-                  ],
-                  Text(
-                    'invite_member_hint'.tr(),
-                    style: GoogleFonts.aBeeZee(fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      widget.projectsCubit.searchProfiles(value);
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'search_users'.tr(),
-                      prefixIcon: const Icon(Icons.search_rounded),
-                      suffixIcon: state.isSearching
-                          ? Container(
-                              padding: const EdgeInsets.all(12),
-                              width: 20,
-                              height: 20,
-                              child: const CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (state.searchResults.isNotEmpty) ...[
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.3,
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: state.searchResults.length,
-                        itemBuilder: (context, index) {
-                          final profile = state.searchResults[index];
-                          final email = profile['email'] as String;
-                          final name = profile['name'] as String;
-                          final isAlreadyMember = _isAlreadyMember(
-                            state,
-                            email,
-                          );
-                          final isSelected =
-                              _selectedEmails.contains(email) ||
-                              isAlreadyMember;
-
-                          return CheckboxListTile(
-                            value: isSelected,
-                            onChanged: isAlreadyMember
-                                ? null
-                                : (checked) {
-                                    setState(() {
-                                      if (checked == true) {
-                                        _selectedEmails.add(email);
-                                      } else {
-                                        _selectedEmails.remove(email);
-                                      }
-                                    });
-                                  },
-                            title: Text(
-                              name,
-                              style: GoogleFonts.aBeeZee(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            subtitle: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    email,
-                                    style: GoogleFonts.aBeeZee(fontSize: 12),
-                                  ),
-                                ),
-                                if (isAlreadyMember)
-                                  Text(
-                                    'already_member'.tr(),
-                                    style: GoogleFonts.aBeeZee(
-                                      fontSize: 10,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            contentPadding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ] else if (_searchController.text.length >= 2 &&
-                      !state.isSearching)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Text(
-                          'no_users_found'.tr(),
-                          style: GoogleFonts.aBeeZee(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  if (_selectedEmails.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Text(
-                        'selected_members'.tr(
-                          args: [_selectedEmails.length.toString()],
-                        ),
-                        style: GoogleFonts.aBeeZee(
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('cancel'.tr()),
-            ),
-            ElevatedButton(
-              onPressed: _selectedEmails.isEmpty
-                  ? null
-                  : () {
-                      for (final email in _selectedEmails) {
-                        widget.projectsCubit.inviteToProject(
-                          projectId: widget.project.id,
-                          email: email,
-                        );
-                      }
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('invitation_sent'.tr())),
+        return SheetBody(
+          title: 'share_project'.tr(),
+          footer: FilledButton(
+            onPressed: _selectedEmails.isEmpty
+                ? null
+                : () {
+                    for (final email in _selectedEmails) {
+                      widget.projectsCubit.inviteToProject(
+                        projectId: widget.project.id,
+                        email: email,
                       );
-                    },
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
+                    }
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('invitation_sent'.tr())),
+                    );
+                  },
+            child: Text('invite'.tr()),
+          ),
+          children: [
+            if (state.projectMembers.isNotEmpty) ...[
+              Text(
+                'current_members'.tr(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              child: Text('invite'.tr()),
+              const SizedBox(height: 8),
+              GroupedList(
+                children: [
+                  for (final member in state.projectMembers)
+                    _memberTile(context, member, currentUserId),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+            Text(
+              'invite_member_hint'.tr(),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _searchController,
+              onChanged: widget.projectsCubit.searchProfiles,
+              decoration: InputDecoration(
+                hintText: 'search_users'.tr(),
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: state.isSearching
+                    ? const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (state.searchResults.isNotEmpty)
+              GroupedList(
+                children: [
+                  for (final profile in state.searchResults)
+                    _resultTile(state, profile),
+                ],
+              )
+            else if (_searchController.text.length >= 2 && !state.isSearching)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: Text(
+                    'no_users_found'.tr(),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ),
+            if (_selectedEmails.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  'selected_members'.tr(
+                    args: [_selectedEmails.length.toString()],
+                  ),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.link(context),
+                  ),
+                ),
+              ),
           ],
         );
       },
+    );
+  }
+
+  Widget _memberTile(
+    BuildContext context,
+    Map<String, dynamic> member,
+    String? currentUserId,
+  ) {
+    final theme = Theme.of(context);
+    final isOwner = widget.project.ownerId == currentUserId;
+    final canRemove =
+        isOwner ||
+        member['user_id'] == currentUserId ||
+        member['invited_by'] == currentUserId;
+    final accepted = member['accepted_at'] as String?;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+      child: Row(
+        children: [
+          InitialsAvatar(name: member['name'] as String?, size: 40),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member['name'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  member['email'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall,
+                ),
+                Text(
+                  accepted != null
+                      ? '${'joined'.tr()}: ${DateFormat('dd MMM yyyy', context.locale.toString()).format(DateTime.parse(accepted))}'
+                      : 'pending'.tr(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: accepted != null
+                        ? AppTheme.link(context)
+                        : AppTheme.expenseAccent(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (canRemove)
+            IconButton(
+              tooltip: 'delete'.tr(),
+              constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+              icon: Icon(
+                Icons.remove_circle_outline,
+                color: theme.colorScheme.error,
+                size: 20,
+              ),
+              onPressed: () => widget.projectsCubit.removeProjectMember(
+                member['member_id'],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _resultTile(ProjectsState state, Map<String, dynamic> profile) {
+    final theme = Theme.of(context);
+    final email = profile['email'] as String;
+    final name = profile['name'] as String;
+    final already = _isAlreadyMember(state, email);
+    return CheckboxListTile(
+      value: _selectedEmails.contains(email) || already,
+      onChanged: already
+          ? null
+          : (checked) => setState(() {
+              if (checked == true) {
+                _selectedEmails.add(email);
+              } else {
+                _selectedEmails.remove(email);
+              }
+            }),
+      title: Text(
+        name,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        already ? '$email · ${'already_member'.tr()}' : email,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
     );
   }
 }

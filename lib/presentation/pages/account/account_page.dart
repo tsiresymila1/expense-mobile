@@ -6,7 +6,8 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_instantdb/flutter_instantdb.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:expense/presentation/widgets/settings_widgets.dart';
+import 'package:expense/presentation/widgets/ui_kit.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -46,33 +47,18 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> _logout() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (c) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-        title: Text(
-          'logout'.tr(),
-          style: GoogleFonts.aBeeZee(fontWeight: FontWeight.w500),
-        ),
-        content: Text('logout_confirmation'.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(c, false),
-            child: Text('cancel'.tr()),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(c, true),
-            child: Text(
-              'logout'.tr(),
-              style: const TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
+    final auth = context.read<AuthCubit>();
+    final ok = await showConfirmSheet(
+      context,
+      title: 'logout_title'.tr(),
+      message: 'logout_sheet_message'.tr(),
+      cancelLabel: 'keep'.tr(),
+      confirmLabel: 'logout'.tr(),
+      destructive: true,
     );
-    if (ok == true) {
+    if (ok) {
       if (!mounted) return;
-      context.read<AuthCubit>().signOut();
+      auth.signOut();
       context.go('/login');
     }
   }
@@ -87,84 +73,121 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text('account'.tr())),
-      body: ListView(
-        padding: const EdgeInsets.all(22),
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const CircleAvatar(child: Icon(Icons.person_outline)),
-            title: Text(_displayName ?? 'user_profile_fallback'.tr()),
-            subtitle: Text(_user?.email ?? ''),
-          ),
-          const SizedBox(height: 24),
-          const Divider(),
-          const SizedBox(height: 24),
-          FormBuilder(
-            key: _key,
-            initialValue: {
-              'name': _displayName ?? '',
-              'email': _user?.email ?? '',
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+          children: [
+            SubPageHeader(
+              title: 'account'.tr(),
+              onBack: () => context.canPop() ? context.pop() : context.go('/'),
+            ),
+            SurfaceCard(
+              child: Row(
+                children: [
+                  InitialsAvatar(name: _displayName, size: 56),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _displayName ?? 'user_profile_fallback'.tr(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          _user?.email ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SettingsSectionHeader(title: 'profile_info'.tr()),
+            SurfaceCard(
+              child: FormBuilder(
+                key: _key,
+                initialValue: {
+                  'name': _displayName ?? '',
+                  'email': _user?.email ?? '',
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FormBuilderTextField(
+                      name: 'name',
+                      decoration: InputDecoration(labelText: 'full_name'.tr()),
+                      textInputAction: TextInputAction.done,
+                      validator: FormBuilderValidators.required(),
+                    ),
+                    const SizedBox(height: 14),
+                    FormBuilderTextField(
+                      name: 'email',
+                      readOnly: true,
+                      decoration: InputDecoration(labelText: 'email'.tr()),
+                    ),
+                    const SizedBox(height: 18),
+                    FilledButton(
+                      onPressed: _loading ? null : _update,
+                      child: _loading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text('update_profile'.tr()),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SettingsSectionHeader(title: 'management'.tr()),
+            SettingsCard(
               children: [
-                Text(
-                  'profile_info'.tr().toUpperCase(),
-                  style: theme.textTheme.bodySmall,
+                SettingsListTile(
+                  title: 'manage_projects'.tr(),
+                  icon: Icons.folder_outlined,
+                  onTap: () => context.go('/projects'),
                 ),
-                const SizedBox(height: 18),
-                FormBuilderTextField(
-                  name: 'name',
-                  decoration: InputDecoration(labelText: 'full_name'.tr()),
-                  validator: FormBuilderValidators.required(),
-                ),
-                const SizedBox(height: 18),
-                FormBuilderTextField(
-                  name: 'email',
-                  readOnly: true,
-                  decoration: InputDecoration(labelText: 'email'.tr()),
-                ),
-                const SizedBox(height: 22),
-                ElevatedButton(
-                  onPressed: _loading ? null : _update,
-                  child: _loading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text('update_profile'.tr()),
+                SettingsListTile(
+                  title: 'settings'.tr(),
+                  icon: Icons.tune_rounded,
+                  onTap: () => context.push('/settings'),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 26),
-          Text(
-            'management'.tr().toUpperCase(),
-            style: theme.textTheme.bodySmall,
-          ),
-          ListTile(
-            title: Text('manage_projects'.tr()),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.go('/projects'),
-          ),
-          const Divider(),
-          ListTile(
-            title: Text('settings'.tr()),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push('/settings'),
-          ),
-          const Divider(),
-          ListTile(
-            title: Text(
-              'logout'.tr(),
-              style: TextStyle(color: theme.colorScheme.error),
+            const SizedBox(height: 36),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: scheme.error,
+                side: BorderSide(
+                  color: Color.alphaBlend(
+                    scheme.error.withValues(alpha: .5),
+                    theme.dividerColor,
+                  ),
+                ),
+                minimumSize: const Size.fromHeight(52),
+              ),
+              onPressed: _logout,
+              icon: const Icon(Icons.logout_rounded, size: 18),
+              label: Text('sign_out'.tr()),
             ),
-            onTap: _logout,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
