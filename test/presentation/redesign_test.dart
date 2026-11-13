@@ -2,6 +2,7 @@ import 'package:expense/presentation/pages/expenses/expenses_page.dart';
 import 'package:expense/presentation/pages/stats/stats_page.dart';
 import 'package:expense/presentation/pages/settings/settings_page.dart';
 import 'package:expense/presentation/widgets/add_expense_modal.dart';
+import 'package:expense/presentation/widgets/category_picker_field.dart';
 import 'package:expense/presentation/widgets/add_category_modal.dart';
 import 'package:expense/presentation/widgets/category_management_modal.dart';
 import 'dart:io';
@@ -305,6 +306,19 @@ void main() {
     await tester.tap(find.text('0').last);
     await tester.pump();
     expect(find.text('50'), findsWidgets);
+    // Selected category chip shows a check mark; tapping another moves it.
+    final check = find.descendant(
+      of: find.byType(PickChip),
+      matching: find.byIcon(Icons.check_rounded),
+    );
+    final before = check.evaluate().length;
+    await tester.ensureVisible(find.text('Courses'));
+    await tester.tap(find.text('Courses'));
+    await tester.pump();
+    expect(check.evaluate().length, before + 1);
+    await tester.tap(find.text('Maison'));
+    await tester.pump();
+    expect(check.evaluate().length, before + 1);
     tester.view.viewInsets = const FakeViewPadding(bottom: 300);
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expense/core/auth/auth_session_store.dart';
 import 'package:expense/core/config.dart';
@@ -68,17 +70,28 @@ Future<void> bootstrap(AppFlavor flavor) async {
       baseUrl: config.instantApiUri.toString(),
     ),
   );
-  try {
-    await AuthSessionRestorer(sessionStore).restore(
-      verify: (token) async {
-        final user = await db.auth.verifyRefreshToken(refreshToken: token);
-        await sessionStore.saveUser(user);
-      },
+  final restorer = AuthSessionRestorer(sessionStore);
+  Future<bool> verifySession() => restorer.restore(
+    verify: (token) async {
+      final user = await db.auth.verifyRefreshToken(refreshToken: token);
+      await sessionStore.saveUser(user);
+    },
+  );
+  final cachedToken = await sessionStore.readRefreshToken();
+  final cachedUser = await sessionStore.readUser();
+  if (cachedToken != null && cachedUser != null) {
+    // Known session: open the app now, verify the token in the background
+    // instead of blocking the first frame on a network round trip.
+    db.auth.restoreSession(cachedUser, cachedToken);
+    unawaited(
+      verifySession().then((valid) async {
+        if (!valid) await db.auth.signOut();
+      }).catchError((_) {}),
     );
-  } catch (_) {
-    final token = await sessionStore.readRefreshToken();
-    final user = await sessionStore.readUser();
-    if (token != null && user != null) db.auth.restoreSession(user, token);
+  } else {
+    try {
+      await verifySession().timeout(const Duration(seconds: 4));
+    } catch (_) {}
   }
 
   FlutterNativeSplash.remove();

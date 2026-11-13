@@ -154,10 +154,13 @@ class _AddExpenseModalState extends State<AddExpenseModal> {
         ),
         const SizedBox(height: 4),
         // A category deleted from the manager must not stay selected.
-        BlocSelector<CategoriesCubit, CategoriesState, bool>(
-          selector: (s) => s.categories.any((c) => c.id == _categoryId),
-          builder: (context, exists) => CategoryPickerField(
-            value: exists ? _categoryId : null,
+        // BlocBuilder, not BlocSelector: a selector caches its value and ignores
+        // _categoryId changes coming from setState.
+        BlocBuilder<CategoriesCubit, CategoriesState>(
+          builder: (context, state) => CategoryPickerField(
+            value: state.categories.any((c) => c.id == _categoryId)
+                ? _categoryId
+                : null,
             onChanged: (v) => setState(() => _categoryId = v),
           ),
         ),

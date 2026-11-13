@@ -1,3 +1,8 @@
+## [1.5.1]
+
+- Fix: the selected category in the add-transaction sheet now shows the check mark and green outline.
+- Faster launch: a known session opens the app immediately and the token is verified in the background; first-time verification is capped at 4 seconds.
+
 ## [1.5.0]
 
 - New v6 design: Geist typography, calmer green palette, central "+" button in a 4-tab bottom bar.
