@@ -8,6 +8,9 @@ class ProjectsState {
   final Project? currentProject;
   final List<Map<String, dynamic>> searchResults;
   final List<Map<String, dynamic>> projectMembers;
+
+  /// Invitations addressed to the signed-in user, waiting for a decision.
+  final List<Map<String, dynamic>> pendingInvitations;
   final bool isLoading;
   final bool isSearching;
   final bool isLoadingMembers;
@@ -19,6 +22,7 @@ class ProjectsState {
     this.currentProject,
     this.searchResults = const [],
     this.projectMembers = const [],
+    this.pendingInvitations = const [],
     this.isLoading = false,
     this.isSearching = false,
     this.isLoadingMembers = false,
@@ -31,6 +35,7 @@ class ProjectsState {
     Object? currentProject = _currentProjectNotProvided,
     List<Map<String, dynamic>>? searchResults,
     List<Map<String, dynamic>>? projectMembers,
+    List<Map<String, dynamic>>? pendingInvitations,
     bool? isLoading,
     bool? isSearching,
     bool? isLoadingMembers,
@@ -44,6 +49,7 @@ class ProjectsState {
           : currentProject as Project?,
       searchResults: searchResults ?? this.searchResults,
       projectMembers: projectMembers ?? this.projectMembers,
+      pendingInvitations: pendingInvitations ?? this.pendingInvitations,
       isLoading: isLoading ?? this.isLoading,
       isSearching: isSearching ?? this.isSearching,
       isLoadingMembers: isLoadingMembers ?? this.isLoadingMembers,

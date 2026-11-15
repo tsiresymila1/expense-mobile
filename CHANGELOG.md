@@ -1,3 +1,8 @@
+## [1.5.4]
+
+- Project invitations: invited people now see an "Invitations" section in the Projects tab, with Accept / Decline buttons and a red dot on the tab. Nothing is shared until they accept.
+- Invitations store the project and inviter names so the invitee can read them.
+
 ## [1.5.3]
 
 - Fix: the project members list showed "Unknown User / No email" when a profile was missing; your own profile is now created automatically.

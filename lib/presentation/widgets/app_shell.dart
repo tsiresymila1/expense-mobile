@@ -96,9 +96,13 @@ class ExpenseNavigation extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final invitations = context.select<ProjectsCubit, int>(
+      (c) => c.state.pendingInvitations.length,
+    );
     Widget tab(String route, String label, IconData icon, IconData active) =>
         Expanded(
           child: _NavTab(
+            badge: route == '/projects' && invitations > 0,
             label: label.tr(),
             icon: icon,
             activeIcon: active,
@@ -187,8 +191,10 @@ class _NavTab extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final bool selected;
+  final bool badge;
   final VoidCallback onTap;
   const _NavTab({
+    this.badge = false,
     required this.label,
     required this.icon,
     required this.activeIcon,
@@ -221,7 +227,25 @@ class _NavTab extends StatelessWidget {
                 color: selected ? scheme.primaryContainer : Colors.transparent,
                 borderRadius: BorderRadius.circular(15),
               ),
-              child: Icon(selected ? activeIcon : icon, size: 22, color: color),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(selected ? activeIcon : icon, size: 22, color: color),
+                  if (badge)
+                    Positioned(
+                      right: -2,
+                      top: -1,
+                      child: Container(
+                        width: 9,
+                        height: 9,
+                        decoration: BoxDecoration(
+                          color: scheme.error,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
             const SizedBox(height: 2),
             Text(

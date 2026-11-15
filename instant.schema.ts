@@ -49,6 +49,9 @@ const _schema = i.schema({
       email: i.string().indexed(), // lower-cased
       role: i.string(),
       invitedBy: i.string(),
+      // Denormalised: the invitee cannot read the project/inviter yet.
+      projectName: i.string().optional(),
+      inviterName: i.string().optional(),
       createdAt: i.number(),
     }),
 

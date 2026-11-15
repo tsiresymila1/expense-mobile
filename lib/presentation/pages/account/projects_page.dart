@@ -163,6 +163,16 @@ class ProjectsPage extends StatelessWidget {
                 ),
               ),
             ),
+            if (state.pendingInvitations.isNotEmpty) ...[
+              Text(
+                'invitations'.tr(),
+                style: theme.textTheme.titleSmall,
+              ),
+              const SizedBox(height: 8),
+              for (final inv in state.pendingInvitations)
+                _InvitationCard(invitation: inv),
+              const SizedBox(height: 8),
+            ],
             card(
               name: 'personal_workspace'.tr(),
               subtitle: 'personal_project_desc'.tr(),
@@ -350,6 +360,68 @@ class ProjectsPage extends StatelessWidget {
     showAppSheet<void>(
       context,
       builder: (_) => _ShareProjectSheet(project: project, projectsCubit: cubit),
+    );
+  }
+}
+
+/// Invitation addressed to me: nothing is shared until I accept.
+class _InvitationCard extends StatelessWidget {
+  final Map<String, dynamic> invitation;
+  const _InvitationCard({required this.invitation});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cubit = context.read<ProjectsCubit>();
+    final id = invitation['id'] as String;
+    final project = (invitation['projectName'] as String?) ?? '';
+    final inviter = (invitation['inviterName'] as String?) ?? '';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              project.isEmpty ? 'invitation_unnamed'.tr() : project,
+              style: theme.textTheme.titleMedium,
+            ),
+            if (inviter.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                'invitation_from'.tr(args: [inviter]),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                    onPressed: () => cubit.declineInvitation(id),
+                    child: Text('decline'.tr()),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                    onPressed: () => cubit.acceptInvitation(id),
+                    child: Text('accept'.tr()),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

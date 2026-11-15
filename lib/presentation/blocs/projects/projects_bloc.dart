@@ -63,7 +63,6 @@ class ProjectsCubit extends Cubit<ProjectsState> {
       // Only once the server data has arrived, never from the empty cache.
       if (res.data != null) {
         unawaited(_ensureOwnProfile());
-        unawaited(_acceptInvitations());
       }
     });
   }
@@ -106,45 +105,60 @@ class ProjectsCubit extends Cubit<ProjectsState> {
     }
   }
 
-  /// Turns pending invitations addressed to my e-mail into memberships.
-  Future<void> _acceptInvitations() async {
+  List<Map<String, dynamic>> get _myInvitations => [
+    for (final i in _allInvitations)
+      if ((i['email'] as String?)?.toLowerCase() == _myEmail) i,
+  ];
+
+  /// Accepts an invitation addressed to me: becomes a member, then the
+  /// invitation is removed.
+  Future<void> acceptInvitation(String invId) async {
     final uid = _uid;
-    final email = _myEmail;
-    if (uid == null || email.isEmpty) return;
-    for (final inv in _allInvitations) {
-      final invId = inv['id'] as String?;
-      final projectId = inv['projectId'] as String?;
-      if (invId == null || projectId == null) continue;
-      if ((inv['email'] as String?)?.toLowerCase() != email) continue;
-      if (!_accepting.add(invId)) continue;
-      final already = _allMembers.any(
-        (m) => m.projectId == projectId && m.userId == uid,
-      );
-      try {
-        if (!already) {
-          final id = db.id();
-          final now = DateTime.now().millisecondsSinceEpoch;
-          await db.transact([
-            ...db.tx['members'].create({
-              'id': id,
-              'projectId': projectId,
-              'userId': uid,
-              'role': inv['role'] ?? 'viewer',
-              'invitedBy': inv['invitedBy'],
-              'invitedAt': inv['createdAt'] ?? now,
-              'acceptedAt': now,
-            }).operations,
-            ...db.tx['members'][id].link({
-              'project': projectId,
-              'user': uid,
-            }).operations,
-          ]);
-        }
-        await db.transact(db.tx['invitations'][invId].delete());
-      } catch (e) {
-        debugPrint('Error accepting invitation: $e');
-        _accepting.remove(invId);
+    if (uid == null || !_accepting.add(invId)) return;
+    final inv = _myInvitations.where((i) => i['id'] == invId).firstOrNull;
+    final projectId = inv?['projectId'] as String?;
+    if (inv == null || projectId == null) {
+      _accepting.remove(invId);
+      return;
+    }
+    final already = _allMembers.any(
+      (m) => m.projectId == projectId && m.userId == uid,
+    );
+    try {
+      if (!already) {
+        final id = db.id();
+        final now = DateTime.now().millisecondsSinceEpoch;
+        await db.transact([
+          ...db.tx['members'].create({
+            'id': id,
+            'projectId': projectId,
+            'userId': uid,
+            'role': inv['role'] ?? 'viewer',
+            'invitedBy': inv['invitedBy'],
+            'invitedAt': inv['createdAt'] ?? now,
+            'acceptedAt': now,
+          }).operations,
+          ...db.tx['members'][id].link({
+            'project': projectId,
+            'user': uid,
+          }).operations,
+        ]);
       }
+      await db.transact(db.tx['invitations'][invId].delete());
+    } catch (e) {
+      debugPrint('Error accepting invitation: $e');
+      emit(state.copyWith(error: e.toString()));
+    } finally {
+      _accepting.remove(invId);
+    }
+  }
+
+  Future<void> declineInvitation(String invId) async {
+    try {
+      await db.transact(db.tx['invitations'][invId].delete());
+    } catch (e) {
+      debugPrint('Error declining invitation: $e');
+      emit(state.copyWith(error: e.toString()));
     }
   }
 
@@ -174,6 +188,7 @@ class ProjectsCubit extends Cubit<ProjectsState> {
         currentProject: current,
         searchResults: _computeSearch(uid),
         projectMembers: current == null ? [] : _membersFor(current),
+        pendingInvitations: _myInvitations,
         isLoading: false,
         isLoadingMembers: false,
         isSearching: false,
@@ -397,6 +412,14 @@ class ProjectsCubit extends Cubit<ProjectsState> {
           'email': email,
           'role': role,
           'invitedBy': uid,
+          'projectName': _allProjects
+              .where((p) => p.id == projectId)
+              .firstOrNull
+              ?.name,
+          'inviterName': _identity(
+            uid,
+            _allProfiles.where((p) => p.id == uid).firstOrNull,
+          )['name'],
           'createdAt': DateTime.now().millisecondsSinceEpoch,
         }).operations,
         ...db.tx['invitations'][id].link({'project': projectId}).operations,
