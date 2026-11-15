@@ -1,3 +1,7 @@
+## [1.5.2]
+
+- Fix: sign-in codes could not be sent to most e-mail addresses. The app now uses the InstantDB app hosted on instantdb.com. Existing data from the previous backend is not migrated.
+
 ## [1.5.1]
 
 - Fix: the selected category in the add-transaction sheet now shows the check mark and green outline.
