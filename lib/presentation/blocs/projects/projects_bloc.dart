@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_instantdb/flutter_instantdb.dart';
 import 'package:expense/data/models/models.dart';
+import 'package:expense/presentation/blocs/auth/profile_name.dart';
 import 'project_selection.dart';
 import 'projects_state.dart';
 
@@ -22,6 +23,9 @@ class ProjectsCubit extends Cubit<ProjectsState> {
   List<Project> _allProjects = [];
   List<ProjectMember> _allMembers = [];
   List<Profile> _allProfiles = [];
+  List<Map<String, dynamic>> _allInvitations = [];
+  final Set<String> _accepting = {};
+  String? _profileEnsuredFor;
   String? _selectedId;
   bool _personalWorkspaceSelected = false;
   String _search = '';
@@ -40,6 +44,7 @@ class ProjectsCubit extends Cubit<ProjectsState> {
       'projects': {},
       'members': {},
       'profiles': {},
+      'invitations': {},
     });
     _queryDispose = effect(() {
       final res = sig.value;
@@ -47,12 +52,101 @@ class ProjectsCubit extends Cubit<ProjectsState> {
       _allProjects = mapList(data['projects'], Project.fromMap);
       _allMembers = mapList(data['members'], ProjectMember.fromMap);
       _allProfiles = mapList(data['profiles'], Profile.fromMap);
+      final invitations = data['invitations'];
+      _allInvitations = invitations is List
+          ? [
+              for (final m in invitations.whereType<Map>())
+                Map<String, dynamic>.from(m),
+            ]
+          : [];
       _recompute();
+      // Only once the server data has arrived, never from the empty cache.
+      if (res.data != null) {
+        unawaited(_ensureOwnProfile());
+        unawaited(_acceptInvitations());
+      }
     });
   }
 
   /// Kept for call-site compatibility; the subscription already keeps data live.
   void loadProjects() => _recompute();
+
+  String get _myEmail =>
+      (db.auth.currentUser.value?.email ?? '').trim().toLowerCase();
+
+  /// Members list shows the owner/me even when the profiles row is missing.
+  Map<String, String> _identity(String userId, Profile? profile) {
+    final me = db.auth.currentUser.value;
+    if (profile != null) return {'name': profile.name, 'email': profile.email};
+    if (me != null && me.id == userId) {
+      return {
+        'name': resolveDisplayName(email: me.email, metadata: me.metadata),
+        'email': me.email,
+      };
+    }
+    return {'name': 'Unknown User', 'email': ''};
+  }
+
+  Future<void> _ensureOwnProfile() async {
+    final me = db.auth.currentUser.value;
+    if (me == null || _profileEnsuredFor == me.id) return;
+    _profileEnsuredFor = me.id;
+    if (_allProfiles.any((p) => p.id == me.id)) return;
+    try {
+      await db.transact([
+        ...db.tx['profiles'].create({
+          'id': me.id,
+          'name': resolveDisplayName(email: me.email, metadata: me.metadata),
+          'email': me.email,
+        }).operations,
+        ...db.tx['profiles'][me.id].link({'user': me.id}).operations,
+      ]);
+    } catch (e) {
+      debugPrint('Error creating own profile: $e');
+    }
+  }
+
+  /// Turns pending invitations addressed to my e-mail into memberships.
+  Future<void> _acceptInvitations() async {
+    final uid = _uid;
+    final email = _myEmail;
+    if (uid == null || email.isEmpty) return;
+    for (final inv in _allInvitations) {
+      final invId = inv['id'] as String?;
+      final projectId = inv['projectId'] as String?;
+      if (invId == null || projectId == null) continue;
+      if ((inv['email'] as String?)?.toLowerCase() != email) continue;
+      if (!_accepting.add(invId)) continue;
+      final already = _allMembers.any(
+        (m) => m.projectId == projectId && m.userId == uid,
+      );
+      try {
+        if (!already) {
+          final id = db.id();
+          final now = DateTime.now().millisecondsSinceEpoch;
+          await db.transact([
+            ...db.tx['members'].create({
+              'id': id,
+              'projectId': projectId,
+              'userId': uid,
+              'role': inv['role'] ?? 'viewer',
+              'invitedBy': inv['invitedBy'],
+              'invitedAt': inv['createdAt'] ?? now,
+              'acceptedAt': now,
+            }).operations,
+            ...db.tx['members'][id].link({
+              'project': projectId,
+              'user': uid,
+            }).operations,
+          ]);
+        }
+        await db.transact(db.tx['invitations'][invId].delete());
+      } catch (e) {
+        debugPrint('Error accepting invitation: $e');
+        _accepting.remove(invId);
+      }
+    }
+  }
 
   void _recompute() {
     final uid = _uid ?? '';
@@ -99,8 +193,7 @@ class ProjectsCubit extends Cubit<ProjectsState> {
         'role': m.role,
         'invited_by': m.invitedBy,
         'accepted_at': m.acceptedAt?.toIso8601String(),
-        'name': profile?.name ?? 'Unknown User',
-        'email': profile?.email ?? 'No email',
+        ..._identity(m.userId, profile),
       };
     }).toList();
 
@@ -113,8 +206,20 @@ class ProjectsCubit extends Cubit<ProjectsState> {
         'role': 'owner',
         'invited_by': null,
         'accepted_at': project.createdAt.toIso8601String(),
-        'name': owner?.name ?? 'Unknown User',
-        'email': owner?.email ?? 'No email',
+        ..._identity(project.ownerId, owner),
+      });
+    }
+    // Invited people who have not signed up yet.
+    for (final inv in _allInvitations) {
+      if (inv['projectId'] != project.id) continue;
+      members.add({
+        'member_id': inv['id'],
+        'user_id': '',
+        'role': inv['role'] ?? 'viewer',
+        'invited_by': inv['invitedBy'],
+        'accepted_at': null,
+        'name': inv['email'],
+        'email': inv['email'],
       });
     }
     return members;
@@ -220,9 +325,12 @@ class ProjectsCubit extends Cubit<ProjectsState> {
   }) async {
     final uid = _uid;
     if (uid == null) return;
-    final target = _allProfiles.where((p) => p.email == email).firstOrNull;
+    email = email.trim().toLowerCase();
+    final target = _allProfiles
+        .where((p) => p.email.toLowerCase() == email)
+        .firstOrNull;
     if (target == null) {
-      emit(state.copyWith(error: 'user_not_found_local'.tr()));
+      await _inviteByEmail(projectId, email, role, uid);
       return;
     }
     if (target.id == uid) {
@@ -261,10 +369,53 @@ class ProjectsCubit extends Cubit<ProjectsState> {
     }
   }
 
+  /// No account for [email] yet: store a pending invitation, accepted at the
+  /// person's first sign-in.
+  Future<void> _inviteByEmail(
+    String projectId,
+    String email,
+    String role,
+    String uid,
+  ) async {
+    if (email == _myEmail) {
+      emit(state.copyWith(error: 'cannot_share_self'.tr()));
+      return;
+    }
+    final duplicate = _allInvitations.any(
+      (i) => i['projectId'] == projectId && i['email'] == email,
+    );
+    if (duplicate) {
+      emit(state.copyWith(error: 'already_member_error'.tr()));
+      return;
+    }
+    final id = db.id();
+    try {
+      await db.transact([
+        ...db.tx['invitations'].create({
+          'id': id,
+          'projectId': projectId,
+          'email': email,
+          'role': role,
+          'invitedBy': uid,
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+        }).operations,
+        ...db.tx['invitations'][id].link({'project': projectId}).operations,
+      ]);
+    } catch (e) {
+      debugPrint('Error creating invitation: $e');
+      emit(state.copyWith(error: e.toString()));
+    }
+  }
+
   Future<void> removeProjectMember(String memberId) async {
     if (memberId == 'owner_placeholder') return;
     try {
-      await db.transact(db.tx['members'][memberId].delete());
+      final isInvitation = _allInvitations.any((i) => i['id'] == memberId);
+      await db.transact(
+        isInvitation
+            ? db.tx['invitations'][memberId].delete()
+            : db.tx['members'][memberId].delete(),
+      );
     } catch (e) {
       debugPrint('Error removing member: $e');
     }

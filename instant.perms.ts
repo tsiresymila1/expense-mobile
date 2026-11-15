@@ -37,9 +37,21 @@ const rules = {
     allow: {
       // Project owner manages membership; a user can see their own membership.
       view: "auth.id != null && (auth.id == data.userId || auth.id in data.ref('project.owner.id'))",
-      create: "auth.id != null && auth.id in data.ref('project.owner.id')",
+      // The owner adds members; an invited person may add themself while a
+      // pending invitation for their e-mail exists on the project.
+      create: "auth.id != null && (auth.id in data.ref('project.owner.id') || (auth.id == data.userId && auth.email in data.ref('project.invitations.email')))",
       update: "auth.id != null && auth.id in data.ref('project.owner.id')",
       delete: "auth.id != null && auth.id in data.ref('project.owner.id')",
+    },
+  },
+
+  invitations: {
+    allow: {
+      view: "auth.id != null && (auth.email == data.email || auth.id in data.ref('project.owner.id'))",
+      create: "auth.id != null && auth.id in data.ref('project.owner.id')",
+      update: "auth.id != null && auth.id in data.ref('project.owner.id')",
+      // The invitee deletes it once accepted.
+      delete: "auth.id != null && (auth.email == data.email || auth.id in data.ref('project.owner.id'))",
     },
   },
 

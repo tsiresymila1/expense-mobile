@@ -708,6 +708,30 @@ class _ShareProjectSheet extends StatefulWidget {
 class _ShareProjectSheetState extends State<_ShareProjectSheet> {
   final _searchController = TextEditingController();
   final Set<String> _selectedEmails = {};
+  static final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
+  String get _typed => _searchController.text.trim().toLowerCase();
+  bool get _typedIsEmail => _emailPattern.hasMatch(_typed);
+
+  void _addSelected(String email) => setState(() {
+    _selectedEmails.add(email.trim().toLowerCase());
+    _searchController.clear();
+    widget.projectsCubit.searchProfiles('');
+  });
+
+  void _submit() {
+    final emails = {..._selectedEmails, if (_typedIsEmail) _typed};
+    for (final email in emails) {
+      widget.projectsCubit.inviteToProject(
+        projectId: widget.project.id,
+        email: email,
+      );
+    }
+    Navigator.pop(context);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('invitation_sent'.tr())));
+  }
 
   @override
   void initState() {
@@ -722,7 +746,9 @@ class _ShareProjectSheetState extends State<_ShareProjectSheet> {
   }
 
   bool _isAlreadyMember(ProjectsState state, String email) {
-    return state.projectMembers.any((m) => m['email'] == email);
+    return state.projectMembers.any(
+      (m) => (m['email'] as String?)?.toLowerCase() == email.toLowerCase(),
+    );
   }
 
   @override
@@ -739,20 +765,7 @@ class _ShareProjectSheetState extends State<_ShareProjectSheet> {
         return SheetBody(
           title: 'share_project'.tr(),
           footer: FilledButton(
-            onPressed: _selectedEmails.isEmpty
-                ? null
-                : () {
-                    for (final email in _selectedEmails) {
-                      widget.projectsCubit.inviteToProject(
-                        projectId: widget.project.id,
-                        email: email,
-                      );
-                    }
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('invitation_sent'.tr())),
-                    );
-                  },
+            onPressed: _selectedEmails.isEmpty && !_typedIsEmail ? null : _submit,
             child: Text('invite'.tr()),
           ),
           children: [
@@ -781,7 +794,16 @@ class _ShareProjectSheetState extends State<_ShareProjectSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _searchController,
-              onChanged: widget.projectsCubit.searchProfiles,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
+              autocorrect: false,
+              onChanged: (v) {
+                widget.projectsCubit.searchProfiles(v);
+                setState(() {});
+              },
+              onSubmitted: (_) {
+                if (_typedIsEmail) _addSelected(_typed);
+              },
               decoration: InputDecoration(
                 hintText: 'search_users'.tr(),
                 prefixIcon: const Icon(Icons.search_rounded),
@@ -798,34 +820,46 @@ class _ShareProjectSheetState extends State<_ShareProjectSheet> {
               ),
             ),
             const SizedBox(height: 12),
-            if (state.searchResults.isNotEmpty)
+            if (state.searchResults.isNotEmpty || _typedIsEmail)
               GroupedList(
                 children: [
                   for (final profile in state.searchResults)
                     _resultTile(state, profile),
+                  if (_typedIsEmail &&
+                      !state.searchResults.any(
+                        (p) => (p['email'] as String).toLowerCase() == _typed,
+                      ) &&
+                      !_isAlreadyMember(state, _typed) &&
+                      !_selectedEmails.contains(_typed))
+                    ListTile(
+                      leading: const Icon(Icons.person_add_alt_1_rounded),
+                      title: Text(
+                        'invite_email'.tr(args: [_typed]),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text('invite_email_hint'.tr()),
+                      onTap: () => _addSelected(_typed),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                      ),
+                    ),
                 ],
-              )
-            else if (_searchController.text.length >= 2 && !state.isSearching)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Center(
-                  child: Text(
-                    'no_users_found'.tr(),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ),
               ),
             if (_selectedEmails.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  'selected_members'.tr(
-                    args: [_selectedEmails.length.toString()],
-                  ),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.link(context),
-                  ),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final email in _selectedEmails)
+                      RemovableChip(
+                        label: email,
+                        onRemoved: () =>
+                            setState(() => _selectedEmails.remove(email)),
+                      ),
+                  ],
                 ),
               ),
           ],

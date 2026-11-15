@@ -42,6 +42,16 @@ const _schema = i.schema({
       acceptedAt: i.number().optional(),
     }),
 
+    // Invite by e-mail for people who have no account yet; accepted client-side
+    // on their first sign-in (see ProjectsCubit).
+    invitations: i.entity({
+      projectId: i.string().indexed(),
+      email: i.string().indexed(), // lower-cased
+      role: i.string(),
+      invitedBy: i.string(),
+      createdAt: i.number(),
+    }),
+
     categories: i.entity({
       ownerId: i.string().optional().indexed(), // null == global default
       name: i.string(),
@@ -81,6 +91,10 @@ const _schema = i.schema({
     memberUser: {
       forward: { on: 'members', has: 'one', label: 'user' },
       reverse: { on: '$users', has: 'many', label: 'memberships' },
+    },
+    invitationProject: {
+      forward: { on: 'invitations', has: 'one', label: 'project' },
+      reverse: { on: 'projects', has: 'many', label: 'invitations' },
     },
     categoryOwner: {
       forward: { on: 'categories', has: 'one', label: 'owner' },

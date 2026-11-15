@@ -1,3 +1,8 @@
+## [1.5.3]
+
+- Fix: the project members list showed "Unknown User / No email" when a profile was missing; your own profile is now created automatically.
+- Project sharing: invite any e-mail address, with autocomplete from existing users. People without an account get a pending invitation that becomes a membership at their first sign-in.
+
 ## [1.5.2]
 
 - Fix: sign-in codes could not be sent to most e-mail addresses. The app now uses the InstantDB app hosted on instantdb.com. Existing data from the previous backend is not migrated.
